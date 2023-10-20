@@ -1,44 +1,24 @@
-inductive Aexp 
-  | num  : Int → Aexp
-  | loc  : String → Aexp
-  | sum  : Aexp → Aexp → Aexp
-  | prod : Aexp → Aexp → Aexp
+inductive 𝔸 
+  | num  : Int → 𝔸
+  | loc  : String → 𝔸
+  | sum  : 𝔸 → 𝔸 → 𝔸
+  | prod : 𝔸 → 𝔸 → 𝔸
 
-inductive Bexp 
-  | true  : Bexp
-  | false : Bexp
-  | eq    : Aexp → Aexp → Bexp
-  | le    : Aexp → Aexp → Bexp
-  | not   : Bexp → Bexp
-  | and   : Bexp → Bexp → Bexp
-  | or    : Bexp → Bexp → Bexp
+inductive 𝔹 
+  | true  : 𝔹
+  | false : 𝔹
+  | eq    : 𝔸 → 𝔸 → 𝔹
+  | le    : 𝔸 → 𝔸 → 𝔹
+  | not   : 𝔹 → 𝔹
+  | and   : 𝔹 → 𝔹 → 𝔹
+  | or    : 𝔹 → 𝔹 → 𝔹
 
-inductive Com 
-  | skipc  : Com
-  | assc   : String → Aexp → Com
-  | seqc   : Com → Com → Com
-  | condc  : Bexp → Com → Com → Com 
-  | whilec : Bexp → Com → Com
-
--- Meta syntax
-notation "nᵢ" n => Aexp.num n
-notation "lᵢ" x => Aexp.loc x
-notation:60 a₁:60 " +ᵢ " a₂:61 => Aexp.sum a₁ a₂
-notation:70 a₁:70 " *ᵢ " a₂:71 => Aexp.prod a₁ a₂
-
-notation "trueᵢ" => Bexp.true
-notation "falseᵢ" => Bexp.false
-notation:80 "¬ᵢ" a:81 => Bexp.not a
-notation:70 a₁:70 " =ᵢ " a₂:71 => Bexp.eq a₁ a₂
-notation:70 a₁:70 " ≤ᵢ " a₂:71 => Bexp.le a₁ a₂
-notation:65 b₁:65 " ∨ᵢ " b₂:66 => Bexp.or b₁ b₂
-notation:65 b₁:65 " ∧ᵢ " b₂:66 => Bexp.and b₁ b₂
-
-notation "skipᵢ" => Com.skipc
-notation:50 c₁:50 " ≔ᵢ " c₂:51 => Com.assc c₁ c₂
-notation:40 c₁:40 " ;ᵢ " c₂:41 => Com.seqc c₁ c₂
-notation "ifᵢ " b " thenᵢ " c₁ " elseᵢ " c₂ " endᵢ" => Com.condc b c₁ c₂
-notation "whileᵢ " b " doᵢ " c " endᵢ" => Com.whilec b c
+inductive ℂ 
+  | skip  : ℂ
+  | ass   : String → 𝔸 → ℂ
+  | seq   : ℂ → ℂ → ℂ
+  | cond  : 𝔹 → ℂ → ℂ → ℂ 
+  | while : 𝔹 → ℂ → ℂ
 
 -- Syntax of the language
 declare_syntax_cat imp
@@ -47,55 +27,59 @@ declare_syntax_cat imp
 syntax "(" imp ")" : imp
 -- imp
 syntax num : imp
-syntax str : imp
 syntax ident: imp
 syntax:60 imp:60 "+" imp:61 : imp
 syntax:70 imp:70 "*" imp:71 : imp
 -- bexp
-syntax "⊤" : imp
-syntax "⊥" : imp
-syntax:80 "¬" imp:81 : imp
-syntax:70 imp:70 "=" imp:71 : imp
-syntax:70 imp:70 "≤" imp:71 : imp
-syntax:65 imp:65 "∨" imp:66 : imp
-syntax:65 imp:65 "∧" imp:66 : imp
+syntax:200 "tt" : imp
+syntax:200 "ff" : imp
+syntax:80 "!" imp:81 : imp
+syntax:70 imp:70 "==" imp:71 : imp
+syntax:70 imp:70 "<=" imp:71 : imp
+syntax:65 imp:65 "||" imp:66 : imp
+syntax:65 imp:65 "&&" imp:66 : imp
 -- stmt
 syntax "nop" : imp
-syntax:50 imp:50 "≔" imp:51 : imp
+syntax:50 imp:50 "=" imp:51 : imp
 syntax:40 imp:40 ";" imp:41 : imp
-syntax "if" imp "then" imp "else" imp "end" : imp
-syntax "while" imp "do" imp "end" : imp
+syntax "if" imp "{" imp "}" "else" "{" imp "}" : imp
+syntax "while" imp "{" imp "}" : imp
 
+-- meta
 syntax "⦃" imp "⦄" : term
+syntax "." ident: imp
 
 macro_rules
   -- general
-  | `(⦃($x)⦄) => `(⦃$x⦄)
+  | `(⦃($x)⦄)     => `(⦃$x⦄)
   -- imp
-  | `(⦃$s:str⦄) => `(lᵢ $s)
-  | `(⦃$x:ident⦄) => `(lᵢ $(Lean.quote (toString x.getId)))
-  | `(⦃$n:num⦄) => `(nᵢ $n)
-  | `(⦃$x + $y⦄) => `(⦃$x⦄ +ᵢ ⦃$y⦄)
-  | `(⦃$x * $y⦄) => `(⦃$x⦄ *ᵢ ⦃$y⦄)
+  -- | `(⦃$s:str⦄)   => `(𝔸.loc $s)
+  | `(⦃$x:ident⦄) => `(𝔸.loc $(Lean.quote (toString x.getId)))
+  | `(⦃$n:num⦄)   => `(𝔸.num $n)
+  | `(⦃$x + $y⦄)  => `(𝔸.sum ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x * $y⦄)  => `(𝔸.prod ⦃$x⦄ ⦃$y⦄)
   -- bexp
-  | `(⦃⊤⦄) => `(trueᵢ)
-  | `(⦃⊥⦄) => `(falseᵢ)
-  | `(⦃¬$x⦄) => `(¬ᵢ⦃$x⦄)
-  | `(⦃$x = $y⦄) => `(⦃$x⦄ =ᵢ ⦃$y⦄)
-  | `(⦃$x ≤ $y⦄) => `(⦃$x⦄ ≤ᵢ ⦃$y⦄)
-  | `(⦃$x ∧ $y⦄) => `(⦃$x⦄ ∧ᵢ ⦃$y⦄)
-  | `(⦃$x ∨ $y⦄) => `(⦃$x⦄ ∨ᵢ ⦃$y⦄)
+  | `(⦃tt⦄)        => `(𝔹.true)
+  | `(⦃ff⦄)        => `(𝔹.false)
+  | `(⦃!$x⦄)       => `(𝔹.not ⦃$x⦄)
+  | `(⦃$x == $y⦄)  => `(𝔹.eq ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x <= $y⦄)  => `(𝔹.le ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x && $y⦄)  => `(𝔹.and ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x || $y⦄)  => `(𝔹.or ⦃$x⦄ ⦃$y⦄)
   -- stmt
-  | `(⦃nop⦄) => `(skipᵢ)
-  | `(⦃$x:ident ≔ $y⦄) => `($(Lean.quote (toString x.getId)) ≔ᵢ ⦃$y⦄)
-  | `(⦃$x ; $y⦄) => `(⦃$x⦄ ;ᵢ ⦃$y⦄)
-  | `(⦃if $x then $y else $z end⦄) => `(ifᵢ ⦃$x⦄ thenᵢ ⦃$y⦄ elseᵢ ⦃$z⦄ endᵢ)
-  | `(⦃while $x do $y end⦄) => `(whileᵢ ⦃$x⦄ doᵢ ⦃$y⦄ endᵢ)
+  | `(⦃nop⦄)           => `(ℂ.skip)
+  | `(⦃$x:ident = $y⦄) => `(ℂ.ass $(Lean.quote (toString x.getId)) ⦃$y⦄)
+  | `(⦃$x ; $y⦄)       => `(ℂ.seq ⦃$x⦄ ⦃$y⦄)
+  | `(⦃if $b {$x} else {$y}⦄) => `(ℂ.cond ⦃$b⦄ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃while $b {$x}⦄) => `(ℂ.while ⦃$b⦄ ⦃$x⦄)
+  -- meta variables
+  | `(⦃.$x:ident⦄) => `($x)
+  | `(⦃.$x:ident = $y⦄) => `(ℂ.ass $x ⦃$y⦄)
 
-#check ⦃z ≔ 4; if 3 ≤ 2 then y ≔ 4 + 2 else nop end⦄
-#check ⦃while ⊤ do nop end⦄
+#check ⦃z = 4; if 3 <= 2 {y = 4 + 2} else {nop}⦄
+#check ⦃while tt {nop}⦄
 #check ⦃nop⦄
-#check ⦃x ≔ 5⦄
-#check ⦃x ≔ 5; y ≔ 6⦄
-#check ⦃if x = 5 then y ≔ 6 else z ≔ 7 end⦄
-#check ⦃x ≔ 0 ; while ¬(x = 5) do nop; nop; x ≔ x + 1 end⦄
+#check ⦃x = 5⦄
+#check ⦃x = 5; y = 6⦄
+#check ⦃if x == 5 {y = 6} else {z = 7}⦄
+#check ⦃x = 0; while !(x == 5) {nop; nop; x = x + 1}⦄

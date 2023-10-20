@@ -2,86 +2,86 @@ import Imp.State
 import Imp.Aexp
 import Imp.Syntax
 
--- Operational semantics of bexp
-inductive bevalₒₛ: Bexp → Σ → Bool → Prop 
-  | trueₒₛ (σ: Σ):
-    bevalₒₛ trueᵢ σ true
+-- Operational semantics of 𝔹
+inductive 𝔹.evₒ: 𝔹 → Σ → Bool → Prop 
+  | trueₒ (σ: Σ):
+    evₒ ⦃tt⦄ σ Bool.true
 
-  | falseₒₛ (σ: Σ):
-    bevalₒₛ falseᵢ σ false
+  | falseₒ (σ: Σ):
+    evₒ ⦃ff⦄ σ Bool.false
 
-  | eqₒₛ (σ: Σ) (a₁ a₂: Aexp) (n₁ n₂: Int)
-    (h₁: ⟨a₁,σ⟩ ⟶ n₁) (h₁: ⟨a₂,σ⟩ ⟶ n₂):
-    bevalₒₛ (a₁ =ᵢ a₂) σ (n₁ = n₂)
+  | eqₒ (σ: Σ) (a₁ a₂: 𝔸) (n₁ n₂: Int)
+    (h₁: ⟨a₁,σ⟩ → n₁) (h₁: ⟨a₂,σ⟩ → n₂):
+    evₒ ⦃.a₁ == .a₂⦄ σ (n₁ = n₂)
 
-  | leₒₛ (σ: Σ) (a₁ a₂: Aexp) (n₁ n₂: Int)
-    (h₁: ⟨a₁,σ⟩ ⟶ n₁) (h₁: ⟨a₂,σ⟩ ⟶ n₂):
-    bevalₒₛ (a₁ ≤ᵢ a₂) σ (n₁ ≤ n₂)
+  | leₒ (σ: Σ) (a₁ a₂: 𝔸) (n₁ n₂: Int)
+    (h₁: ⟨a₁,σ⟩ → n₁) (h₁: ⟨a₂,σ⟩ → n₂):
+    evₒ ⦃.a₁ <= .a₂⦄ σ (n₁ ≤ n₂)
 
-  | notₒₛ (σ: Σ) (b₁: Bexp) (n₁: Bool)
-    (h₁: bevalₒₛ b₁ σ n₁):
-    bevalₒₛ (¬ᵢb₁) σ (¬n₁)
+  | notₒ (σ: Σ) (b₁: 𝔹) (n₁: Bool)
+    (h₁: evₒ b₁ σ n₁):
+    evₒ ⦃!.b₁⦄ σ (¬n₁)
 
-  | andₒₛ (σ: Σ) (b₁ b₂: Bexp) (n₁ n₂: Bool)
-    (h₁: bevalₒₛ b₁ σ n₁) (h₁: bevalₒₛ b₂ σ n₂):
-    bevalₒₛ (b₁ ∧ᵢ b₂) σ (n₁ ∧ n₂)
+  | andₒ (σ: Σ) (b₁ b₂: 𝔹) (n₁ n₂: Bool)
+    (h₁: evₒ b₁ σ n₁) (h₁: evₒ b₂ σ n₂):
+    evₒ ⦃.b₁ && .b₂⦄ σ (n₁ ∧ n₂)
 
-  | orₒₛ (σ: Σ) (b₁ b₂: Bexp) (n₁ n₂: Bool)
-    (h₁: bevalₒₛ b₁ σ n₁) (h₁: bevalₒₛ b₂ σ n₂):
-    bevalₒₛ (b₁ ∨ᵢ b₂) σ (n₁ ∨ n₂)
+  | orₒ (σ: Σ) (b₁ b₂: 𝔹) (n₁ n₂: Bool)
+    (h₁: evₒ b₁ σ n₁) (h₁: evₒ b₂ σ n₂):
+    evₒ ⦃.b₁ || .b₂⦄ σ (n₁ ∨ n₂)
 
-notation "⟨" b "," σ "⟩" " ⟶ " n => bevalₒₛ b σ n
+notation "⟨" b "," σ "⟩" " → " n => 𝔹.evₒ b σ n
     
--- Denotational semantics of boolean expressions
-@[simp] def beval (b: Bexp) (σ: Σ): Bool :=
-  match b with 
-  | trueᵢ    => true
-  | falseᵢ   => false
-  | a₁ =ᵢ a₂ => A⟦a₁⟧ σ = A⟦a₂⟧ σ
-  | a₁ ≤ᵢ a₂ => A⟦a₁⟧ σ ≤ A⟦a₂⟧ σ
-  | ¬ᵢb      => ¬(beval b σ)
-  | b₁ ∧ᵢ b₂ => (beval b₁ σ) ∧ (beval b₂ σ)
-  | b₁ ∨ᵢ b₂ => (beval b₁ σ) ∨ (beval b₂ σ)
+-- Denotational semantics of 𝔹
+@[simp] def 𝔹.ev (b: 𝔹) (σ: Σ): Bool :=
+  match b with
+  | ⦃tt⦄        => Bool.true
+  | ⦃ff⦄        => Bool.false
+  | ⦃.a₁ == .a₂⦄ => ⟪a₁, σ⟫ = ⟪a₂, σ⟫
+  | ⦃.a₁ <= .a₂⦄ => ⟪a₁, σ⟫ ≤ ⟪a₂, σ⟫
+  | ⦃!.b⦄       => ¬(ev b σ)
+  | ⦃.b₁ && .b₂⦄ => (ev b₁ σ) ∧ (ev b₂ σ)
+  | ⦃.b₁ || .b₂⦄ => (ev b₁ σ) ∨ (ev b₂ σ)
 
-notation " B⟦" b "⟧" => beval b
+notation "⟪" b "," σ "⟫" => 𝔹.ev b σ 
 
---  Examples of the semantics of boolean expressions.
-example: B⟦⦃x ≤ 5⦄⟧ ⟦"x"↦5⟧ = true := rfl
-example: B⟦⦃x ≤ 5⦄⟧ ⟦"x"↦6⟧ = false := rfl
-example: B⟦⦃x = 5⦄⟧ ⟦"x"↦5⟧ = true := rfl
-example: B⟦⦃x = 5⦄⟧ ⟦"x"↦6⟧ = false := rfl
-example: B⟦⦃¬(x = 5)⦄⟧ ⟦"x"↦5⟧ = false := rfl
+--  Examples of the semantics of 𝔹
+example: ⟪⦃x <= 5⦄, ⟦x↦5⟧⟫ = true := rfl
+example: ⟪⦃x <= 5⦄, ⟦x↦6⟧⟫ = false := rfl
+example: ⟪⦃x == 5⦄, ⟦x↦5⟧⟫ = true := rfl
+example: ⟪⦃x == 5⦄, ⟦x↦6⟧⟫ = false := rfl
+example: ⟪⦃!(x == 5)⦄, ⟦x↦5⟧⟫ = false := rfl
 
 -- relational definition is equivalent to recursive
-theorem beval_iff_bevalₒₛ (b: Bexp) (r: Bool) (σ: Σ):
-  (⟨b,σ⟩ ⟶ r) ↔ B⟦b⟧ σ = r :=
+theorem 𝔹.evₒ_eq_ev (b: 𝔹) (r: Bool) (σ: Σ):
+  (⟨b,σ⟩ → r) ↔ ⟪b, σ⟫ = r :=
   by
     apply Iff.intro
     case mp => { 
       intro h; induction h with
-      | trueₒₛ => constructor
-      | falseₒₛ => constructor
-      | eqₒₛ _ _ _ _ _ ih₁ ih₂ => {
-          rw [aeval_iff_aevalₒₛ] at ih₁
-          rw [aeval_iff_aevalₒₛ] at ih₂
+      | trueₒ => constructor
+      | falseₒ => constructor
+      | eqₒ _ _ _ _ _ ih₁ ih₂ => {
+          rw [𝔸.evₒ_eq_ev] at ih₁
+          rw [𝔸.evₒ_eq_ev] at ih₂
           rw [←ih₁, ←ih₂]
           constructor
         }
-      | leₒₛ _ _ _ _ _ ih₁ ih₂ => {
-          rw [aeval_iff_aevalₒₛ] at ih₁;
-          rw [aeval_iff_aevalₒₛ] at ih₂;
+      | leₒ _ _ _ _ _ ih₁ ih₂ => {
+          rw [𝔸.evₒ_eq_ev] at ih₁;
+          rw [𝔸.evₒ_eq_ev] at ih₂;
           rw [←ih₁, ←ih₂]
           constructor
         }
-      | notₒₛ _ _ _ _ ih => {
+      | notₒ _ _ _ _ ih => {
           rw [←ih]
           constructor
         }
-      | andₒₛ _ _ _ _ _ h₁ h₂ ih₁ ih₂ => {
+      | andₒ _ _ _ _ _ h₁ h₂ ih₁ ih₂ => {
           induction ih₁; induction ih₂
           rfl        
         }
-      | orₒₛ _ _ _ _ _ h₁ h₂ ih₁ ih₂ => {
+      | orₒ _ _ _ _ _ h₁ h₂ ih₁ ih₂ => {
           induction ih₁; induction ih₂
           rfl        
         }
@@ -91,8 +91,8 @@ theorem beval_iff_bevalₒₛ (b: Bexp) (r: Bool) (σ: Σ):
       induction b with 
         | true => intro _ h; rw [←h]; constructor
         | false => intro _ h; rw [←h]; constructor
-        | eq _ _ => intro _ h; rw [←h]; constructor <;> rw [aeval_iff_aevalₒₛ]
-        | le _ _ => intro _ h; rw [←h]; constructor <;> rw [aeval_iff_aevalₒₛ]
+        | eq _ _ => intro _ h; rw [←h]; constructor <;> rw [𝔸.evₒ_eq_ev]
+        | le _ _ => intro _ h; rw [←h]; constructor <;> rw [𝔸.evₒ_eq_ev]
         | not _ ih => {
             intro _ h; rw [←h]; constructor
             apply ih
@@ -110,11 +110,11 @@ theorem beval_iff_bevalₒₛ (b: Bexp) (r: Bool) (σ: Σ):
         }
     }
 
-theorem beval_not_true_iff_false (b: Bexp) (σ: Σ) :
-  B⟦b⟧ σ = false ↔ B⟦¬ᵢb⟧ σ = true :=
+theorem 𝔹.not_true_eq_false (b: 𝔹) (σ: Σ) :
+  ⟪b, σ⟫ = Bool.false ↔ ⟪⦃!.b⦄, σ⟫ = Bool.true :=
   by apply Iff.intro <;> (simp; intros; assumption)
 
-def bexp_equiv (b₁ b₂: Bexp) :=
-  ∀ σ: Σ, B⟦b₁⟧ σ = B⟦b₂⟧ σ
+def 𝔹.sim (b₁ b₂: 𝔹) :=
+  ∀ σ: Σ, ⟪b₁, σ⟫ = ⟪b₂, σ⟫
 
-notation e₁ " ∼ " e₂ => bexp_equiv e₁ e₂
+notation e₁ " ∼ " e₂ => 𝔹.sim e₁ e₂

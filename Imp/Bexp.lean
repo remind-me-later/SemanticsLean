@@ -19,10 +19,10 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
   | or (hₗ : ε b₁ s n₁) (hᵣ: ε b₂ s n₂):
     ε ⦃b₁ ∨ b₂⦄ s (n₁ ∨ n₂)
 
-  | eq (hₗ: 𝔸.ε a₁ s n₁) (hᵣ: 𝔸.ε a₂ s n₂):
+  | eq (hₗ: 𝔸.ρ a₁ s = n₁) (hᵣ: 𝔸.ρ a₂ s = n₂):
     ε ⦃a₁ = a₂⦄ s (n₁ = n₂)
 
-  | le (hₗ: 𝔸.ε a₁ s n₁) (hᵣ: 𝔸.ε a₂ s n₂):
+  | le (hₗ: 𝔸.ρ a₁ s = n₁) (hᵣ: 𝔸.ρ a₂ s = n₂):
     ε ⦃a₁ ≤ a₂⦄ s (n₁ ≤ n₂)
 
 -- Denotational semantics of 𝔹
@@ -53,8 +53,7 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
       | eq ih₁ ih₂ => simp at *; cases ih₁; cases ih₂; rfl
       | le ih₁ ih₂ => simp at *; cases ih₁; cases ih₂; rfl
       | not _ ih => simp at *; cases ih; rfl
-      | and _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
-      | or _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
+      | _ _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
     . revert r
       induction b with
         | tt => intro _ h; cases h; constructor
@@ -66,15 +65,10 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
             apply ih
             rfl
           }
-        | and _ _ ih₁ ih₂ => {
+        | _ _ _ ih₁ ih₂ => {
           intro _ h; cases h; constructor
-          apply ih₁; rfl
-          apply ih₂; rfl
-        }
-        | or _ _ ih₁ ih₂ => {
-          intro _ h; cases h; constructor
-          apply ih₁; rfl
-          apply ih₂; rfl
+          . apply ih₁; rfl
+          . apply ih₂; rfl
         }
 
 theorem 𝔹.not_true_eq_false:

@@ -12,7 +12,7 @@ inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
   | add (h₁: ε a₁ s n) (h₂: ε a₂ s m):
     ε ⦃a₁ + a₂⦄ s (n + m)
 
-  | mua₁ (h₁: ε a₁ s n) (h₂: ε a₂ s m):
+  | mul (h₁: ε a₁ s n) (h₂: ε a₂ s m):
     ε ⦃a₁ * a₂⦄ s (n * m)
 
 -- Denotationaa₁ semantics of arithmetic expressions
@@ -34,24 +34,14 @@ inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
   ε a s n ↔ ρ a s = n :=
   by
     constructor
-    . intro h
-      induction h with
+    . intro h; induction h with
       | num => rfl
       | loc => rfl
-      | add _ _ ih₁ ih₂ => simp; rw [ih₁, ih₂]
-      | mua₁ _ _ ih₁ ih₂ => simp; rw [ih₁, ih₂]
-    . revert n
-      induction a with
+      | _ _ _ ih₁ ih₂ => simp; rw [ih₁, ih₂]
+    . revert n; induction a with
       | num _ => intro _ h; cases h; constructor
       | loc _ => intro _ h; cases h; constructor
-      | add _ _ ih₁ ih₂ => {
-          intro _ h
-          cases h
-          constructor
-          . apply ih₁; rfl
-          . apply ih₂; rfl
-        }
-      | mul _ _ ih₁ ih₂ => {
+      | _ _ _ ih₁ ih₂ => {
           intro _ h
           cases h
           constructor
@@ -68,7 +58,7 @@ theorem 𝔸.esim_eq_sim: esim a₁ a₂ ↔ rsim a₁ a₂ :=
     constructor <;> intro h
     . intro s
       specialize h s (ρ a₂ s)
-      simp at *
+      simp at h
       assumption
     . intro s _
       specialize h s

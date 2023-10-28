@@ -17,8 +17,21 @@ inductive ℂ
   | skip  : ℂ
   | ass   : String → 𝔸 → ℂ
   | cat   : ℂ → ℂ → ℂ
-  | ite   : 𝔹 → ℂ → ℂ → ℂ
-  | while : 𝔹 → ℂ → ℂ
+  | ife   : 𝔹 → ℂ → ℂ → ℂ
+  | wle   : 𝔹 → ℂ → ℂ
+
+-- Meta syntax
+notation:60 a₁:60 " +ₛ " a₂:61 => 𝔸.add a₁ a₂
+notation:70 a₁:70 " *ₛ " a₂:71 => 𝔸.mul a₁ a₂
+
+notation:80 "¬ₛ" a:81 => 𝔹.not a
+notation:70 a₁:70 " =ₛ " a₂:71 => 𝔹.eq a₁ a₂
+notation:70 a₁:70 " ≤ₛ " a₂:71 => 𝔹.le a₁ a₂
+notation:65 b₁:65 " ∨ₛ " b₂:66 => 𝔹.or b₁ b₂
+notation:65 b₁:65 " ∧ₛ " b₂:66 => 𝔹.and b₁ b₂
+
+notation:50 c₁:50 " ≔ₛ " c₂:51 => ℂ.ass c₁ c₂
+notation:40 c₁:40 " ;ₛ " c₂:41 => ℂ.cat c₁ c₂
 
 -- Syntax of the language
 declare_syntax_cat imp
@@ -43,33 +56,7 @@ syntax "if" imp "{" imp "}" "else" "{" imp "}" : imp
 syntax "while" imp "{" imp "}" : imp
 
 -- meta
-syntax "⦃" imp "⦄" : term
 syntax "⟪" imp "⟫" : term
-
-macro_rules
-  -- keywords
-  | `(⦃skip⦄) => `(ℂ.skip)
-  | `(⦃tt⦄)   => `(𝔹.tt)
-  | `(⦃ff⦄)   => `(𝔹.ff)
-  -- general
-  | `(⦃($x)⦄) => `(⦃$x⦄)
-  -- imp
-  | `(⦃$n:num⦄)   => `(𝔸.num $n)
-  | `(⦃$x + $y⦄)  => `(𝔸.add ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x * $y⦄)  => `(𝔸.mul ⦃$x⦄ ⦃$y⦄)
-  -- bexp
-  | `(⦃¬$x⦄)      => `(𝔹.not ⦃$x⦄)
-  | `(⦃$x = $y⦄)  => `(𝔹.eq ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x ≤ $y⦄)  => `(𝔹.le ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x ∧ $y⦄)  => `(𝔹.and ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x ∨ $y⦄)  => `(𝔹.or ⦃$x⦄ ⦃$y⦄)
-  -- stmt
-  | `(⦃$x ; $y⦄)       => `(ℂ.cat ⦃$x⦄ ⦃$y⦄)
-  | `(⦃if $b {$x} else {$y}⦄) => `(ℂ.ite ⦃$b⦄ ⦃$x⦄ ⦃$y⦄)
-  | `(⦃while $b {$x}⦄) => `(ℂ.while ⦃$b⦄ ⦃$x⦄)
-  -- meta variables
-  | `(⦃$x:ident⦄) => `($x)
-  | `(⦃$x:ident ≔ $y⦄) => `(ℂ.ass $x ⦃$y⦄)
 
 macro_rules
   -- keywords
@@ -92,8 +79,8 @@ macro_rules
   -- stmt
   | `(⟪$x:ident ≔ $y⟫) => `(ℂ.ass $(Lean.quote (toString x.getId)) ⟪$y⟫)
   | `(⟪$x ; $y⟫)       => `(ℂ.cat ⟪$x⟫ ⟪$y⟫)
-  | `(⟪if $b {$x} else {$y}⟫) => `(ℂ.ite ⟪$b⟫ ⟪$x⟫ ⟪$y⟫)
-  | `(⟪while $b {$x}⟫) => `(ℂ.while ⟪$b⟫ ⟪$x⟫)
+  | `(⟪if $b {$x} else {$y}⟫) => `(ℂ.ife ⟪$b⟫ ⟪$x⟫ ⟪$y⟫)
+  | `(⟪while $b {$x}⟫) => `(ℂ.wle ⟪$b⟫ ⟪$x⟫)
 
 #check ⟪z ≔ 4; if 3 ≤ 2 {y ≔ 4 + 2} else {skip}⟫
 #check ⟪while tt {skip}⟫

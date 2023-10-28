@@ -8,17 +8,17 @@ import Mathlib.Init.Classical
 
 
 
-def Γ (t: Σ → Bool) (f: Σ → Option Σ) (g: Σ → Option Σ): Σ → Option Σ :=
-  fun σ => ite (t σ = true) (f σ >>= g) σ
+def Γ (t: 𝕊 → Bool) (f: 𝕊 → Option 𝕊) (g: 𝕊 → Option 𝕊): 𝕊 → Option 𝕊 :=
+  fun σ => ite (t σ) (f σ >>= g) σ
 
 theorem ℂ.fix t f: ∃g, Γ t f g = g :=
   by sorry
 
 
-noncomputable def ℂ.ev (c: ℂ) (σ: Σ): Option Σ :=
+noncomputable def ℂ.ρ (c: ℂ) (σ: 𝕊): Option 𝕊 :=
   match c with
-  | ⦃nop⦄     => σ
-  | ⦃.x = .a⦄ => State.update σ x ⟪a, σ⟫
-  | ⦃.c₁;.c₂⦄ => ℂ.ev c₁ σ >>= ℂ.ev c₂
-  | ⦃if .b {.c₁} else {.c₂}⦄ => ite (⟪b, σ⟫ = true) (ℂ.ev c₁ σ) (ℂ.ev c₂ σ)
-  | ⦃while .b {.c}⦄ => Classical.choose (ℂ.fix (𝔹.ev b) (ℂ.ev c)) σ
+  | skip   => σ
+  | x ≔ₛ a => 𝕊.update σ x (𝔸.ρ a σ)
+  | c₁;ₛc₂ => ρ c₁ σ >>= ρ c₂
+  | ife b c₁ c₂ => ite (𝔹.ρ b σ) (ρ c₁ σ) (ρ c₂ σ)
+  | wle b c => Classical.choose (fix (𝔹.ρ b) (ρ c)) σ

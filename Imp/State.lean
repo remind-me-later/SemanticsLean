@@ -17,12 +17,9 @@ syntax "⟦""⟧" : term
 syntax "⟦" state "⟧" : term
 
 macro_rules
-  | `(⟦⟧)                        => `(𝕊.init)
+  | `(⟦⟧)                    => `(𝕊.init)
   | `(⟦$x:ident ↦ $e⟧)      => `(𝕊.update ⟦⟧ $(Lean.quote (toString x.getId)) $e)
   | `(⟦$s , $x:ident ↦ $e⟧) => `(𝕊.update ⟦$s⟧ $(Lean.quote (toString x.getId)) $e)
-  -- meta
-  -- | `(⟦. $x:ident ↦ $n:num⟧)      => `(𝕊.update ⟦⟧ $x $n)
-  -- | `(⟦$s , . $x:ident ↦ $n:num⟧) => `(𝕊.update ⟦$s⟧ $x $n)
 
 #check ⟦⟧
 #check ⟦x↦3, x↦4⟧

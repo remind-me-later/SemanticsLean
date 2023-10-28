@@ -5,36 +5,36 @@ import Imp.Syntax
 -- Operational semantics of 𝔹
 inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
   | tt:
-    ε ⦃tt⦄ s true
+    ε tt s true
 
   | ff:
-    ε ⦃ff⦄ s false
+    ε ff s false
 
   | not (h: ε b₁ s n₁):
-    ε ⦃¬b₁⦄ s (¬n₁)
+    ε (¬ₛb₁) s (¬n₁)
 
   | and (hₗ: ε b₁ s n₁) (hᵣ: ε b₂ s n₂):
-    ε ⦃b₁ ∧ b₂⦄ s (n₁ ∧ n₂)
+    ε (b₁ ∧ₛ b₂) s (n₁ ∧ n₂)
 
   | or (hₗ : ε b₁ s n₁) (hᵣ: ε b₂ s n₂):
-    ε ⦃b₁ ∨ b₂⦄ s (n₁ ∨ n₂)
+    ε (b₁ ∨ₛ b₂) s (n₁ ∨ n₂)
 
   | eq (hₗ: 𝔸.ρ a₁ s = n₁) (hᵣ: 𝔸.ρ a₂ s = n₂):
-    ε ⦃a₁ = a₂⦄ s (n₁ = n₂)
+    ε (a₁ =ₛ a₂) s (n₁ = n₂)
 
   | le (hₗ: 𝔸.ρ a₁ s = n₁) (hᵣ: 𝔸.ρ a₂ s = n₂):
-    ε ⦃a₁ ≤ a₂⦄ s (n₁ ≤ n₂)
+    ε (a₁ ≤ₛ a₂) s (n₁ ≤ n₂)
 
 -- Denotational semantics of 𝔹
 @[simp] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
   match b with
-  | ⦃tt⦄      => true
-  | ⦃ff⦄      => false
-  | ⦃¬b⦄      => ¬(ρ b s)
-  | ⦃b₁ ∧ b₂⦄ => (ρ b₁ s) ∧ (ρ b₂ s)
-  | ⦃b₁ ∨ b₂⦄ => (ρ b₁ s) ∨ (ρ b₂ s)
-  | ⦃a₁ = a₂⦄ => 𝔸.ρ a₁ s = 𝔸.ρ a₂ s
-  | ⦃a₁ ≤ a₂⦄ => 𝔸.ρ a₁ s ≤ 𝔸.ρ a₂ s
+  | tt       => true
+  | ff       => false
+  | ¬ₛb      => ¬(ρ b s)
+  | b₁ ∧ₛ b₂ => (ρ b₁ s) ∧ (ρ b₂ s)
+  | b₁ ∨ₛ b₂ => (ρ b₁ s) ∨ (ρ b₂ s)
+  | a₁ =ₛ a₂ => 𝔸.ρ a₁ s = 𝔸.ρ a₂ s
+  | a₁ ≤ₛ a₂ => 𝔸.ρ a₁ s ≤ 𝔸.ρ a₂ s
 
 --  Examples of the semantics of 𝔹
 #reduce 𝔹.ρ ⟪x ≤ 5⟫ ⟦x↦5⟧
@@ -60,18 +60,25 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
         | ff => intro _ h; cases h; constructor
         | eq _ _ => intro _ h; cases h; constructor <;> simp
         | le _ _ => intro _ h; cases h; constructor <;> simp
-        | not _ ih => {
-            intro _ h; cases h; constructor
-            apply ih
-            rfl
-          }
-        | _ _ _ ih₁ ih₂ => {
+        | not _ ih =>
+          intro _ h; cases h; constructor
+          apply ih; rfl
+        | _ _ _ ih₁ ih₂ =>
           intro _ h; cases h; constructor
           . apply ih₁; rfl
           . apply ih₂; rfl
-        }
 
 theorem 𝔹.not_true_eq_false:
-  ρ b s = false ↔ ρ ⦃¬b⦄ s = true := by simp
+  ρ b s = false ↔ ρ (¬ₛb) s := by simp
 
-def 𝔹.sim b₁ b₂ := ∀ s, ρ b₁ s = ρ b₂ s
+def 𝔹.esim b₁ b₂ := ∀ s n, ε b₁ s n ↔ ε b₂ s n
+
+def 𝔹.rsim b₁ b₂ := ∀ s, ρ b₁ s = ρ b₂ s
+
+theorem 𝔹.esim_eq_sim: esim a₁ a₂ ↔ rsim a₁ a₂ :=
+  by
+    constructor <;> intro h s
+    . specialize h s (ρ a₂ s)
+      simp at h; assumption
+    . intro _; specialize h s
+      simp; rw [h]; simp

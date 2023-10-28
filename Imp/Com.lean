@@ -6,25 +6,25 @@ import Imp.Syntax
 -- Semantics of commands.
 inductive ℂ.ε: ℂ → 𝕊 → 𝕊 → Prop
   | skip:
-    ε ⦃skip⦄ s s
+    ε skip s s
 
   | ass:
-    ε ⦃x ≔ a⦄ s (𝕊.update s x (𝔸.ρ a s))
+    ε (x ≔ₛ a) s (𝕊.update s x (𝔸.ρ a s))
 
   | cat s₂ (hc₁: ε c₁ s s₂) (hc₂: ε c₂ s₂ s₁):
-    ε ⦃c₁;c₂⦄ s s₁
+    ε (c₁;ₛc₂) s s₁
 
-  | ite_tt (hb: 𝔹.ρ b s = true) (hc₁: ε c₁ s s₁):
-    ε ⦃if b {c₁} else {c₂}⦄ s s₁
+  | ite_tt (hb: 𝔹.ρ b s) (hc₁: ε c₁ s s₁):
+    ε (ife b c₁ c₂) s s₁
 
   | ite_ff (hb: 𝔹.ρ b s = false) (hc₂: ε c₂ s s₂):
-    ε ⦃if b {c₁} else {c₂}⦄ s s₂
+    ε (ife b c₁ c₂) s s₂
 
-  | while_tt s₂ (hb: 𝔹.ρ b s = true) (hc: ε c s s₂) (hw: ε ⦃while b {c}⦄ s₂ s₁):
-    ε ⦃while b {c}⦄ s s₁
+  | while_tt s₂ (hb: 𝔹.ρ b s) (hc: ε c s s₂) (hw: ε (wle b c) s₂ s₁):
+    ε (wle b c) s s₁
 
   | while_ff (hb: 𝔹.ρ b s = false):
-    ε ⦃while b {c}⦄ s s
+    ε (wle b c) s s
 
 example: ℂ.ε ⟪x ≔ 5⟫ ⟦⟧ ⟦x↦5⟧ := by constructor
 
@@ -47,7 +47,7 @@ example:
 
 def ℂ.sim c₁ c₂ := ∀ s s₁, ε c₁ s s₁ ↔ ε c₂ s s₁
 
-theorem ℂ.skipl: sim ⦃skip;c⦄ c := by
+theorem ℂ.skipl: sim (skip;ₛc) c := by
     unfold sim
     intro _ _
     constructor <;> intro h
@@ -56,7 +56,7 @@ theorem ℂ.skipl: sim ⦃skip;c⦄ c := by
       . constructor
       . assumption
 
-theorem ℂ.skipr: sim ⦃c;skip⦄ c := by
+theorem ℂ.skipr: sim (c;ₛskip) c := by
     unfold sim
     intro _ _
     constructor <;> intro h
@@ -65,8 +65,8 @@ theorem ℂ.skipr: sim ⦃c;skip⦄ c := by
       . assumption
       . constructor
 
-theorem ℂ.if_true (h: 𝔹.sim b ⦃tt⦄):
-  sim ⦃if b {c₁} else {c₂}⦄ c₁ :=
+theorem ℂ.if_true (h: 𝔹.rsim b 𝔹.tt):
+  sim (ife b c₁ c₂) c₁ :=
   by
     unfold sim
     intro s₁ _
@@ -85,8 +85,8 @@ theorem ℂ.if_true (h: 𝔹.sim b ⦃tt⦄):
         assumption
       . assumption
 
-theorem ℂ.if_false (h: 𝔹.sim b ⦃ff⦄):
-  sim ⦃if b {c₁} else {c₂}⦄ c₂ :=
+theorem ℂ.if_false (h: 𝔹.rsim b 𝔹.ff):
+  sim (ife b c₁ c₂) c₂ :=
   by
     unfold sim
     intro s₁ _
@@ -105,25 +105,25 @@ theorem ℂ.if_false (h: 𝔹.sim b ⦃ff⦄):
         assumption
       . assumption
 
-theorem ℂ.while_true (heqb: 𝔹.sim b ⦃tt⦄):
-  ¬(ε ⦃while b {c}⦄ s s₁) :=
+theorem ℂ.while_true (heqb: 𝔹.rsim b 𝔹.tt):
+  ¬(ε (wle b c) s s₁) :=
   by
     intro h
-    generalize heqcw: ⦃while b {c}⦄ = w at h
+    generalize heqcw: wle b c = w at h
     induction h with
-    | while_tt _ _ _ _ _ ih₂ => {
-        simp at heqcw
-        apply ih₂
-        rw [←heqcw.left, ←heqcw.right]
-      }
-    | while_ff hb => {
-        simp at heqcw
-        unfold 𝔹.sim at heqb
-        simp at heqb
-        rw [←heqcw.left, heqb] at hb
-        contradiction
-      }
-    | _  => simp at heqcw
+    | while_tt _ _ _ _ _ ih₂ =>
+      simp at heqcw
+      apply ih₂
+      rw [←heqcw.left, ←heqcw.right]
+
+    | while_ff hb =>
+      simp at heqcw
+      unfold 𝔹.rsim at heqb
+      simp at heqb
+      rw [←heqcw.left, heqb] at hb
+      contradiction
+
+    | _ => simp at heqcw
 
 #print axioms ℂ.while_true
 

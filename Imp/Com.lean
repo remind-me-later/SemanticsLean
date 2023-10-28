@@ -1,177 +1,139 @@
 import Imp.State
 import Imp.Aexp
 import Imp.Bexp
-import Imp.Syntax 
+import Imp.Syntax
 
 -- Semantics of commands.
-inductive ℂ.evₒ: ℂ → Σ → Σ → Prop 
-  | skipₒ (σ: Σ):
-    evₒ ⦃nop⦄ σ σ
+inductive ℂ.ε: ℂ → 𝕊 → 𝕊 → Prop
+  | skip:
+    ε ⦃skip⦄ s s
 
-  | assₒ (x: String) (a: 𝔸) (σ: Σ):
-    evₒ ⦃.x = .a⦄ σ (State.update σ x ⟪a, σ⟫)
+  | ass:
+    ε ⦃x ≔ a⦄ s (𝕊.update s x (𝔸.ρ a s))
 
-  | seqₒ (σ σ₁ σ₂: Σ) (c₁ c₂: ℂ)
-    (hc₁: evₒ c₁ σ σ₂) (hc₂: evₒ c₂ σ₂ σ₁):
-    evₒ ⦃.c₁;.c₂⦄ σ σ₁
+  | seq s₂ (hc₁: ε c₁ s s₂) (hc₂: ε c₂ s₂ s₁):
+    ε ⦃c₁;c₂⦄ s s₁
 
-  | if_ttₒ (σ σ₁: Σ) (b: 𝔹) (c₁ c₂: ℂ)
-    (hb: ⟪b, σ⟫ = true) (hc₁: evₒ c₁ σ σ₁):
-    evₒ ⦃if .b {.c₁} else {.c₂}⦄ σ σ₁
+  | if_tt (hb: 𝔹.ρ b s = true) (hc₁: ε c₁ s s₁):
+    ε ⦃if b {c₁} else {c₂}⦄ s s₁
 
-  | if_ffₒ (σ σ₁: Σ) (b: 𝔹) (c₁ c₂: ℂ)
-    (hb: ⟪b, σ⟫ = false) (hc₂: evₒ c₂ σ σ₁):
-    evₒ ⦃if .b {.c₁} else {.c₂}⦄ σ σ₁
+  | if_ff (hb: 𝔹.ρ b s = false) (hc₂: ε c₂ s s₂):
+    ε ⦃if b {c₁} else {c₂}⦄ s s₂
 
-  | while_ttₒ (σ σ₁ σ₂: Σ) (b: 𝔹) (c: ℂ)
-    (hb: ⟪b, σ⟫ = true) (hc: evₒ c σ σ₂) (hW: evₒ ⦃while .b {.c}⦄ σ₂ σ₁):
-    evₒ ⦃while .b {.c}⦄ σ σ₁
+  | while_tt s₂ (hb: 𝔹.ρ b s = true) (hc: ε c s s₂) (hw: ε ⦃while b {c}⦄ s₂ s₁):
+    ε ⦃while b {c}⦄ s s₁
 
-  | while_ffₒ (σ: Σ) (b: 𝔹) (c: ℂ)
-    (hb: ⟪b, σ⟫ = false):
-    evₒ ⦃while .b {.c}⦄ σ σ
+  | while_ff (hb: 𝔹.ρ b s = false):
+    ε ⦃while b {c}⦄ s s
 
-notation "⟨" c "," σ "⟩" " → " σ₁ => ℂ.evₒ c σ σ₁
-
-example: ⟨⦃x = 5⦄,⟦⟧⟩ → ⟦x↦5⟧ := by apply ℂ.evₒ.assₒ
+example: ℂ.ε ⟪x ≔ 5⟫ ⟦⟧ ⟦x↦5⟧ := by constructor
 
 example:
-  ⟨⦃
-    x = 2;
-    if x <= 1 {
-      y = 3
+  ℂ.ε ⟪
+    x ≔ 2;
+    if x ≤ 1 {
+      y ≔ 3
     } else {
-      z = 4
-    }
-    ⦄, ⟦⟧
-  ⟩ →
-  ⟦x↦2, z↦4⟧ := 
-  by 
-    apply ℂ.evₒ.seqₒ
-    case hc₁ => apply ℂ.evₒ.assₒ
-    case hc₂ =>
-      apply ℂ.evₒ.if_ffₒ
-      case hb => rfl
-      case hc₂ => apply ℂ.evₒ.assₒ
+      z ≔ 4
+    }⟫
+  ⟦⟧
+  ⟦x↦2, z↦4⟧ :=
+  by
+    constructor
+    . constructor
+    . apply ℂ.ε.if_ff
+      . rfl
+      . constructor
 
-def ℂ.sim (c₁ c₂: ℂ):=
-  ∀ (σ σ₁: Σ), (⟨c₁, σ⟩ → σ₁) ↔ (⟨c₂, σ⟩ → σ₁) 
+def ℂ.sim c₁ c₂ := ∀ s s₁, (ε c₁ s s₁) ↔ (ε c₂ s s₁)
 
-notation e₁ " ∼ " e₂ => ℂ.sim e₁ e₂
-
-theorem ℂ.skipl (c: ℂ): ⦃nop;.c⦄ ∼ c := by
+theorem ℂ.skipl: sim ⦃skip;c⦄ c := by
     unfold sim
-    intro σ σ₁
-    apply Iff.intro
-    . {
-      intro h
-      cases h with | seqₒ _ _ _ _ _ hc₁ _ => cases hc₁; assumption
-    }
-    . {
-      intro h
-      apply evₒ.seqₒ
-      . apply evₒ.skipₒ
+    intro _ _
+    constructor
+    . intro h
+      cases h with | seq _ hc₁ _ => cases hc₁; assumption
+    . intro h
+      constructor
+      . constructor
       . assumption
-    }
 
-theorem ℂ.skipr (c: ℂ): ⦃.c;nop⦄ ∼ c := by
+theorem ℂ.skipr: sim ⦃c;skip⦄ c := by
     unfold sim
-    intro σ σ₁
-    apply Iff.intro
-    . {
-      intro h
-      cases h with | seqₒ _ _ _ _ _ _ hc₂ => cases hc₂; assumption
-    }
-    . {
-      intro h
-      apply evₒ.seqₒ
+    intro _ _
+    constructor
+    . intro h
+      cases h with | seq _ _ hc₂ => cases hc₂; assumption
+    . intro h
+      constructor
       . assumption
-      . apply evₒ.skipₒ
-    }
+      . constructor
 
-theorem ℂ.if_true (b: 𝔹) (c₁ c₂: ℂ) (h: b ∼ ⦃tt⦄):
-  ⦃if .b {.c₁} else {.c₂}⦄ ∼ c₁ :=
+theorem ℂ.if_true (h: 𝔹.sim b ⦃tt⦄):
+  sim ⦃if b {c₁} else {c₂}⦄ c₁ :=
   by
     unfold sim
-    intro σ₁ σ₂
-    apply Iff.intro
-    . {
-      intro h₁
-      unfold 𝔹.sim at h
+    intro s₁ _
+    constructor
+    . intro h₁
       cases h₁ with
-      | if_ttₒ => assumption
-      | if_ffₒ _ _ _ _ _ hb => {
-        specialize h σ₁
+      | if_tt => assumption
+      | if_ff hb => {
+        specialize h s₁
         simp at h
         rw [hb] at h
         contradiction
       }
-    }
-    . {
-      intro h₁
-      unfold 𝔹.sim at h
-      apply evₒ.if_ttₒ
-      . {
-        specialize h σ₁
+    . intro h₁
+      apply ε.if_tt
+      . specialize h s₁
         simp at h
         assumption
-      }
       . assumption
-    }
 
-theorem ℂ.if_false (b: 𝔹) (c₁ c₂: ℂ) (h: b ∼ ⦃ff⦄):
-  ⦃if .b {.c₁} else {.c₂}⦄ ∼ c₂ :=
+theorem ℂ.if_false (h: 𝔹.sim b ⦃ff⦄):
+  sim ⦃if b {c₁} else {c₂}⦄ c₂ :=
   by
     unfold sim
-    intro σ₁ σ₂
+    intro s₁ s₂
     apply Iff.intro
-    . {
-      intro h₁
+    . intro h₁
       unfold 𝔹.sim at h
       cases h₁ with
-      | if_ffₒ => assumption
-      | if_ttₒ _ _ _ _ _ hb => {
-        specialize h σ₁
+      | if_ff => assumption
+      | if_tt hb => {
+        specialize h s₁
         simp at h
         rw [hb] at h
         contradiction
       }
-    }
-    . {
-      intro h₁
+    . intro h₁
       unfold 𝔹.sim at h
-      apply evₒ.if_ffₒ
-      . {
-        specialize h σ₁
+      apply ε.if_ff
+      . specialize h s₁
         simp at h
         assumption
-      }
       . assumption
-    }
 
-
-
-theorem ℂ.while_true 
-  (σ σ₁: Σ) (c: ℂ) (b: 𝔹) (heqb: b ∼ ⦃tt⦄):
-  ¬(⟨⦃while .b {.c}⦄, σ⟩ → σ₁) :=
+theorem ℂ.while_true (heqb: 𝔹.sim b ⦃tt⦄):
+  ¬(ε ⦃while b {c}⦄ s s₁) :=
   by
     intro h
-    generalize heqcw: ⦃while .b {.c}⦄ = cw at h
+    generalize heqcw: ⦃while b {c}⦄ = cw at h
     induction h with
-    | skipₒ  => simp at heqcw
-    | assₒ   => simp at heqcw
-    | seqₒ   => simp at heqcw
-    | if_ttₒ => simp at heqcw
-    | if_ffₒ => simp at heqcw
-    | while_ttₒ _ _ _ _ _ _ _ _ _ ih₂ => {
+    | skip  => simp at heqcw
+    | ass   => simp at heqcw
+    | seq   => simp at heqcw
+    | if_tt => simp at heqcw
+    | if_ff => simp at heqcw
+    | while_tt _ _ _ _ _ ih₂ => {
         simp at heqcw
         apply ih₂
         rw [←heqcw.left, ←heqcw.right]
       }
-    | while_ffₒ σ _ _ hb => {
+    | while_ff hb => {
         simp at heqcw
         unfold 𝔹.sim at heqb
-        specialize heqb σ
         simp at heqb
         rw [←heqcw.left, heqb] at hb
         simp at hb
@@ -179,67 +141,65 @@ theorem ℂ.while_true
 
 #print axioms ℂ.while_true
 
-theorem ℂ.evₒ_determ (c: ℂ) (σ σ₁ σ₁': Σ)
-  (h₁: ⟨c, σ⟩ → σ₁) (h₂: ⟨c, σ⟩ → σ₁') :
-  σ₁ = σ₁' := 
+theorem ℂ.ε_determ (h₁: ε c s s₁) (h₂: ε c s s₁'):
+  s₁ = s₁' :=
   by
-    revert σ₁'
+    revert s₁'
     induction h₁ with
-    | skipₒ => intro _ h; cases h; rfl
-    | assₒ  => intro _ h; cases h; rfl
-    | seqₒ _ _ σ₂ _ _ _ _ ih₁ ih₂ => {
+    | skip => intro _ h; cases h; rfl
+    | ass  => intro _ h; cases h; rfl
+    | seq s₂ _ _ ih₁ ih₂ => {
         intro _ h
         apply ih₂
         cases h with
-        | seqₒ _ _ σ₂' _ _ hc₁ hc₂ => {
-            suffices hi : σ₂ = σ₂' by rw [←hi] at hc₂; apply hc₂
+        | seq s₂' hc₁ hc₂ => {
+            suffices hi : s₂ = s₂' by rw [←hi] at hc₂; apply hc₂
             apply ih₁
             assumption
           }
       }
-    | if_ttₒ _ _ _ _ _ hb _ ih => {
+    | if_tt hb _ ih => {
         intro _ h
         apply ih
         cases h with
-        | if_ttₒ => assumption
-        | if_ffₒ _ _ _ _ _ hb₁ => {
+        | if_tt => assumption
+        | if_ff hb₁ => {
           rw [hb] at hb₁
           contradiction
         }
       }
-    | if_ffₒ _ _ _ _ _ hb _ ih => {
+    | if_ff hb _ ih => {
         intro _ h
         apply ih
         cases h with
-        | if_ttₒ _ _ _ _ _ hb₁ => {
+        | if_tt hb₁ => {
           rw [hb] at hb₁
           contradiction
         }
-        | if_ffₒ _ _ _ _ _ hb₁ => assumption
+        | if_ff hb₁ => assumption
       }
-    | while_ttₒ _ _ σ₂ _ _ hb _ _ ih₁ ih => {
+    | while_tt s₂ hb _ _ ih₁ ih => {
         intro _ h
         apply ih
         cases h with
-        | while_ttₒ  _ _ σ₃ _ _ _ _ hW₁ => {
-          suffices hi: σ₂ = σ₃ by rw [←hi] at hW₁; apply hW₁
+        | while_tt s₃ _ _ hW₁ => {
+          suffices hi: s₂ = s₃ by rw [←hi] at hW₁; apply hW₁
           apply ih₁
           assumption
         }
-        | while_ffₒ _ _ _ hb₁ => {
+        | while_ff hb₁ => {
           rw [hb] at hb₁
           contradiction
         }
       }
-    | while_ffₒ _ _ _ hb => {
+    | while_ff hb => {
         intro _ h
         cases h with
-        | while_ffₒ => rfl
-        | while_ttₒ _ _ _ _ _ hb₁ => {
+        | while_ff => rfl
+        | while_tt _ hb₁ => {
           rw [hb] at hb₁
           contradiction
         }
       }
-    
-#print axioms ℂ.evₒ_determ
 
+#print axioms ℂ.ε_determ

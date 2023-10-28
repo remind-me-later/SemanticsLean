@@ -1,98 +1,77 @@
 import Imp.State
 import Imp.Syntax
 
--- Operational semantics of aexp
-inductive 𝔸.evₒ: 𝔸 → Σ → Int → Prop 
-  | numₒ (σ: Σ) (n: Int):
-    evₒ (num n) σ n
+-- Operationaa₁ semantics of aexp
+inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
+  | num:
+    ε (num n) _ n
 
-  | locₒ (σ: Σ) (x: String):
-    evₒ (loc x) σ (S⟦x⟧ σ)
+  | loc:
+    ε (loc x) s (𝕊.ρ x s)
 
-  | sumₒ (σ: Σ) (a₁ a₂: 𝔸) (n₁ n₂: Int)
-    (h₁: evₒ a₁ σ n₁) (h₂: evₒ a₂ σ n₂):
-    evₒ ⦃.a₁ + .a₂⦄ σ (n₁ + n₂)
+  | add (h₁: ε a₁ s n) (h₂: ε a₂ s m):
+    ε ⦃a₁ + a₂⦄ s (n + m)
 
-  | prodₒ (σ: Σ) (a₁ a₂: 𝔸) (n₁ n₂: Int)
-    (h₁: evₒ a₁ σ n₁) (h₂: evₒ a₂ σ n₂):
-    evₒ ⦃.a₁ * .a₂⦄ σ (n₁ * n₂)
+  | mua₁ (h₁: ε a₁ s n) (h₂: ε a₂ s m):
+    ε ⦃a₁ * a₂⦄ s (n * m)
 
-notation "⟨" a "," σ "⟩" " → " n => 𝔸.evₒ a σ n
-
--- Denotational semantics of arithmetic expressions
-@[simp] def 𝔸.ev (a: 𝔸) (σ: Σ): Int :=
+-- Denotationaa₁ semantics of arithmetic expressions
+@[simp] def 𝔸.ρ (a: 𝔸) (s: 𝕊): Int :=
   match a with
-  | num n     => n
-  | loc x     => S⟦x⟧ σ
-  | ⦃.a₁ + .a₂⦄ => (ev a₁ σ) + (ev a₂ σ)
-  | ⦃.a₁ * .a₂⦄ => (ev a₁ σ) * (ev a₂ σ)
+  | num n    => n
+  | loc x    => 𝕊.ρ x s
+  | ⦃a₁ + r⦄ => (ρ a₁ s) + (ρ r s)
+  | ⦃a₁ * r⦄ => (ρ a₁ s) * (ρ r s)
 
-notation "⟪" a "," σ "⟫" => 𝔸.ev a σ
- 
 -- Examples of the semantics of arithmetic expressions.
-example: ⟪⦃x⦄, ⟦x↦5⟧⟫ = 5 := rfl
-example: ⟪⦃x⦄, ⟦y↦5⟧⟫ = 0 := rfl
-example: ⟪⦃4 + 7⦄, ⟦⟧⟫ = 11 := rfl
-example: ⟪⦃4 * 7⦄, ⟦⟧⟫ = 28 := rfl
+#reduce 𝔸.ρ ⟪x⟫ ⟦x↦5⟧
+#reduce 𝔸.ρ ⟪x⟫ ⟦y↦5⟧
+#reduce 𝔸.ρ ⟪4 + 7⟫ ⟦⟧
+#reduce 𝔸.ρ ⟪4 * 7⟫ ⟦⟧
 
--- relational definition is equivalent to recursive
-theorem 𝔸.evₒ_eq_ev (a: 𝔸) (n: Int) (σ: Σ):
-  (⟨a, σ⟩ → n) ↔ (⟪a, σ⟫ = n) :=
+-- relationaa₁ definition is equivalent to recursive
+@[simp↓] theorem 𝔸.ε_iff_ρ:
+  ε a s n ↔ ρ a s = n :=
   by
-    apply Iff.intro
-    . {
-      intro h
+    constructor
+    . intro h
       induction h with
-      | numₒ _ _ => rfl
-      | locₒ _ _ => rfl 
-      | sumₒ _ _ _ _ _ _ _ ih₁ ih₂ => rw [←ih₁, ←ih₂]; rfl
-      | prodₒ _ _ _ _ _ _ _ ih₁ ih₂ => rw [←ih₁, ←ih₂]; rfl
-    }
-    . {
-      revert n
+      | num => rfl
+      | loc => rfl
+      | add _ _ ih₁ ih₂ => simp; rw [ih₁, ih₂]
+      | mua₁ _ _ ih₁ ih₂ => simp; rw [ih₁, ih₂]
+    . revert n
       induction a with
-      | num _ => intro _ h; rw [←h]; constructor
-      | loc _ => intro _ h; rw [←h]; constructor
-      | sum _ _ ih₁ ih₂ => {
+      | num _ => intro _ h; cases h; constructor
+      | loc _ => intro _ h; cases h; constructor
+      | add _ _ ih₁ ih₂ => {
           intro _ h
-          rw [←h]
-          constructor
-          . apply ih₁; rfl
-          . apply ih₂; rfl 
-        }
-      | prod _ _ ih₁ ih₂ => {
-          intro _ h
-          rw [←h]
+          cases h
           constructor
           . apply ih₁; rfl
           . apply ih₂; rfl
         }
-    }
+      | mul _ _ ih₁ ih₂ => {
+          intro _ h
+          cases h
+          constructor
+          . apply ih₁; rfl
+          . apply ih₂; rfl
+        }
 
-def 𝔸.simₒ (a₁ a₂: 𝔸) :=
-  ∀ (σ: Σ) (n: Int), (⟨a₁, σ⟩ → n) ↔ (⟨a₂, σ⟩ → n)
+def 𝔸.esim a₁ a₂ := ∀ s n, ε a₁ s n ↔ ε a₂ s n
 
-def 𝔸.sim (a₁ a₂: 𝔸) :=
-  ∀ σ: Σ, ⟪a₁, σ⟫ = ⟪a₂, σ⟫
+def 𝔸.rsim a₁ a₂ := ∀ s, ρ a₁ s = ρ a₂ s
 
-theorem 𝔸.simₒ_eq_sim (a₁ a₂: 𝔸):
-  (simₒ a₁ a₂) ↔ (sim a₁ a₂) :=
-  by 
-    apply Iff.intro <;> (intro h; unfold sim at *; unfold simₒ at *)
-    . {
-      intro σ
-      specialize h σ ⟪a₂, σ⟫
-      rw [evₒ_eq_ev] at h
-      apply h.mpr
-      rw [evₒ_eq_ev]
-    }
-    . {
-      intro σ _
-      apply Iff.intro <;> {
-        intro h₁
-        rw [evₒ_eq_ev] at h₁
-        rw [evₒ_eq_ev, ←h₁, h]
-      }
-    }
-
-notation e₁ " ∼ " e₂ => 𝔸.sim e₁ e₂
+theorem 𝔸.esim_eq_sim: esim a₁ a₂ ↔ rsim a₁ a₂ :=
+  by
+    constructor <;> intro h
+    . intro s
+      specialize h s (ρ a₂ s)
+      simp at *
+      assumption
+    . intro s _
+      specialize h s
+      simp
+      rw [h]
+      simp

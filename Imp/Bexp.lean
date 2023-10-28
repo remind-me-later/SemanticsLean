@@ -3,118 +3,81 @@ import Imp.Aexp
 import Imp.Syntax
 
 -- Operational semantics of 𝔹
-inductive 𝔹.evₒ: 𝔹 → Σ → Bool → Prop 
-  | trueₒ (σ: Σ):
-    evₒ ⦃tt⦄ σ Bool.true
+inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
+  | tt:
+    ε ⦃tt⦄ s true
 
-  | falseₒ (σ: Σ):
-    evₒ ⦃ff⦄ σ Bool.false
+  | ff:
+    ε ⦃ff⦄ s false
 
-  | eqₒ (σ: Σ) (a₁ a₂: 𝔸) (n₁ n₂: Int)
-    (h₁: ⟨a₁,σ⟩ → n₁) (h₁: ⟨a₂,σ⟩ → n₂):
-    evₒ ⦃.a₁ == .a₂⦄ σ (n₁ = n₂)
+  | not (h: ε b₁ s n₁):
+    ε ⦃¬b₁⦄ s (¬n₁)
 
-  | leₒ (σ: Σ) (a₁ a₂: 𝔸) (n₁ n₂: Int)
-    (h₁: ⟨a₁,σ⟩ → n₁) (h₁: ⟨a₂,σ⟩ → n₂):
-    evₒ ⦃.a₁ <= .a₂⦄ σ (n₁ ≤ n₂)
+  | and (hₗ: ε b₁ s n₁) (hᵣ: ε b₂ s n₂):
+    ε ⦃b₁ ∧ b₂⦄ s (n₁ ∧ n₂)
 
-  | notₒ (σ: Σ) (b₁: 𝔹) (n₁: Bool)
-    (h₁: evₒ b₁ σ n₁):
-    evₒ ⦃!.b₁⦄ σ (¬n₁)
+  | or (hₗ : ε b₁ s n₁) (hᵣ: ε b₂ s n₂):
+    ε ⦃b₁ ∨ b₂⦄ s (n₁ ∨ n₂)
 
-  | andₒ (σ: Σ) (b₁ b₂: 𝔹) (n₁ n₂: Bool)
-    (h₁: evₒ b₁ σ n₁) (h₁: evₒ b₂ σ n₂):
-    evₒ ⦃.b₁ && .b₂⦄ σ (n₁ ∧ n₂)
+  | eq (hₗ: 𝔸.ε a₁ s n₁) (hᵣ: 𝔸.ε a₂ s n₂):
+    ε ⦃a₁ = a₂⦄ s (n₁ = n₂)
 
-  | orₒ (σ: Σ) (b₁ b₂: 𝔹) (n₁ n₂: Bool)
-    (h₁: evₒ b₁ σ n₁) (h₁: evₒ b₂ σ n₂):
-    evₒ ⦃.b₁ || .b₂⦄ σ (n₁ ∨ n₂)
+  | le (hₗ: 𝔸.ε a₁ s n₁) (hᵣ: 𝔸.ε a₂ s n₂):
+    ε ⦃a₁ ≤ a₂⦄ s (n₁ ≤ n₂)
 
-notation "⟨" b "," σ "⟩" " → " n => 𝔹.evₒ b σ n
-    
 -- Denotational semantics of 𝔹
-@[simp] def 𝔹.ev (b: 𝔹) (σ: Σ): Bool :=
+@[simp] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
   match b with
-  | ⦃tt⦄        => Bool.true
-  | ⦃ff⦄        => Bool.false
-  | ⦃.a₁ == .a₂⦄ => ⟪a₁, σ⟫ = ⟪a₂, σ⟫
-  | ⦃.a₁ <= .a₂⦄ => ⟪a₁, σ⟫ ≤ ⟪a₂, σ⟫
-  | ⦃!.b⦄       => ¬(ev b σ)
-  | ⦃.b₁ && .b₂⦄ => (ev b₁ σ) ∧ (ev b₂ σ)
-  | ⦃.b₁ || .b₂⦄ => (ev b₁ σ) ∨ (ev b₂ σ)
-
-notation "⟪" b "," σ "⟫" => 𝔹.ev b σ 
+  | ⦃tt⦄      => true
+  | ⦃ff⦄      => false
+  | ⦃¬b⦄      => ¬(ρ b s)
+  | ⦃b₁ ∧ b₂⦄ => (ρ b₁ s) ∧ (ρ b₂ s)
+  | ⦃b₁ ∨ b₂⦄ => (ρ b₁ s) ∨ (ρ b₂ s)
+  | ⦃a₁ = a₂⦄ => 𝔸.ρ a₁ s = 𝔸.ρ a₂ s
+  | ⦃a₁ ≤ a₂⦄ => 𝔸.ρ a₁ s ≤ 𝔸.ρ a₂ s
 
 --  Examples of the semantics of 𝔹
-example: ⟪⦃x <= 5⦄, ⟦x↦5⟧⟫ = true := rfl
-example: ⟪⦃x <= 5⦄, ⟦x↦6⟧⟫ = false := rfl
-example: ⟪⦃x == 5⦄, ⟦x↦5⟧⟫ = true := rfl
-example: ⟪⦃x == 5⦄, ⟦x↦6⟧⟫ = false := rfl
-example: ⟪⦃!(x == 5)⦄, ⟦x↦5⟧⟫ = false := rfl
+#reduce 𝔹.ρ ⟪x ≤ 5⟫ ⟦x↦5⟧
+#reduce 𝔹.ρ ⟪x ≤ 5⟫ ⟦x↦6⟧
+#reduce 𝔹.ρ ⟪x = 5⟫ ⟦x↦5⟧
+#reduce 𝔹.ρ ⟪x = 5⟫ ⟦x↦6⟧
+#reduce 𝔹.ρ ⟪¬(x = 5)⟫ ⟦x↦5⟧
 
 -- relational definition is equivalent to recursive
-theorem 𝔹.evₒ_eq_ev (b: 𝔹) (r: Bool) (σ: Σ):
-  (⟨b,σ⟩ → r) ↔ ⟪b, σ⟫ = r :=
+@[simp↓] theorem 𝔹.ε_iff_ρ: ε b s r ↔ ρ b s = r :=
   by
-    apply Iff.intro
-    case mp => { 
-      intro h; induction h with
-      | trueₒ => constructor
-      | falseₒ => constructor
-      | eqₒ _ _ _ _ _ ih₁ ih₂ => {
-          rw [𝔸.evₒ_eq_ev] at ih₁
-          rw [𝔸.evₒ_eq_ev] at ih₂
-          rw [←ih₁, ←ih₂]
-          constructor
-        }
-      | leₒ _ _ _ _ _ ih₁ ih₂ => {
-          rw [𝔸.evₒ_eq_ev] at ih₁;
-          rw [𝔸.evₒ_eq_ev] at ih₂;
-          rw [←ih₁, ←ih₂]
-          constructor
-        }
-      | notₒ _ _ _ _ ih => {
-          rw [←ih]
-          constructor
-        }
-      | andₒ _ _ _ _ _ h₁ h₂ ih₁ ih₂ => {
-          induction ih₁; induction ih₂
-          rfl        
-        }
-      | orₒ _ _ _ _ _ h₁ h₂ ih₁ ih₂ => {
-          induction ih₁; induction ih₂
-          rfl        
-        }
-    }
-    case mpr => {
-      revert r
-      induction b with 
-        | true => intro _ h; rw [←h]; constructor
-        | false => intro _ h; rw [←h]; constructor
-        | eq _ _ => intro _ h; rw [←h]; constructor <;> rw [𝔸.evₒ_eq_ev]
-        | le _ _ => intro _ h; rw [←h]; constructor <;> rw [𝔸.evₒ_eq_ev]
+    constructor
+    . intro h; induction h with
+      | tt => rfl
+      | ff => rfl
+      | eq ih₁ ih₂ => simp at *; cases ih₁; cases ih₂; rfl
+      | le ih₁ ih₂ => simp at *; cases ih₁; cases ih₂; rfl
+      | not _ ih => simp at *; cases ih; rfl
+      | and _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
+      | or _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
+    . revert r
+      induction b with
+        | tt => intro _ h; cases h; constructor
+        | ff => intro _ h; cases h; constructor
+        | eq _ _ => intro _ h; cases h; constructor <;> simp
+        | le _ _ => intro _ h; cases h; constructor <;> simp
         | not _ ih => {
-            intro _ h; rw [←h]; constructor
+            intro _ h; cases h; constructor
             apply ih
             rfl
           }
         | and _ _ ih₁ ih₂ => {
-          intro _ h; rw [←h]; constructor
+          intro _ h; cases h; constructor
           apply ih₁; rfl
           apply ih₂; rfl
         }
         | or _ _ ih₁ ih₂ => {
-          intro _ h; rw [←h]; constructor
+          intro _ h; cases h; constructor
           apply ih₁; rfl
           apply ih₂; rfl
         }
-    }
 
-theorem 𝔹.not_true_eq_false (b: 𝔹) (σ: Σ) :
-  ⟪b, σ⟫ = Bool.false ↔ ⟪⦃!.b⦄, σ⟫ = Bool.true :=
-  by apply Iff.intro <;> (simp; intros; assumption)
+theorem 𝔹.not_true_eq_false:
+  ρ b s = false ↔ ρ ⦃¬b⦄ s = true := by simp
 
-def 𝔹.sim (b₁ b₂: 𝔹) :=
-  ∀ σ: Σ, ⟪b₁, σ⟫ = ⟪b₂, σ⟫
-
-notation e₁ " ∼ " e₂ => 𝔹.sim e₁ e₂
+def 𝔹.sim b₁ b₂ := ∀ s, ρ b₁ s = ρ b₂ s

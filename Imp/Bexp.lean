@@ -26,7 +26,7 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
     ε (a₁ ≤ₛ a₂) s (n₁ ≤ n₂)
 
 -- Denotational semantics of 𝔹
-@[simp] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
+@[reducible] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
   match b with
   | tt       => true
   | ff       => false
@@ -50,9 +50,9 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
     . intro h; induction h with
       | tt => rfl
       | ff => rfl
-      | eq ih₁ ih₂ => simp at *; cases ih₁; cases ih₂; rfl
-      | le ih₁ ih₂ => simp at *; cases ih₁; cases ih₂; rfl
-      | not _ ih => simp at *; cases ih; rfl
+      | eq ih₁ ih₂ => cases ih₁; cases ih₂; rfl
+      | le ih₁ ih₂ => cases ih₁; cases ih₂; rfl
+      | not _ ih => cases ih; rfl
       | _ _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
     . revert r
       induction b with
@@ -69,16 +69,36 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
           . apply ih₂; rfl
 
 theorem 𝔹.not_true_eq_false:
-  ρ b s = false ↔ ρ (¬ₛb) s := by simp
+  !(ρ b s) = ρ (¬ₛb) s := by simp; cases ρ b s <;> rfl
 
-def 𝔹.esim b₁ b₂ := ∀ s n, ε b₁ s n ↔ ε b₂ s n
+def 𝔹.ε_eq b₁ b₂ := ∀ s n, ε b₁ s n ↔ ε b₂ s n
 
-def 𝔹.rsim b₁ b₂ := ∀ s, ρ b₁ s = ρ b₂ s
+def 𝔹.ρ_eq b₁ b₂ := ∀ s, ρ b₁ s = ρ b₂ s
 
-theorem 𝔹.esim_eq_sim: esim a₁ a₂ ↔ rsim a₁ a₂ :=
+theorem 𝔹.ε_eq_iff_ρ_eq: ε_eq a₁ a₂ ↔ ρ_eq a₁ a₂ :=
   by
     constructor <;> intro h s
     . specialize h s (ρ a₂ s)
       simp at h; assumption
     . intro _; specialize h s
       simp; rw [h]; simp
+
+instance: Setoid 𝔹 where
+  r := 𝔹.ρ_eq
+  iseqv := {
+    refl := by {
+      unfold 𝔹.ρ_eq
+      simp
+    }
+    symm := by {
+      intro _ _ h _
+      apply Eq.symm
+      apply h
+    }
+    trans := by {
+      intro _ _ _ h₁ h₂ x
+      specialize h₁ x
+      specialize h₂ x
+      rw [h₁, h₂]
+    }
+  }

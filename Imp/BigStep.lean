@@ -45,10 +45,10 @@ example:
       . rfl
       . constructor
 
-def ℂ.sim c₁ c₂ := ∀ s s₁, ε c₁ s s₁ ↔ ε c₂ s s₁
+def ℂ.esim c₁ c₂ := ∀ s s₁, ε c₁ s s₁ ↔ ε c₂ s s₁
 
-theorem ℂ.skipl: sim (skip;ₛc) c := by
-    unfold sim
+theorem ℂ.skipl: esim (skip;ₛc) c := by
+    unfold esim
     intro _ _
     constructor <;> intro h
     . cases h with | cat _ hc₁ => cases hc₁; assumption
@@ -56,8 +56,8 @@ theorem ℂ.skipl: sim (skip;ₛc) c := by
       . constructor
       . assumption
 
-theorem ℂ.skipr: sim (c;ₛskip) c := by
-    unfold sim
+theorem ℂ.skipr: esim (c;ₛskip) c := by
+    unfold esim
     intro _ _
     constructor <;> intro h
     . cases h with | cat _ _ hc₂ => cases hc₂; assumption
@@ -65,65 +65,54 @@ theorem ℂ.skipr: sim (c;ₛskip) c := by
       . assumption
       . constructor
 
-theorem ℂ.if_true (h: 𝔹.rsim b 𝔹.tt):
-  sim (ife b c₁ c₂) c₁ :=
+theorem ℂ.if_true (h: b ≈ 𝔹.tt):
+  esim (ife b c₁ c₂) c₁ :=
   by
-    unfold sim
+    unfold esim
     intro s₁ _
     constructor <;> intro h₁
     . cases h₁ with
       | ite_tt => assumption
       | ite_ff hb =>
-        specialize h s₁
-        simp at h
-        rw [hb] at h
+        rw [h] at hb
         contradiction
-
     . apply ε.ite_tt
-      . specialize h s₁
-        simp at h
-        assumption
+      . apply h
       . assumption
 
-theorem ℂ.if_false (h: 𝔹.rsim b 𝔹.ff):
-  sim (ife b c₁ c₂) c₂ :=
+theorem ℂ.if_false (h: b ≈  𝔹.ff):
+  esim (ife b c₁ c₂) c₂ :=
   by
-    unfold sim
+    unfold esim
     intro s₁ _
     constructor <;> intro h₁
     . cases h₁ with
       | ite_ff => assumption
       | ite_tt hb =>
-        specialize h s₁
-        simp at h
-        rw [hb] at h
+        rw [h] at hb
         contradiction
 
     . apply ε.ite_ff
-      . specialize h s₁
-        simp at h
-        assumption
+      . apply h
       . assumption
 
-theorem ℂ.while_true (heqb: 𝔹.rsim b 𝔹.tt):
+theorem ℂ.while_true (heqb: b ≈ 𝔹.tt):
   ¬(ε (wle b c) s s₁) :=
   by
     intro h
-    generalize heqcw: wle b c = w at h
+    generalize heqw: wle b c = w at h
     induction h with
     | while_tt _ _ _ _ _ ih₂ =>
-      simp at heqcw
+      simp at heqw
       apply ih₂
-      rw [←heqcw.left, ←heqcw.right]
+      rw [←heqw.left, ←heqw.right]
 
     | while_ff hb =>
-      simp at heqcw
-      unfold 𝔹.rsim at heqb
-      simp at heqb
-      rw [←heqcw.left, heqb] at hb
+      simp at heqw
+      rw [←heqw.left, heqb] at hb
       contradiction
 
-    | _ => simp at heqcw
+    | _ => contradiction
 
 #print axioms ℂ.while_true
 

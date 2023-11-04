@@ -20,10 +20,10 @@ inductive ℂ.ε: ℂ → 𝕊 → 𝕊 → Prop
   | ite_ff (hb: 𝔹.ρ b s = false) (hc₂: ε c₂ s s₂):
     ε (ife b c₁ c₂) s s₂
 
-  | while_tt s₂ (hb: 𝔹.ρ b s) (hc: ε c s s₂) (hw: ε (wle b c) s₂ s₁):
+  | wle_tt s₂ (hb: 𝔹.ρ b s) (hc: ε c s s₂) (hw: ε (wle b c) s₂ s₁):
     ε (wle b c) s s₁
 
-  | while_ff (hb: 𝔹.ρ b s = false):
+  | wle_ff (hb: 𝔹.ρ b s = false):
     ε (wle b c) s s
 
 example: ℂ.ε ⟪x ≔ 5⟫ ⟦⟧ ⟦x↦5⟧ := by constructor
@@ -102,12 +102,12 @@ theorem ℂ.while_true (heqb: b ≈ 𝔹.tt):
     intro h
     generalize heqw: wle b c = w at h
     induction h with
-    | while_tt _ _ _ _ _ ih₂ =>
+    | wle_tt _ _ _ _ _ ih₂ =>
       simp at heqw
       apply ih₂
       rw [←heqw.left, ←heqw.right]
 
-    | while_ff hb =>
+    | wle_ff hb =>
       simp at heqw
       rw [←heqw.left, heqb] at hb
       contradiction
@@ -136,14 +136,14 @@ theorem ℂ.ε_determ (h₁: ε c s s₁) (h₂: ε c s s₁'):
       . rw [hb] at *; contradiction
       . assumption
 
-    | while_tt s₂ hb _ _ ih₁ ih =>
+    | wle_tt s₂ hb _ _ ih₁ ih =>
       intro _ h; apply ih; cases h with
-      | while_tt s₃ =>
+      | wle_tt s₃ =>
         have hi: s₂ = s₃ := by apply ih₁; assumption
         cases hi; assumption
-      | while_ff hb₁ => rw [hb] at hb₁; contradiction
+      | wle_ff hb₁ => rw [hb] at hb₁; contradiction
 
-    | while_ff hb =>
+    | wle_ff hb =>
       intro _ h; cases h
       . rw [hb] at *; contradiction
       . rfl

@@ -12,6 +12,9 @@ inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
   | add (h₁: ε a₁ s n) (h₂: ε a₂ s m):
     ε (a₁ +ₛ a₂) s (n + m)
 
+  | sub (h₁: ε a₁ s n) (h₂: ε a₂ s m):
+    ε (a₁ -ₛ a₂) s (n - m)
+
   | mul (h₁: ε a₁ s n) (h₂: ε a₂ s m):
     ε (a₁ *ₛ a₂) s (n * m)
 
@@ -20,8 +23,9 @@ inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
   match a with
   | num n      => n
   | loc x      => 𝕊.ρ x s
-  | (a₁ +ₛ a₂) => (ρ a₁ s) + (ρ a₂ s)
-  | (a₁ *ₛ a₂) => (ρ a₁ s) * (ρ a₂ s)
+  | a₁ +ₛ a₂ => (ρ a₁ s) + (ρ a₂ s)
+  | a₁ -ₛ a₂ => (ρ a₁ s) - (ρ a₂ s)
+  | a₁ *ₛ a₂ => (ρ a₁ s) * (ρ a₂ s)
 
 -- Examples of the semantics of arithmetic expressions.
 #reduce 𝔸.ρ ⟪x⟫ ⟦x↦5⟧
@@ -40,11 +44,10 @@ inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
     . revert n; induction a with
       | num _ => intro _ h; cases h; constructor
       | loc _ => intro _ h; cases h; constructor
-      | _ _ _ ih₁ ih₂ => {
-          intro _ h; cases h; constructor
-          . apply ih₁; rfl
-          . apply ih₂; rfl
-        }
+      | _ _ _ ih₁ ih₂ =>
+        intro _ h; cases h; constructor
+        . apply ih₁; rfl
+        . apply ih₂; rfl
 
 def 𝔸.ε_eq a₁ a₂ := ∀ s n, ε a₁ s n ↔ ε a₂ s n
 

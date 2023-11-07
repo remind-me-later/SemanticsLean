@@ -14,10 +14,10 @@ inductive ℂ.ε: ℂ → 𝕊 → 𝕊 → Prop
   | cat s₂ (hc₁: ε c₁ s s₂) (hc₂: ε c₂ s₂ s₁):
     ε (c₁;ₛc₂) s s₁
 
-  | ite_tt (hb: 𝔹.ρ b s) (hc₁: ε c₁ s s₁):
+  | ife_tt (hb: 𝔹.ρ b s) (hc₁: ε c₁ s s₁):
     ε (ife b c₁ c₂) s s₁
 
-  | ite_ff (hb: 𝔹.ρ b s = false) (hc₂: ε c₂ s s₂):
+  | ife_ff (hb: 𝔹.ρ b s = false) (hc₂: ε c₂ s s₂):
     ε (ife b c₁ c₂) s s₂
 
   | wle_tt s₂ (hb: 𝔹.ρ b s) (hc: ε c s s₂) (hw: ε (wle b c) s₂ s₁):
@@ -41,7 +41,7 @@ example:
   by
     constructor
     . constructor
-    . apply ℂ.ε.ite_ff
+    . apply ℂ.ε.ife_ff
       . rfl
       . constructor
 
@@ -65,34 +65,34 @@ theorem ℂ.skipr: esim (c;ₛskip) c := by
       . assumption
       . constructor
 
-theorem ℂ.if_true (h: b ≈ 𝔹.tt):
+theorem ℂ.ife_true (h: b ≈ 𝔹.tt):
   esim (ife b c₁ c₂) c₁ :=
   by
     unfold esim
     intro s₁ _
     constructor <;> intro h₁
     . cases h₁ with
-      | ite_tt => assumption
-      | ite_ff hb =>
+      | ife_tt => assumption
+      | ife_ff hb =>
         rw [h] at hb
         contradiction
-    . apply ε.ite_tt
+    . apply ε.ife_tt
       . apply h
       . assumption
 
-theorem ℂ.if_false (h: b ≈  𝔹.ff):
+theorem ℂ.ife_false (h: b ≈  𝔹.ff):
   esim (ife b c₁ c₂) c₂ :=
   by
     unfold esim
     intro s₁ _
     constructor <;> intro h₁
     . cases h₁ with
-      | ite_ff => assumption
-      | ite_tt hb =>
+      | ife_ff => assumption
+      | ife_tt hb =>
         rw [h] at hb
         contradiction
 
-    . apply ε.ite_ff
+    . apply ε.ife_ff
       . apply h
       . assumption
 
@@ -116,6 +116,8 @@ theorem ℂ.while_true (heqb: b ≈ 𝔹.tt):
 
 #print axioms ℂ.while_true
 
+theorem ℂ.wle_unfold: esim (wle b c) (ife b (c;ₛwle b c) skip) := sorry
+
 theorem ℂ.ε_determ (h₁: ε c s s₁) (h₂: ε c s s₁'):
   s₁ = s₁' :=
   by
@@ -126,12 +128,12 @@ theorem ℂ.ε_determ (h₁: ε c s s₁) (h₂: ε c s s₁'):
         have hi: s₂ = s₂' := by apply ih₁; assumption
         cases hi; assumption
 
-    | ite_tt hb _ ih =>
+    | ife_tt hb _ ih =>
       intro _ h; apply ih; cases h
       . assumption
       . rw [hb] at *; contradiction
 
-    | ite_ff hb _ ih =>
+    | ife_ff hb _ ih =>
       intro _ h; apply ih; cases h
       . rw [hb] at *; contradiction
       . assumption
@@ -151,3 +153,5 @@ theorem ℂ.ε_determ (h₁: ε c s s₁) (h₂: ε c s s₁'):
     | _ => intro _ h; cases h; rfl
 
 #print axioms ℂ.ε_determ
+
+theorem ℂ.ife_unfold_ext: ε (ife b c₁ c₂) s s₁ ↔ ite (𝔹.ρ b s) (ε c₁ s s₁) (ε c₂ s s₁) := sorry

@@ -5,10 +5,10 @@ import Imp.Syntax
 -- Operational semantics of 𝔹
 inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
   | tt:
-    ε tt s true
+    ε tt _ true
 
   | ff:
-    ε ff s false
+    ε ff _ false
 
   | not (h: ε b₁ s n₁):
     ε (¬ₛb₁) s (¬n₁)
@@ -26,13 +26,13 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
     ε (a₁ ≤ₛ a₂) s (n₁ ≤ n₂)
 
 -- Denotational semantics of 𝔹
-@[reducible] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
+@[simp↓, reducible] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
   match b with
   | tt       => true
   | ff       => false
-  | ¬ₛb      => ¬(ρ b s)
-  | b₁ ∧ₛ b₂ => (ρ b₁ s) ∧ (ρ b₂ s)
-  | b₁ ∨ₛ b₂ => (ρ b₁ s) ∨ (ρ b₂ s)
+  | ¬ₛb      => ¬ρ b s
+  | b₁ ∧ₛ b₂ => ρ b₁ s ∧ ρ b₂ s
+  | b₁ ∨ₛ b₂ => ρ b₁ s ∨ ρ b₂ s
   | a₁ =ₛ a₂ => 𝔸.ρ a₁ s = 𝔸.ρ a₂ s
   | a₁ ≤ₛ a₂ => 𝔸.ρ a₁ s ≤ 𝔸.ρ a₂ s
 

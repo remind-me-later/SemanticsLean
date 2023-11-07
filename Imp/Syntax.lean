@@ -2,6 +2,7 @@ inductive 𝔸
   | num : Int → 𝔸
   | loc : String → 𝔸
   | add : 𝔸 → 𝔸 → 𝔸
+  | sub : 𝔸 → 𝔸 → 𝔸
   | mul : 𝔸 → 𝔸 → 𝔸
 
 inductive 𝔹
@@ -20,8 +21,12 @@ inductive ℂ
   | ife   : 𝔹 → ℂ → ℂ → ℂ
   | wle   : 𝔹 → ℂ → ℂ
 
+instance: Inhabited ℂ where
+  default := ℂ.skip
+
 -- Meta syntax
 notation:60 a₁:60 " +ₛ " a₂:61 => 𝔸.add a₁ a₂
+notation:60 a₁:60 " -ₛ " a₂:61 => 𝔸.sub a₁ a₂
 notation:70 a₁:70 " *ₛ " a₂:71 => 𝔸.mul a₁ a₂
 
 notation:80 "¬ₛ" a:81 => 𝔹.not a
@@ -42,6 +47,7 @@ syntax "(" imp ")" : imp
 syntax num : imp
 syntax ident: imp
 syntax:60 imp:60 "+" imp:61 : imp
+syntax:60 imp:60 "-" imp:61 : imp
 syntax:70 imp:70 "*" imp:71 : imp
 -- bexp
 syntax:80 "¬" imp:81 : imp
@@ -69,9 +75,10 @@ macro_rules
   | `(⟪$x:ident⟫) => `(𝔸.loc $(Lean.quote (toString x.getId)))
   | `(⟪$n:num⟫)   => `(𝔸.num $n)
   | `(⟪$x + $y⟫)  => `(𝔸.add ⟪$x⟫ ⟪$y⟫)
+  | `(⟪$x - $y⟫)  => `(𝔸.sub ⟪$x⟫ ⟪$y⟫)
   | `(⟪$x * $y⟫)  => `(𝔸.mul ⟪$x⟫ ⟪$y⟫)
   -- bexp
-  | `(⟪¬$x⟫)       => `(𝔹.not ⟪$x⟫)
+  | `(⟪¬$x⟫)      => `(𝔹.not ⟪$x⟫)
   | `(⟪$x = $y⟫)  => `(𝔹.eq ⟪$x⟫ ⟪$y⟫)
   | `(⟪$x ≤ $y⟫)  => `(𝔹.le ⟪$x⟫ ⟪$y⟫)
   | `(⟪$x ∧ $y⟫)  => `(𝔹.and ⟪$x⟫ ⟪$y⟫)

@@ -24,8 +24,8 @@ instance: Setoid 𝕊 where
     }
   }
 notation "⟦⟧" => 𝕊.init
-notation "⟦ " x " ↦ " e " ⟧" => 𝕊.update ⟦⟧ x e
-notation s "⟦ " x " ↦ " e " ⟧" => 𝕊.update s x e
+notation "⟦" x "↦" e "⟧" => 𝕊.update ⟦⟧ x e
+notation s "⟦" x "↦" e "⟧" => 𝕊.update s x e
 
 #check ⟦⟧
 #check ⟦"x"↦3⟧⟦"x"↦4⟧

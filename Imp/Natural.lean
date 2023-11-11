@@ -5,153 +5,175 @@ import Imp.Syntax
 
 -- Semantics of commands.
 inductive ℂ.ε: ℂ → 𝕊 → 𝕊 → Prop
-  | skip:
+  | skip_ε:
     ε skip s s
 
-  | ass:
-    ε (x ≔ₛ a) s (𝕊.update s x (𝔸.ρ a s))
+  | ass_ε:
+    ε (x ≔ₛ a) s (s⟦x↦a.ρ s⟧)
 
-  | cat s₂ (hc₁: ε c₁ s s₂) (hc₂: ε c₂ s₂ s₁):
-    ε (c₁;ₛc₂) s s₁
+  | cat_ε t (hc: c.ε s t) (hd: d.ε t u):
+    ε (c;;d) s u
 
-  | ife_tt (hb: 𝔹.ρ b s) (hc₁: ε c₁ s s₁):
-    ε (ife b c₁ c₂) s s₁
+  | ife_tt_ε (hb: b.ρ s) (hc: c.ε s t):
+    ε (ife b c d) s t
 
-  | ife_ff (hb: 𝔹.ρ b s = false) (hc₂: ε c₂ s s₂):
-    ε (ife b c₁ c₂) s s₂
+  | ife_ff_ε (hb: b.ρ s = false) (hd: d.ε s u):
+    ε (ife b c d) s u
 
-  | wle_tt s₂ (hb: 𝔹.ρ b s) (hc: ε c s s₂) (hw: ε (wle b c) s₂ s₁):
-    ε (wle b c) s s₁
+  | wle_tt_ε u (hb: b.ρ s) (hc: c.ε s u) (hw: (wle b c).ε u t):
+    ε (wle b c) s t
 
-  | wle_ff (hb: 𝔹.ρ b s = false):
+  | wle_ff_ε (hb: b.ρ s = false):
     ε (wle b c) s s
 
-example: ℂ.ε ⟪x ≔ 5⟫ ⟦⟧ ⟦x↦5⟧ := by constructor
+example: ⟪x ≔ 5⟫.ε ⟦⟧ ⟦"x"↦5⟧ := by constructor
 
 example:
-  ℂ.ε ⟪
-    x ≔ 2;
-    if x ≤ 1 {
-      y ≔ 3
-    } else {
-      z ≔ 4
-    }⟫
+  ⟪x ≔ 2; if x ≤ 1 {y ≔ 3} else {z ≔ 4}⟫.ε
   ⟦⟧
-  ⟦x↦2, z↦4⟧ :=
+  (⟦"x"↦2⟧⟦"z"↦4⟧) :=
   by
     constructor
     . constructor
-    . apply ℂ.ε.ife_ff
-      . rfl
+    . apply ℂ.ε.ife_ff_ε
+      . simp
       . constructor
 
-def ℂ.esim c₁ c₂ := ∀ s s₁, ε c₁ s s₁ ↔ ε c₂ s s₁
+instance ℂ.ε.equiv: Setoid ℂ where
+  r c d := ∀ s t, ε c s t ↔ ε d s t
+  iseqv := {
+    refl := by simp
+    symm := by {
+      intro _ _ h _ _
+      apply Iff.symm
+      apply h
+    }
+    trans := by {
+      intro _ _ _ h₁ h₂ x _
+      specialize h₁ x
+      specialize h₂ x
+      rw [h₁, h₂]
+      simp
+    }
+  }
 
-theorem ℂ.skipl: esim (skip;ₛc) c := by
-    unfold esim
-    intro _ _
-    constructor <;> intro h
-    . cases h with | cat _ hc₁ => cases hc₁; assumption
+theorem ℂ.ε.skipl: (skip;;c) ≈ c := by
+  intro _ _
+  constructor <;> intro h
+  . cases h with | cat_ε _ hc => cases hc; assumption
+  . constructor
     . constructor
-      . constructor
-      . assumption
+    . assumption
 
-theorem ℂ.skipr: esim (c;ₛskip) c := by
-    unfold esim
-    intro _ _
-    constructor <;> intro h
-    . cases h with | cat _ _ hc₂ => cases hc₂; assumption
+theorem ℂ.ε.skipr: (c;;skip) ≈ c := by
+  intro _ _
+  constructor <;> intro h
+  . cases h with | cat_ε _ _ hd => cases hd; assumption
+  . constructor
+    . assumption
     . constructor
+
+theorem ℂ.ε.ife_tt (h: b ≈ 𝔹.tt):
+  ife b c d ≈ c := by
+  intro _ _; constructor <;> intro h₁
+  . cases h₁ with
+    | ife_tt_ε => assumption
+    | ife_ff_ε hb => rw [h] at hb; contradiction
+  . apply ε.ife_tt_ε
+    . apply h
+    . assumption
+
+theorem ℂ.ε.ife_ff (h: b ≈ 𝔹.ff):
+  ife b c d ≈ d := by
+  intro t _
+  constructor <;> intro h₁
+  . cases h₁ with
+    | ife_ff_ε => assumption
+    | ife_tt_ε hb => rw [h] at hb; contradiction
+  . apply ε.ife_ff_ε
+    . apply h
+    . assumption
+
+theorem ℂ.ε.wle_unfold:
+  wle b c ≈ ife b (c;;wle b c) skip := by
+  intro s t
+  constructor <;> intro h
+  . cases hb: b.ρ s
+    . apply ife_ff_ε
       . assumption
-      . constructor
-
-theorem ℂ.ife_true (h: b ≈ 𝔹.tt):
-  esim (ife b c₁ c₂) c₁ :=
-  by
-    unfold esim
-    intro s₁ _
-    constructor <;> intro h₁
-    . cases h₁ with
-      | ife_tt => assumption
-      | ife_ff hb =>
-        rw [h] at hb
-        contradiction
-    . apply ε.ife_tt
-      . apply h
+      . cases h
+        . rw [hb] at *; contradiction
+        . constructor
+    . apply ife_tt_ε
       . assumption
-
-theorem ℂ.ife_false (h: b ≈  𝔹.ff):
-  esim (ife b c₁ c₂) c₂ :=
-  by
-    unfold esim
-    intro s₁ _
-    constructor <;> intro h₁
-    . cases h₁ with
-      | ife_ff => assumption
-      | ife_tt hb =>
-        rw [h] at hb
-        contradiction
-
-    . apply ε.ife_ff
-      . apply h
-      . assumption
-
-theorem ℂ.while_true (heqb: b ≈ 𝔹.tt):
-  ¬(ε (wle b c) s s₁) :=
-  by
-    intro h
-    generalize heqw: wle b c = w at h
-    induction h with
-    | wle_tt _ _ _ _ _ ih₂ =>
-      simp at heqw
-      apply ih₂
-      rw [←heqw.left, ←heqw.right]
-
-    | wle_ff hb =>
-      simp at heqw
-      rw [←heqw.left, heqb] at hb
-      contradiction
-
-    | _ => contradiction
-
-#print axioms ℂ.while_true
-
-theorem ℂ.wle_unfold: esim (wle b c) (ife b (c;ₛwle b c) skip) := sorry
-
-theorem ℂ.ε_determ (h₁: ε c s s₁) (h₂: ε c s s₁'):
-  s₁ = s₁' :=
-  by
-    revert s₁'
-    induction h₁ with
-    | cat s₂ _ _ ih₁ ih₂ =>
-      intro _ h; apply ih₂; cases h with | cat s₂' =>
-        have hi: s₂ = s₂' := by apply ih₁; assumption
-        cases hi; assumption
-
-    | ife_tt hb _ ih =>
-      intro _ h; apply ih; cases h
-      . assumption
+      . cases h
+        . constructor <;> assumption
+        . rw [hb] at *; contradiction
+  . cases hb: b.ρ s
+    . cases h
+      . rw [hb] at *; contradiction
+      . rename_i hd; cases hd; apply wle_ff_ε; assumption
+    . cases h
+      . rename_i hc; cases hc; constructor <;> assumption
       . rw [hb] at *; contradiction
 
-    | ife_ff hb _ ih =>
-      intro _ h; apply ih; cases h
+theorem ℂ.ε.ife_ext: (ife b c d).ε s t ↔ cond (b.ρ s) (c.ε s t) (d.ε s t) := by
+  constructor <;> intro h
+  . cases hb: b.ρ s <;> simp
+    . cases h
       . rw [hb] at *; contradiction
       . assumption
-
-    | wle_tt s₂ hb _ _ ih₁ ih =>
-      intro _ h; apply ih; cases h with
-      | wle_tt s₃ =>
-        have hi: s₂ = s₃ := by apply ih₁; assumption
-        cases hi; assumption
-      | wle_ff hb₁ => rw [hb] at hb₁; contradiction
-
-    | wle_ff hb =>
-      intro _ h; cases h
+    . cases h
+      . assumption
       . rw [hb] at *; contradiction
-      . rfl
+  . cases hb: b.ρ s <;> (rw [hb] at h; simp at h)
+    . apply ife_ff_ε <;> assumption
+    . apply ife_tt_ε <;> assumption
 
-    | _ => intro _ h; cases h; rfl
+theorem ℂ.ε.wle_tt (heqb: b ≈ 𝔹.tt):
+  ¬((wle b c).ε s t) := by
+  intro h
+  generalize heqw: wle b c = w at h
+  induction h with
+  | wle_tt_ε _ _ _ _ _ ih₂ =>
+    simp at heqw
+    apply ih₂
+    rw [←heqw.left, ←heqw.right]
+  | wle_ff_ε hb =>
+    simp at heqw
+    rw [←heqw.left, heqb] at hb
+    contradiction
+  | _ => contradiction
 
-#print axioms ℂ.ε_determ
+theorem ℂ.ε.determ (h₁: ε c s t) (h₂: ε c s u):
+  t = u := by
+  revert u
+  induction h₁ with
+  | cat_ε u _ _ ih₁ ih₂ =>
+    intro _ h; apply ih₂; cases h with | cat_ε u' =>
+      have hi: u = u' := by apply ih₁; assumption
+      cases hi; assumption
 
-theorem ℂ.ife_unfold_ext: ε (ife b c₁ c₂) s s₁ ↔ ite (𝔹.ρ b s) (ε c₁ s s₁) (ε c₂ s s₁) := sorry
+  | ife_tt_ε hb _ ih =>
+    intro _ h; apply ih; cases h
+    . assumption
+    . rw [hb] at *; contradiction
+
+  | ife_ff_ε hb _ ih =>
+    intro _ h; apply ih; cases h
+    . rw [hb] at *; contradiction
+    . assumption
+
+  | wle_tt_ε u hb _ _ ih₁ ih =>
+    intro _ h; apply ih; cases h with
+    | wle_tt_ε s₃ =>
+      have hi: u = s₃ := by apply ih₁; assumption
+      cases hi; assumption
+    | wle_ff_ε hb₁ => rw [hb] at hb₁; contradiction
+
+  | wle_ff_ε hb =>
+    intro _ h; cases h
+    . rw [hb] at *; contradiction
+    . rfl
+
+  | _ => intro _ h; cases h; rfl

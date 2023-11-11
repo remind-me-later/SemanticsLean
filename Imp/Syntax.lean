@@ -5,6 +5,15 @@ inductive 𝔸
   | sub : 𝔸 → 𝔸 → 𝔸
   | mul : 𝔸 → 𝔸 → 𝔸
 
+instance 𝔸.Add: Add 𝔸 where
+  add := add
+
+instance 𝔸.Sub: Sub 𝔸 where
+  sub := sub
+
+instance 𝔸.Mul: Mul 𝔸 where
+  mul := mul
+
 inductive 𝔹
   | tt  : 𝔹
   | ff  : 𝔹
@@ -14,29 +23,24 @@ inductive 𝔹
   | eq  : 𝔸 → 𝔸 → 𝔹
   | le  : 𝔸 → 𝔸 → 𝔹
 
+instance 𝔹.complement: Complement 𝔹 where
+  complement := not
+
 inductive ℂ
   | skip  : ℂ
-  | ass   : String → 𝔸 → ℂ
   | cat   : ℂ → ℂ → ℂ
+  | ass   : String → 𝔸 → ℂ
   | ife   : 𝔹 → ℂ → ℂ → ℂ
   | wle   : 𝔹 → ℂ → ℂ
 
-instance: Inhabited ℂ where
-  default := ℂ.skip
-
 -- Meta syntax
-notation:60 a₁:60 " +ₛ " a₂:61 => 𝔸.add a₁ a₂
-notation:60 a₁:60 " -ₛ " a₂:61 => 𝔸.sub a₁ a₂
-notation:70 a₁:70 " *ₛ " a₂:71 => 𝔸.mul a₁ a₂
-
-notation:80 "¬ₛ" a:81 => 𝔹.not a
 notation:70 a₁:70 " =ₛ " a₂:71 => 𝔹.eq a₁ a₂
 notation:70 a₁:70 " ≤ₛ " a₂:71 => 𝔹.le a₁ a₂
 notation:65 b₁:65 " ∨ₛ " b₂:66 => 𝔹.or b₁ b₂
 notation:65 b₁:65 " ∧ₛ " b₂:66 => 𝔹.and b₁ b₂
 
-notation:50 c₁:50 " ≔ₛ " c₂:51 => ℂ.ass c₁ c₂
-notation:40 c₁:40 " ;ₛ " c₂:41 => ℂ.cat c₁ c₂
+notation:50 x:50 ";;" e:51 => ℂ.cat x e
+notation:50 x:50 "≔ₛ" e:51 => ℂ.ass x e
 
 -- Syntax of the language
 declare_syntax_cat imp

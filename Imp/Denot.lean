@@ -60,25 +60,20 @@ def Γ (b: Bool) (f: 𝕊 →. 𝕊): (𝕊 →. 𝕊) →𝒄 (𝕊 →. 𝕊) 
     }
   }
 
-@[reducible] def ℂ.ρ (c: ℂ) (s: 𝕊): Part 𝕊 :=
+@[simp] def ℂ.ρ (c: ℂ) (s: 𝕊): Part 𝕊 :=
   match c with
   | skip   => s
-  | x ≔ₛ a => 𝕊.update s x (𝔸.ρ a s)
-  | c₁;ₛc₂ => ρ c₁ s >>= ρ c₂
+  | x ≔ₛ a => s⟦x↦𝔸.ρ a s⟧
+  | c₁;;c₂ => ρ c₁ s >>= ρ c₂
   | ife b c₁ c₂ => ite (𝔹.ρ b s) (ρ c₁ s) (ρ c₂ s)
   | wle b c => Part.fix (Γ (𝔹.ρ b s) (ρ c)) s
 
-#simp  ℂ.ρ ⟪x ≔ 2; if x ≤ 1 {y ≔ 3} else {z ≔ 4}⟫ ⟦⟧
+#simp ℂ.ρ ⟪x ≔ 2; if x ≤ 1 {y ≔ 3} else {z ≔ 4}⟫ ⟦⟧
 
-@[simp] def ℂ.ρ_eq c₁ c₂ := ∀ s, ρ c₁ s = ρ c₂ s
-
-@[simp] instance: Setoid ℂ where
-  r := ℂ.ρ_eq
+@[simp] instance ℂ.ρ.equiv: Setoid ℂ where
+  r a b := ∀ s, ρ a s = ρ b s
   iseqv := {
-    refl := by {
-      unfold ℂ.ρ_eq
-      simp
-    }
+    refl := by simp
     symm := by {
       intro _ _ h _
       apply Eq.symm
@@ -92,13 +87,16 @@ def Γ (b: Bool) (f: 𝕊 →. 𝕊): (𝕊 →. 𝕊) →𝒄 (𝕊 →. 𝕊) 
     }
   }
 
-theorem ℂ.wle_unfoldd: wle b c ≈ ife b (c;ₛwle b c) skip := sorry
+theorem ℂ.ρ.wle_unfold: wle b c ≈ ife b (c;;wle b c) skip :=
+  by
+    intro s
+    sorry
 
-theorem ℂ.skipld: (skip;ₛc) ≈ c := by intro _; simp
+theorem ℂ.ρ.skipl: (skip;;c) ≈ c := by intro _; simp
 
-theorem ℂ.skiprd: (c;ₛskip) ≈ c := by intro s; simp; sorry
+theorem ℂ.ρ.skipr: (c;;skip) ≈ c := by intro _; simp
 
-theorem ℂ.if_trued (hb: b ≈ 𝔹.tt):
+theorem ℂ.ρ.if_tt (hb: b ≈ 𝔹.tt):
   ife b c₁ c₂ ≈ c₁ :=
   by
     intro _
@@ -106,7 +104,7 @@ theorem ℂ.if_trued (hb: b ≈ 𝔹.tt):
     rw [hb]
     simp
 
-theorem ℂ.if_falsed (hb: b ≈ 𝔹.ff):
+theorem ℂ.ρ.if_ff (hb: b ≈ 𝔹.ff):
   ife b c₁ c₂ ≈ c₂ :=
   by
     intro _

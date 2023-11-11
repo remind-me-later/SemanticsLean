@@ -2,9 +2,6 @@ inductive 𝕊
   | init : 𝕊
   | update : 𝕊 → String → Int → 𝕊
 
-@[simp] instance: Inhabited 𝕊 where
-  default := 𝕊.init
-
 @[simp] def 𝕊.ρ (x: String) (s: 𝕊): Int :=
   match s with
   | 𝕊.init => 0 -- unbound variables are 0
@@ -26,19 +23,10 @@ instance: Setoid 𝕊 where
       rw [h₁, h₂]
     }
   }
-
-declare_syntax_cat state
-
-syntax ident "↦" term : state
-syntax state "," ident "↦" term  : state
-syntax "⟦""⟧" : term
-syntax "⟦" state "⟧" : term
-
-macro_rules
-  | `(⟦⟧)                    => `(𝕊.init)
-  | `(⟦$x:ident ↦ $e⟧)      => `(𝕊.update ⟦⟧ $(Lean.quote (toString x.getId)) $e)
-  | `(⟦$s , $x:ident ↦ $e⟧) => `(𝕊.update ⟦$s⟧ $(Lean.quote (toString x.getId)) $e)
+notation "⟦⟧" => 𝕊.init
+notation "⟦ " x " ↦ " e " ⟧" => 𝕊.update ⟦⟧ x e
+notation s "⟦ " x " ↦ " e " ⟧" => 𝕊.update s x e
 
 #check ⟦⟧
-#check ⟦x↦3, x↦4⟧
-#eval 𝕊.ρ "x" (⟦x↦3, x↦4, x↦7⟧)
+#check ⟦"x"↦3⟧⟦"x"↦4⟧
+#eval  𝕊.ρ "x" (⟦"x"↦3⟧⟦"x"↦4⟧⟦"x"↦7⟧)

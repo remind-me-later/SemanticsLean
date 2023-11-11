@@ -10,56 +10,49 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
   | ff:
     ε ff _ false
 
-  | not (h: ε b₁ s n₁):
-    ε (¬ₛb₁) s (¬n₁)
+  | eq:
+    ε (a =ₛ b) s (a.ρ s = b.ρ s)
 
-  | and (hₗ: ε b₁ s n₁) (hᵣ: ε b₂ s n₂):
-    ε (b₁ ∧ₛ b₂) s (n₁ ∧ n₂)
+  | le:
+    ε (a ≤ₛ b) s (a.ρ s ≤ b.ρ s)
 
-  | or (hₗ : ε b₁ s n₁) (hᵣ: ε b₂ s n₂):
-    ε (b₁ ∨ₛ b₂) s (n₁ ∨ n₂)
+  | not (a: 𝔹) (h: a.ε s n):
+    ε (~~~a) s (¬n)
 
-  | eq (hₗ: 𝔸.ρ a₁ s = n₁) (hᵣ: 𝔸.ρ a₂ s = n₂):
-    ε (a₁ =ₛ a₂) s (n₁ = n₂)
+  | and (a b: 𝔹) (hₗ: a.ε s n) (hᵣ: b.ε s m):
+    ε (a ∧ₛ b) s (n ∧ m)
 
-  | le (hₗ: 𝔸.ρ a₁ s = n₁) (hᵣ: 𝔸.ρ a₂ s = n₂):
-    ε (a₁ ≤ₛ a₂) s (n₁ ≤ n₂)
+  | or (a b: 𝔹) (hₗ: a.ε s n) (hᵣ: b.ε s m):
+    ε (a ∨ₛ b) s (n ∨ m)
 
 -- Denotational semantics of 𝔹
-@[simp↓, reducible] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
+@[simp] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
   match b with
-  | tt       => true
-  | ff       => false
-  | ¬ₛb      => ¬ρ b s
-  | b₁ ∧ₛ b₂ => ρ b₁ s ∧ ρ b₂ s
-  | b₁ ∨ₛ b₂ => ρ b₁ s ∨ ρ b₂ s
-  | a₁ =ₛ a₂ => 𝔸.ρ a₁ s = 𝔸.ρ a₂ s
-  | a₁ ≤ₛ a₂ => 𝔸.ρ a₁ s ≤ 𝔸.ρ a₂ s
-
---  Examples of the semantics of 𝔹
-#reduce 𝔹.ρ ⟪x ≤ 5⟫ ⟦x↦5⟧
-#reduce 𝔹.ρ ⟪x ≤ 5⟫ ⟦x↦6⟧
-#reduce 𝔹.ρ ⟪x = 5⟫ ⟦x↦5⟧
-#reduce 𝔹.ρ ⟪x = 5⟫ ⟦x↦6⟧
-#reduce 𝔹.ρ ⟪¬(x = 5)⟫ ⟦x↦5⟧
+  | tt     => true
+  | ff     => false
+  | not b  => ¬b.ρ s
+  | a ∧ₛ b => a.ρ s ∧ b.ρ s
+  | a ∨ₛ b => a.ρ s ∨ b.ρ s
+  | a =ₛ b => a.ρ s = b.ρ s
+  | a ≤ₛ b => a.ρ s ≤ b.ρ s
 
 -- relational definition is equivalent to recursive
-@[simp↓] theorem 𝔹.ε_iff_ρ: ε b s r ↔ ρ b s = r :=
+@[simp] theorem 𝔹.ε_eq_ρ: ε b s r ↔ b.ρ s = r :=
   by
     constructor
     . intro h; induction h with
       | tt => rfl
       | ff => rfl
-      | eq ih₁ ih₂ => cases ih₁; cases ih₂; rfl
-      | le ih₁ ih₂ => cases ih₁; cases ih₂; rfl
-      | not _ ih => cases ih; rfl
-      | _ _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
+      | eq => rfl
+      | le => rfl
+      | not _ _ ih => cases ih; rfl
+      | _ _ _ _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
     . revert r
       induction b with
         | tt => intro _ h; cases h; constructor
         | ff => intro _ h; cases h; constructor
-        | eq _ _ => intro _ h; cases h; constructor <;> simp
-        | le _ _ => intro _ h; cases h; constructor <;> simp
+        | eq => intro _ h; cases h; constructor
+        | le => intro _ h; cases h; constructor
         | not _ ih =>
           intro _ h; cases h; constructor
           apply ih; rfl
@@ -69,27 +62,30 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
           . apply ih₂; rfl
 
 theorem 𝔹.not_true_eq_false:
-  !(ρ b s) = ρ (¬ₛb) s := by simp; cases ρ b s <;> rfl
+  !(ρ b s) = ρ (~~~b) s := by simp; cases b.ρ s <;> simp
 
-def 𝔹.ε_eq b₁ b₂ := ∀ s n, ε b₁ s n ↔ ε b₂ s n
-
-def 𝔹.ρ_eq b₁ b₂ := ∀ s, ρ b₁ s = ρ b₂ s
-
-theorem 𝔹.ε_eq_iff_ρ_eq: ε_eq a₁ a₂ ↔ ρ_eq a₁ a₂ :=
-  by
-    constructor <;> intro h s
-    . specialize h s (ρ a₂ s)
-      simp at h; assumption
-    . intro _; specialize h s
-      simp; rw [h]; simp
-
-instance: Setoid 𝔹 where
-  r := 𝔹.ρ_eq
+protected instance 𝔹.ε.equiv: Setoid 𝔹 where
+  r a b := ∀ s n, ε a s n ↔ ε b s n
   iseqv := {
-    refl := by {
-      unfold 𝔹.ρ_eq
+    refl := by simp
+    symm := by {
+      intro _ _ h _ _
+      apply Iff.symm
+      apply h
+    }
+    trans := by {
+      intro _ _ _ h₁ h₂ x _
+      specialize h₁ x
+      specialize h₂ x
+      rw [h₁, h₂]
       simp
     }
+  }
+
+instance 𝔹.ρ.equiv: Setoid 𝔹 where
+  r a b := ∀ s, a.ρ s = b.ρ s
+  iseqv := {
+    refl := by simp
     symm := by {
       intro _ _ h _
       apply Eq.symm
@@ -102,3 +98,11 @@ instance: Setoid 𝔹 where
       rw [h₁, h₂]
     }
   }
+
+protected theorem 𝔹.ε_eq_eq_ρ_eq: 𝔹.ε.equiv.r a b ↔ 𝔹.ρ.equiv.r a b :=
+  by
+    constructor <;> intro h s
+    . specialize h s (ρ b s)
+      simp at h; assumption
+    . intro _; specialize h s
+      simp; rw [h]; simp

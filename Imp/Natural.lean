@@ -9,7 +9,7 @@ inductive ℂ.ε: ℂ → 𝕊 → 𝕊 → Prop
     ε skip s s
 
   | ass_ε:
-    ε (x ≔ₛ a) s (s⟦x↦a.ρ s⟧)
+    ε (x ≔ a) s (s⟦x↦a.ρ s⟧)
 
   | cat_ε t (hc: c.ε s t) (hd: d.ε t u):
     ε (c;;d) s u
@@ -17,8 +17,8 @@ inductive ℂ.ε: ℂ → 𝕊 → 𝕊 → Prop
   | ife_tt_ε (hb: b.ρ s) (hc: c.ε s t):
     ε (ife b c d) s t
 
-  | ife_ff_ε (hb: b.ρ s = false) (hd: d.ε s u):
-    ε (ife b c d) s u
+  | ife_ff_ε (hb: b.ρ s = false) (hd: d.ε s t):
+    ε (ife b c d) s t
 
   | wle_tt_ε u (hb: b.ρ s) (hc: c.ε s u) (hw: (wle b c).ε u t):
     ε (wle b c) s t

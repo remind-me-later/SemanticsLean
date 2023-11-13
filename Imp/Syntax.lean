@@ -40,7 +40,7 @@ notation:65 b₁:65 " ∨ₛ " b₂:66 => 𝔹.or b₁ b₂
 notation:65 b₁:65 " ∧ₛ " b₂:66 => 𝔹.and b₁ b₂
 
 notation:50 x:50 ";;" e:51 => ℂ.cat x e
-notation:50 x:50 "≔ₛ" e:51 => ℂ.ass x e
+notation:50 x:50 "≔" e:51 => ℂ.ass x e
 
 -- Syntax of the language
 declare_syntax_cat imp

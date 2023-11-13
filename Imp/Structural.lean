@@ -4,11 +4,11 @@ import Imp.Bexp
 import Imp.Syntax
 
 inductive ℂ.γ: ℂ × 𝕊 × Nat → ℂ × 𝕊 × Nat → Prop
-  | skip_γ:
-    γ (skip, s, n) (skip, s, n - 1)
+  | zero_γ:
+    γ (c, s, 0) (c, s, 0)
 
   | ass_γ:
-    γ (x ≔ₛ a, s, n) (skip, s⟦x↦a.ρ s⟧, n - 1)
+    γ (x ≔ a, s, n + 1) (skip, s⟦x↦a.ρ s⟧, n)
 
   | cat_γ (h: γ (c₁, s, n) (c₁', s₁, k)):
     γ (c₁;;c₂, s, n) (c₁';;c₂, s₁, k)
@@ -16,23 +16,42 @@ inductive ℂ.γ: ℂ × 𝕊 × Nat → ℂ × 𝕊 × Nat → Prop
   | cat_skip_γ (h: γ (c₁, s, n) (skip, s₁, k)):
     γ (c₁;;c₂, s, n) (c₂, s₁, k)
 
-  | ife_γ:
-    γ (ife b c₁ c₂, s, n) (cond (𝔹.ρ b s) (c₁, s, n - 1) (c₂, s, n - 1))
+  | ife_tt_γ (hb: b.ρ s) (h: γ (c₁, s, n) (c₁', s₁, k)):
+    γ (ife b c₁ c₂, s, n) (c₁', s₁, k)
 
-  | wle_γ:
-    γ (wle b c, s, n) (ife b (c;;wle b c) skip, s, n - 1)
+  | ife_ff_γ (hb: b.ρ s = false) (h: γ (c₂, s, n) (c₂', s₁, k)):
+    γ (ife b c₁ c₂, s, n) (c₂', s₁, k)
 
-example: ℂ.γ (⟪x ≔ 2; while 0 ≤ x {x≔x-1}⟫, ⟦⟧, 1) (⟪while 0 ≤ x {x≔x-1}⟫, ⟦"x"↦2⟧, 0) :=
+  | wle_γ (h: γ (ife b (c;;wle b c) skip, s, n) (c₁, s₁, k)):
+    γ (wle b c, s, n) (c₁, s₁, k)
+
+example:
+  ℂ.γ (⟪x ≔ 2; while 0 ≤ x {x≔x-1}⟫, ⟦⟧, 1)
+      (⟪while 0 ≤ x {x≔x-1}⟫, ⟦"x"↦2⟧, 0) :=
   by repeat constructor
 
-theorem ℂ.γ.cat_k_if_n_m
-  (hcat: γ (c₁;;c₂, s, k) (skip, s₂, 0)):
-  ∃k₁ k₂ s₁,
-    γ (c₁, s, k₁) (skip, s₁, 0)
-    ∧ γ (c₂, s₁, k₂) (skip, s₂, 0)
-    ∧ k₁ + k₂ = k :=
+theorem ℂ.γ.skip_skip: γ (skip;;skip, s, k) (skip, s, 0) ↔ γ (skip, s, k₁) (skip, s, 0)
+     :=
   by {
-    cases hcat
+    sorry
+  }
+
+theorem ℂ.γ.cat_k_iff
+  (h₁: γ (c₁, s, n) (skip, s₁, 0))
+  (h₂: γ (c₂, s₁, m) (skip, s₂, 0)):
+  γ (c₁;;c₂, s, n + m) (skip, s₂, 0)
+     :=
+  by {
+    sorry
+
+  }
+
+theorem ℂ.γ.cat_k_iff_n_m (h: γ (c₁;;c₂, s, k) (skip, s₂, 0)):
+    ∃ n m s₁, γ (c₁, s, n) (skip, s₁, 0)
+    ∧ γ (c₂, s₁, m) (skip, s₂, 0)
+    ∧ n + m = k :=
+  by {
+    cases h
     rename_i h
     exists k
     exists 0
@@ -41,9 +60,10 @@ theorem ℂ.γ.cat_k_if_n_m
     . assumption
     . constructor
       . constructor
-      . rfl
+      . simp
   }
 
-theorem ℂ.γ.cat_no_influence (hcat: γ (c₁, s, k) (skip, s₁, 0)):
+theorem ℂ.γ.cat_no_influence
+  (hcat: γ (c₁, s, k) (skip, s₁, 0)):
   γ (c₁;;c₂, s, k) (c₂, s₁, 0) :=
   by constructor; assumption

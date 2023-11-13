@@ -63,10 +63,10 @@ def Γ (b: Bool) (f: 𝕊 →. 𝕊): (𝕊 →. 𝕊) →𝒄 (𝕊 →. 𝕊) 
 @[simp] def ℂ.ρ (c: ℂ) (s: 𝕊): Part 𝕊 :=
   match c with
   | skip   => s
-  | x ≔ₛ a => s⟦x↦𝔸.ρ a s⟧
-  | c₁;;c₂ => ρ c₁ s >>= ρ c₂
-  | ife b c₁ c₂ => ite (𝔹.ρ b s) (ρ c₁ s) (ρ c₂ s)
-  | wle b c => Part.fix (Γ (𝔹.ρ b s) (ρ c)) s
+  | x ≔ a => s⟦x↦a.ρ s⟧
+  | c₁;;c₂ => c₁.ρ s >>= c₂.ρ
+  | ife b c₁ c₂ => ite (b.ρ s) (c₁.ρ s) (c₂.ρ s)
+  | wle b c => Part.fix (Γ (b.ρ s) c.ρ) s
 
 #simp ℂ.ρ ⟪x ≔ 2; if x ≤ 1 {y ≔ 3} else {z ≔ 4}⟫ ⟦⟧
 

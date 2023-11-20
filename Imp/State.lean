@@ -7,8 +7,8 @@ inductive 𝕊
   | 𝕊.init => 0 -- unbound variables are 0
   | 𝕊.update s₁ x₁ n₁ => if x₁ = x then n₁ else ρ x s₁
 
-instance: Setoid 𝕊 where
-  r s₁ s₂ := ∀x, 𝕊.ρ x s₁ = 𝕊.ρ x s₂
+instance 𝕊.equiv: Setoid 𝕊 where
+  r s₁ s₂ := ∀x, s₁.ρ x = s₂.ρ x
   iseqv := {
     refl := by simp
     symm := by {
@@ -23,6 +23,7 @@ instance: Setoid 𝕊 where
       rw [h₁, h₂]
     }
   }
+
 notation "⟦⟧" => 𝕊.init
 notation "⟦" x "↦" e "⟧" => 𝕊.update ⟦⟧ x e
 notation s "⟦" x "↦" e "⟧" => 𝕊.update s x e

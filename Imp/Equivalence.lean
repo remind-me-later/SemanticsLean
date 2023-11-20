@@ -2,25 +2,44 @@ import Imp.Natural
 import Imp.Structural
 
 
-theorem ℂ.γ_imp_ε (h: γ (c, s, k) (skip, s₁, k₁)): ε c s s₁ :=
+theorem ℂ.τ_imp_ε (h: τ c s skip s₁): ε c s s₁ :=
   by {
+    revert s s₁
     induction c with
     | skip => {
+      intro s s₁ h
       cases h
-      repeat constructor
+      constructor
+      rename_i h₁ h₂
+      cases h₁
     }
     | cat a b iha ihb => {
-      cases h
-      constructor
-      . apply iha; assumption
-      . constructor
+      intro s s₁ h
+      have hh := τ.catex h
+      cases hh
+      rename_i w hh
+      cases hh
+      apply ε.cat_ε w
+      . apply iha
+        assumption
+      . apply ihb
+        assumption
     }
     | ass x a => {
+      intro s s₁ h
       cases h
-      constructor
+      rename_i h₁ h₂
+      cases h₁
+      cases h₂
+      . constructor
+      . rename_i h₁ h₂
+        cases h₁
     }
     | ife b c d ihc ihd => {
+      intro s s₁ h
       cases h
+      rename_i h₁ h₂
+      cases h₁
       . {
         apply ε.ife_tt_ε
         . assumption
@@ -35,66 +54,56 @@ theorem ℂ.γ_imp_ε (h: γ (c, s, k) (skip, s₁, k₁)): ε c s s₁ :=
       }
     }
     | wle b c =>
-      cases h
-      rename_i h
-      cases h
-      . {
-        rename_i ih hb h
-        cases h
-      }
-      . {
-        rename_i ih hb h
-        cases h
-        apply ε.wle_ff_ε; assumption
-      }
+      intro s s₁ h
+      generalize hs: skip = ss at h
+      generalize hw: wle b c = ww at h ⊢
+      induction h <;> cases hs <;> cases hw
+      simp at *
+      rename_i h₁ h₂ ih
+      cases h₂
+      rw [ε.wle_unfold]
+      apply ih
+      sorry
   }
 
-theorem ℂ.ε_imp_γ (h: ε c s s₁): ∃k, γ (c, s, k) (skip, s₁, 0) :=
+theorem ℂ.ε_imp_τ (h: ε c s s₁): τ c s skip s₁ :=
   by {
     induction h with
-    | skip_ε => exists 0; constructor
-    | ass_ε => exists 1; constructor
-    | cat_ε t _ _ ihc ihd  =>
-      cases ihc
-      rename_i kc ihc
-      cases ihd
-      rename_i kd ihd
-      exists kc + kd
-      apply γ.cat_k_iff
-      . assumption
-      . assumption
+    | skip_ε => constructor
+    | ass_ε => apply τ.self; constructor
+    | cat_ε t _ _ ihc ihd  => apply τ.cat t ihc ihd
     | ife_tt_ε hb _ ih =>
-      cases ih
-      rename_i k ih
-      exists k
-      apply γ.ife_tt_γ <;> assumption
-    | ife_ff_ε hb _ ih =>
-      cases ih
-      rename_i k ih
-      exists k
-      apply γ.ife_ff_γ <;> assumption
-    | wle_tt_ε w hb _ _ ihc ihw => {
-      cases ihc
-      rename_i k ihc
-      cases ihw
-      rename_i n ihw
-      exists k + n
-      constructor
-      apply γ.ife_tt_γ
+      rename_i c _  s _ _
+      apply τ.step c s
+      . apply γ.ife_tt_γ hb
       . assumption
-      . apply γ.cat_k_iff
-        . assumption
-        . assumption
+    | ife_ff_ε hb _ ih =>
+      rename_i c d s _ _
+      apply τ.step d s
+      . apply γ.ife_ff_γ hb
+      . assumption
+    | wle_tt_ε w hb _ _ ihc ihw => {
+      rename_i b c d s _ _
+      apply τ.step (ife b (c;;wle b c) skip) s
+      . apply γ.wle_γ
+      . apply τ.step (c;;wle b c) s
+        . apply γ.ife_tt_γ hb
+        . apply τ.cat w ihc ihw
     }
     | wle_ff_ε => {
-      exists 0
-      constructor
-      apply γ.ife_ff_γ
-      . assumption
-      . constructor
+      rename_i b c s hb
+      apply τ.step (ife b (c;;wle b c) skip) s
+      . apply γ.wle_γ
+      . apply τ.step skip s
+        . apply γ.ife_ff_γ hb
+        . constructor
     }
   }
 
+theorem  ℂ.ε_iff_τ: ε c s s₁ ↔ τ c s skip s₁ := by
+  constructor
+  . apply ε_imp_τ
+  . apply τ_imp_ε
 
 -- theorem ℂ.ε_iff_ρ : ε c s s₁ ↔ s₁ ∈ ρ c s :=
 --   by

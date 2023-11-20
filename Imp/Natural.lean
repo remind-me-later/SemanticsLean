@@ -69,8 +69,7 @@ theorem ℂ.ε.skipr: (c;;skip) ≈ c := by
   intro _ _
   constructor <;> intro h
   . cases h with | cat_ε _ _ hd => cases hd; assumption
-  . constructor
-    . assumption
+  . apply cat_ε _ h
     . constructor
 
 theorem ℂ.ε.ife_tt (h: b ≈ 𝔹.tt):
@@ -136,17 +135,13 @@ theorem ℂ.ε.wle_tt (heqb: b ≈ 𝔹.tt):
   generalize heqw: wle b c = w at h
   induction h with
   | wle_tt_ε _ _ _ _ _ ih₂ =>
-    simp at heqw
-    apply ih₂
-    rw [←heqw.left, ←heqw.right]
+    cases heqw; apply ih₂; rfl
   | wle_ff_ε hb =>
-    simp at heqw
-    rw [←heqw.left, heqb] at hb
-    contradiction
+    cases heqw; rw [heqb] at hb; contradiction
   | _ => contradiction
 
-theorem ℂ.ε.determ (h₁: ε c s t) (h₂: ε c s u):
-  t = u := by
+theorem ℂ.ε.determ (h₁: ε c s t) (h₂: ε c s u): t = u :=
+  by
   revert u
   induction h₁ with
   | cat_ε u _ _ ih₁ ih₂ =>

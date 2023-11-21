@@ -3,27 +3,22 @@ import Imp.Aexp
 import Imp.Bexp
 import Imp.Syntax
 
-def Γ := ℂ × 𝕊
-
 @[reducible]
 inductive ℂ.γ: ℂ → 𝕊 → ℂ → 𝕊 → Prop
-  | ass_γ:
+  | ass₁:
     γ (x ≔ a) s skip (s⟦x↦a.ρ s⟧)
 
-  | cat_skipl_γ:
+  | cat₁:
     γ (skip;;c) s c s
 
-  | cat_γ (h: γ c s e t):
+  | cat₂ (h: γ c s e t):
     γ (c;;d) s (e;;d) t
 
-  | ife_tt_γ (hb: b.ρ s):
-    γ (ife b c d) s c s
+  | ife₁:
+    γ (ife b c d) s (cond (b.ρ s) c d) s
 
-  | ife_ff_γ (hb: b.ρ s = false):
-    γ (ife b c d) s d s
-
-  | wle_γ:
-    γ (wle b c) s (ife b (c;;wle b c) skip) s
+  | wle₁:
+    γ (wle b c) s (cond (b.ρ s) (c;;wle b c) skip) s
 
 example:
   ℂ.γ ⟪x ≔ 2; while 0 ≤ x {x≔x-1}⟫ ⟦⟧
@@ -36,30 +31,13 @@ inductive ℂ.τ: ℂ → 𝕊 → ℂ → 𝕊 → Prop
   | refl:
     τ c s c s
 
-  | step cy sy
-    (h₁: γ cx sx cy sy) (h₂: τ cy sy cz sz):
+  | step (h₁: γ cx sx cy sy) (h₂: τ cy sy cz sz):
     τ cx sx cz sz
 
 example:
   ℂ.τ ⟪x ≔ 2; while 0 ≤ x {x≔x-1}⟫ ⟦⟧
       ⟪while 0 ≤ x {x≔x-1}⟫ (⟦"x"↦2⟧⟦"x"↦1⟧) :=
-  by
-    constructor
-    . constructor
-      constructor
-    . apply ℂ.τ.step ⟪while 0 ≤ x {x≔x-1}⟫ ⟦"x"↦2⟧
-      . constructor
-      . apply ℂ.τ.step ⟪if 0 ≤ x {x≔x-1; while 0 ≤ x {x≔x-1}} else {skip}⟫ ⟦"x"↦2⟧
-        . constructor
-        . apply ℂ.τ.step ⟪x≔x-1; while 0 ≤ x {x≔x-1}⟫ ⟦"x"↦2⟧
-          . constructor
-            simp
-          . apply ℂ.τ.step ⟪skip; while 0 ≤ x {x≔x-1}⟫ (⟦"x"↦2⟧⟦"x"↦1⟧)
-            . constructor
-              constructor
-            . apply ℂ.τ.step ⟪while 0 ≤ x {x≔x-1}⟫ (⟦"x"↦2⟧⟦"x"↦1⟧)
-              . constructor
-              . constructor
+  by repeat constructor
 
 theorem ℂ.τ.self (h: γ cx sx cy sy):
   τ cx sx cy sy :=
@@ -108,23 +86,21 @@ theorem ℂ.τ.unstep
   (h₁: τ cx sx cy sy) (h₂: γ cy sy cz sz):
   τ cx sx cz sz := by
   {
-    apply trans cy sy
-    . assumption
-    . apply self
-      assumption
+    apply trans cy sy h₁
+    apply self h₂
   }
 
 theorem ℂ.τ.final (h: τ c s c₁ s₁):
   ∃d s₂, γ d s₂ c₁ s₁ :=
   by {
-      generalize hs: skip = ss at h
-      induction h <;> cases hs
-      . rename_i c s
-        exists skip;;c
-        exists s
-        constructor
-      . rename_i ih
-        apply ih
+    generalize hs: skip = ss at h
+    induction h <;> cases hs
+    . rename_i c s
+      exists skip;;c
+      exists s
+      constructor
+    . rename_i ih
+      apply ih
   }
 
 instance ℂ.τ.equiv: Setoid ℂ where
@@ -155,7 +131,7 @@ theorem ℂ.τ.cat_skip_cat
     . {
       simp at *
       rename_i _ _ ih
-      apply step _ _ _ ih
+      apply step _ ih
       constructor
       assumption
     }
@@ -168,12 +144,10 @@ theorem ℂ.τ.cat
   τ (c₁;;c₂) s skip s₂ :=
   by {
     apply trans (skip;;c₂) s₁
-    . apply cat_skip_cat
-      assumption
-    . apply trans c₂ s₁
-      . apply self
-        constructor
-      . assumption
+    . apply cat_skip_cat h₁
+    . apply trans c₂ s₁ _ h₂
+      apply self
+      constructor
   }
 
 theorem ℂ.τ.cat_no_influence
@@ -186,7 +160,7 @@ theorem ℂ.τ.cat_no_influence
     . {
       simp at *
       rename_i _ _ ih
-      apply step _ _ _ ih
+      apply step _ ih
       constructor
       assumption
     }
@@ -213,15 +187,7 @@ theorem ℂ.τ.catex
   (h: τ (c₁;;c₂) s skip s₂):
   ∃s₁, τ c₁ s skip s₁ ∧ τ c₂ s₁ skip s₂ :=
   by {
-    cases h
-    rename_i h₁ h₂
-    cases h₁
-    . exists s; constructor; constructor; assumption
-    . {
-      rename_i h
-      cases h
-
-    }
+    sorry
   }
 
 

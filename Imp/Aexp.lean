@@ -3,19 +3,19 @@ import Imp.Syntax
 
 -- Operational semantics of aexp
 inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
-  | num:
+  | num₁:
     ε (num n) _ n
 
-  | loc:
+  | loc₁:
     ε (loc x) s (s.ρ x)
 
-  | add (h₁: a.ε s n) (h₂: b.ε s m):
+  | add₁ {h₁: a.ε s n} {h₂: b.ε s m}:
     ε (a + b) s (n + m)
 
-  | sub (h₁: a.ε s n) (h₂: b.ε s m):
+  | sub₁ {h₁: a.ε s n} {h₂: b.ε s m}:
     ε (a - b) s (n - m)
 
-  | mul (h₁: a.ε s n) (h₂: b.ε s m):
+  | mul₁ {h₁: a.ε s n} {h₂: b.ε s m}:
     ε (a * b) s (n * m)
 
 -- Denotational semantics of arithmetic expressions
@@ -32,10 +32,11 @@ inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
   by
     constructor
     . intro h; induction h with
-      | num => rfl
-      | loc => rfl
-      | _ _ _ ih₁ ih₂ => unfold ρ; rw [ih₁, ih₂]
-    . revert n; induction a with
+      | num₁ => rfl
+      | loc₁ => rfl
+      | _ ih₁ ih₂ => unfold ρ; rw [ih₁, ih₂]
+    . revert n;
+      induction a with
       | num _ => intro _ h; cases h; constructor
       | loc _ => intro _ h; cases h; constructor
       | _ _ _ ih₁ ih₂ =>
@@ -86,3 +87,16 @@ protected theorem 𝔸.ε_eq_eq_ρ_eq: 𝔸.ε.equiv.r a b ↔ 𝔸.ρ.equiv.r a
     . specialize h s (ρ b s)
       simp at h; rw [h]
     . simp; rw [h]; simp
+
+inductive 𝔸.γ: 𝔸 → 𝕊 → 𝔸 → 𝕊 → Prop
+  | loc₁:
+    γ (loc x) s (num (s.ρ x)) s
+
+  | add₁ {h₁: γ a s a₁ s}:
+    γ (a + b) s (a₁ + b) s
+
+  | sub₁ {h₁: γ a s a₁ s}:
+    γ (a - b) s (a₁ * b) s
+
+  | mul₁ {h₁: γ a s a₁ s}:
+    γ (a * b) s (a₁ * b) s

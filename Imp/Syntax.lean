@@ -23,9 +23,6 @@ inductive 𝔹
   | eq  : 𝔸 → 𝔸 → 𝔹
   | le  : 𝔸 → 𝔸 → 𝔹
 
-instance 𝔹.complement: Complement 𝔹 where
-  complement := not
-
 inductive ℂ
   | skip  : ℂ
   | cat   : ℂ → ℂ → ℂ
@@ -34,6 +31,7 @@ inductive ℂ
   | wle   : 𝔹 → ℂ → ℂ
 
 -- Meta syntax
+notation:60 "¬ₛ" a => 𝔹.not a
 notation:70 a₁:70 " =ₛ " a₂:71 => 𝔹.eq a₁ a₂
 notation:70 a₁:70 " ≤ₛ " a₂:71 => 𝔹.le a₁ a₂
 notation:65 b₁:65 " ∨ₛ " b₂:66 => 𝔹.or b₁ b₂

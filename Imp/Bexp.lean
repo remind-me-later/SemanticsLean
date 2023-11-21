@@ -16,13 +16,13 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
   | le:
     ε (a ≤ₛ b) s (a.ρ s ≤ b.ρ s)
 
-  | not (a: 𝔹) (h: a.ε s n):
-    ε (~~~a) s (¬n)
+  | not {a: 𝔹} {h: a.ε s n}:
+    ε (¬ₛa) s (¬n)
 
-  | and (a b: 𝔹) (hₗ: a.ε s n) (hᵣ: b.ε s m):
+  | and {a b: 𝔹} {hₗ: a.ε s n} {hᵣ: b.ε s m}:
     ε (a ∧ₛ b) s (n ∧ m)
 
-  | or (a b: 𝔹) (hₗ: a.ε s n) (hᵣ: b.ε s m):
+  | or {a b: 𝔹} {hₗ: a.ε s n} {hᵣ: b.ε s m}:
     ε (a ∨ₛ b) s (n ∨ m)
 
 -- Denotational semantics of 𝔹
@@ -45,8 +45,8 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
       | ff => rfl
       | eq => rfl
       | le => rfl
-      | not _ _ ih => cases ih; rfl
-      | _ _ _ _ _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
+      | not ih => cases ih; rfl
+      | _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
     . revert r
       induction b with
         | tt => intro _ h; cases h; constructor
@@ -62,7 +62,7 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
           . apply ih₂; rfl
 
 theorem 𝔹.not_true_eq_false:
-  !(ρ b s) = ρ (~~~b) s := by simp; cases b.ρ s <;> simp
+  !(ρ b s) = ρ (¬ₛb) s := by simp; cases b.ρ s <;> simp
 
 protected instance 𝔹.ε.equiv: Setoid 𝔹 where
   r a b := ∀ s n, ε a s n ↔ ε b s n

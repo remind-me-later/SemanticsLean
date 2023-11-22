@@ -5,7 +5,7 @@ import Imp.Syntax
 
 import Mathlib.Logic.Relation
 
-@[reducible]
+-- @[reducible]
 inductive ℂ.γ: ℂ × 𝕊 → ℂ × 𝕊 → Prop
   | ass₁:
     γ (x ≔ a, s) (skip, s⟦x↦a.ρ s⟧)
@@ -78,13 +78,78 @@ theorem ℂ.τ.cat_no_influence
     . apply Relation.ReflTransGen.single
       constructor
 
+@[simp] theorem ℂ.γ.cat_iff:
+  γ (c₁;;c₂, s) et ↔
+  (∃e t, γ (c₁, s) (e, t) ∧ et = (e;;c₂, t))
+  ∨ (c₁ = skip ∧ et = (c₂, s)) :=
+  by {
+    constructor <;> intro h
+    . {
+      cases h
+      . {
+        apply Or.intro_right
+        apply And.intro rfl rfl
+      }
+      . {
+        apply Or.intro_left
+        rename_i e t h
+        exists e, t
+      }
+    }
+    . {
+      cases h <;> rename_i h <;> cases h
+      . {
+        rename_i e h
+        cases h
+        rename_i t h
+        cases h
+        rename_i left right
+        cases right
+        constructor
+        assumption
+      }
+      . {
+        rename_i left right
+        cases left
+        cases right
+        constructor
+      }
+    }
+  }
+
+@[simp] lemma ℂ.γ.ite_iff:
+  γ (ife b S T, s) Us ↔
+  (b.ρ s ∧ Us = (S, s)) ∨ (b.ρ s = false ∧ Us = (T, s)) :=
+  by {
+    constructor <;> intro h
+    . {
+      cases h <;> rename_i hb
+      . {
+        apply Or.intro_left
+        apply And.intro hb rfl
+      }
+      . {
+        apply Or.intro_right
+        apply And.intro hb rfl
+      }
+    }
+    . {
+      cases h <;> rename_i h <;> cases h <;> rename_i left right <;> cases right
+      . apply γ.ife₁ left
+      . apply γ.ife₂ left
+    }
+  }
+
 theorem ℂ.τ.catex
   (h: τ (c₁;;c₂, s) (skip, s₂)):
   ∃s₁, τ (c₁, s) (skip, s₁) ∧ τ (c₂, s₁) (skip, s₂) :=
   by {
-    have hh := Relation.ReflTransGen.lift (fun x => (x.fst;;c₂, x.snd)) _ h
-
-
+    generalize hs₀: (c₁;;c₂, s) = ss₀ at h
+    generalize hs₁: (skip, s₂) = ss₁ at h
+    induction' h generalizing c₁ c₂ s s₂  <;> cases hs₁ <;> cases hs₀
+    cases hs₀
+    simp at *
+    rename_i ih
   }
 
 

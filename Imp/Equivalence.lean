@@ -1,8 +1,75 @@
 import Imp.Natural
 import Imp.Structural
 
+theorem ℂ.ε_imp_τ (h: ε c s s₁): τ (c, s) (skip, s₁) :=
+  by {
+    induction h with
+    | skip₁ => constructor
+    | ass₁ => apply Relation.ReflTransGen.single; constructor
+    | cat₁ _ _ ihc ihd  => apply τ.cat _ ihc ihd
+    | ife₁ hb _ ih =>
+      rename_i c _  s _ _
+      apply Relation.ReflTransGen.head
+      . apply γ.ife₁
+        assumption
+      . assumption
+    | ife₂ hb _ ih =>
+      rename_i c d s _ _
+      apply Relation.ReflTransGen.head
+      . apply γ.ife₂
+        assumption
+      . assumption
+    | wle₁ hb _ _ ihc ihw => {
+      rename_i b c _ d s _ _
+      apply Relation.ReflTransGen.head
+      . apply γ.wle₁
+      . apply Relation.ReflTransGen.head
+        . constructor
+          assumption
+        . apply τ.cat _ ihc ihw
+    }
+    | wle₂ => {
+      rename_i b c s hb
+      apply Relation.ReflTransGen.head
+      . apply γ.wle₁
+      . apply Relation.ReflTransGen.head
+        . apply γ.ife₂
+          assumption
+        . constructor
+    }
+  }
 
-theorem ℂ.τ_imp_ε (h: τ c s skip s₁): ε c s s₁ :=
+lemma ℂ.ε_imp_γ_imp_ε
+  (h₁: γ (S₀, s₀) (S₁, s₁))
+  (h₂: ε S₁ s₁ s₂):
+  ε S₀ s₀ s₂ :=
+  by
+  {
+    generalize hs₀: (S₀, s₀) = ss₀ at h₁
+    generalize hs₁: (S₁, s₁) = ss₁ at h₁
+    induction' h₁ generalizing S₀ S₁ s₀ s₁ <;> cases hs₀ <;> cases hs₁ <;> simp at *
+    . cases h₂; constructor
+    . constructor; constructor; assumption
+    . {
+      r
+
+    }
+
+
+  }
+
+
+
+
+
+  -- simp [*, big_step_while_true_iff] {contextual := tt},
+  -- case seq_step {
+  --   intros u hS' hT,
+  --   apply exists.intro u,
+  --   exact and.intro (ih hS') hT }
+
+
+theorem ℂ.τ_imp_ε (h: τ (c, s) (skip, s₁)): ε c s s₁ :=
   by {
     revert s s₁
     induction c with
@@ -58,45 +125,10 @@ theorem ℂ.τ_imp_ε (h: τ c s skip s₁): ε c s s₁ :=
       }
   }
 
-theorem ℂ.ε_imp_τ (h: ε c s s₁): τ c s skip s₁ :=
-  by {
-    induction h with
-    | skip₁ => constructor
-    | ass₁ => apply τ.self; constructor
-    | cat₁ _ _ ihc ihd  => apply τ.cat _ ihc ihd
-    | ife₁ hb _ ih =>
-      rename_i c _  s _ _
-      apply τ.step
-      . apply γ.ife₁
-      . rw [hb]
-        assumption
-    | ife₂ hb _ ih =>
-      rename_i c d s _ _
-      apply τ.step
-      . apply γ.ife₁
-      . rw [hb]
-        assumption
-    | wle₁ hb _ _ ihc ihw => {
-      rename_i b c _ d s _ _
-      apply τ.step
-      . apply γ.wle₁
-      . rw [hb]
-        simp
-        apply τ.cat _ ihc ihw
-    }
-    | wle₂ => {
-      rename_i b c s hb
-      apply τ.step
-      . apply γ.wle₁
-      . rw [hb]
-        constructor
-    }
-  }
-
-theorem  ℂ.ε_iff_τ: ε c s s₁ ↔ τ c s skip s₁ := by
-  constructor
-  . apply ε_imp_τ
-  . apply τ_imp_ε
+-- theorem  ℂ.ε_iff_τ: ε c s s₁ ↔ τ c s skip s₁ := by
+--   constructor
+--   . apply ε_imp_τ
+--   . apply τ_imp_ε
 
 -- theorem ℂ.ε_iff_ρ : ε c s s₁ ↔ s₁ ∈ ρ c s :=
 --   by

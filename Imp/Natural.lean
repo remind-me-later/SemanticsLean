@@ -26,18 +26,14 @@ inductive ℂ.ε: ℂ → 𝕊 → 𝕊 → Prop
   | wle₂ (hb: b.ρ s = false):
     ε (wle b c) s s
 
-example: ⟪x ≔ 5⟫.ε ⟦⟧ ⟦"x"↦5⟧ := by constructor
+theorem ℂ.ε.demo₁: ⟪x ≔ 5⟫.ε ⟦⟧ ⟦"x"↦5⟧ := ass₁
 
-example:
-  ⟪x ≔ 2; if x ≤ 1 {y ≔ 3} else {z ≔ 4}⟫.ε
-  ⟦⟧
-  (⟦"x"↦2⟧⟦"z"↦4⟧) :=
-  by
-    constructor
-    . constructor
-    . apply ℂ.ε.ife₂
-      . simp
-      . constructor
+theorem ℂ.ε.demo₂:
+  ε ⟪x ≔ 2; if x ≤ 1 {y ≔ 3} else {z ≔ 4}⟫ ⟦⟧
+  (⟦"x"↦2⟧⟦"z"↦4⟧) := cat₁ ass₁ (ife₂ rfl ass₁)
+
+theorem ℂ.ε.skip_same: ε skip s s₁ ↔ s = s₁ :=
+  ⟨by intro h; cases h; rfl, (· ▸ skip₁)⟩
 
 instance ℂ.ε.equiv: Setoid ℂ where
   r c d := ∀ s t, ε c s t ↔ ε d s t
@@ -59,33 +55,33 @@ instance ℂ.ε.equiv: Setoid ℂ where
 
 theorem ℂ.ε.skipl: (skip;;c) ≈ c := by
   intro _ _
-  constructor <;> intro h
-  . cases h with | cat₁ hc => cases hc; assumption
-  . apply cat₁ _ h; constructor
+  constructor
+  . intro h; cases h with | cat₁ hc hd =>
+    exact skip_same.mp hc ▸ hd
+  . exact (cat₁ skip₁ ·)
 
 theorem ℂ.ε.skipr: (c;;skip) ≈ c := by
   intro _ _
-  constructor <;> intro h
-  . cases h with | cat₁ _ hd => cases hd; assumption
-  . apply cat₁ h; constructor
+  constructor
+  . intro h; cases h with | cat₁ hc hd =>
+    exact skip_same.mp hd ▸ hc
+  . exact (cat₁ · skip₁)
 
 theorem ℂ.ε.ife_tt (h: b ≈ 𝔹.tt): ife b c d ≈ c := by
   intro _ _; constructor <;> intro h₁
   . cases h₁ with
     | ife₁ => assumption
     | ife₂ hb => rw [h] at hb; contradiction
-  . apply ε.ife₁
+  . apply ε.ife₁ _ h₁
     . apply h
-    . assumption
 
 theorem ℂ.ε.ife_ff (h: b ≈ 𝔹.ff): ife b c d ≈ d := by
   intro _ _; constructor <;> intro h₁
   . cases h₁ with
     | ife₂ => assumption
     | ife₁ hb => rw [h] at hb; contradiction
-  . apply ε.ife₂
+  . apply ε.ife₂ _ h₁
     . apply h
-    . assumption
 
 theorem ℂ.ε.wle_unfold:
   wle b c ≈ ife b (c;;wle b c) skip := by
@@ -109,75 +105,59 @@ theorem ℂ.ε.wle_unfold:
       . rw [hb] at *; contradiction
 
 theorem ℂ.ε.ife_ext: (ife b c d).ε s t ↔ cond (b.ρ s) (c.ε s t) (d.ε s t) := by
-  constructor <;> intro h
-  . cases hb: b.ρ s <;> simp
-    . cases h
-      . rw [hb] at *; contradiction
-      . assumption
-    . cases h
-      . assumption
-      . rw [hb] at *; contradiction
-  . cases hb: b.ρ s <;> (rw [hb] at h; simp at h)
-    . apply ife₂ <;> assumption
-    . apply ife₁ <;> assumption
+  constructor <;> intro h <;> cases hb: b.ρ s <;> simp at *
+  . cases h
+    simp [hb] at *
+    assumption
+  . cases h
+    assumption
+    simp [hb] at *
+  . rw [hb] at h
+    exact ife₂ hb h
+  . rw [hb] at h
+    exact ife₁ hb h
 
 theorem ℂ.ε.ife_ext': (ife b c d).ε s t ↔ ε (cond (b.ρ s) c d) s t := by
-  constructor <;> intro h
-  . cases hb: b.ρ s <;> simp
-    . cases h
-      . rw [hb] at *; contradiction
-      . assumption
-    . cases h
-      . assumption
-      . rw [hb] at *; contradiction
-  . cases hb: b.ρ s <;> (rw [hb] at h; simp at h)
-    . apply ife₂ <;> assumption
-    . apply ife₁ <;> assumption
+  constructor <;> intro h <;> cases hb: b.ρ s <;> simp at *
+  . cases h
+    simp [hb] at *
+    assumption
+  . cases h
+    assumption
+    simp [hb] at *
+  . rw [hb] at h
+    exact ife₂ hb h
+  . rw [hb] at h
+    exact ife₁ hb h
 
 theorem ℂ.ε.wle_tt (heqb: b ≈ 𝔹.tt):
-  ¬((wle b c).ε s t) := by
+  ¬(ε (wle b c) s t) := by
   intro h
   generalize heqw: wle b c = w at h
   induction h with
-  | wle₁ _ _ _ _ ih₂ =>
-    cases heqw; apply ih₂; rfl
-  | wle₂ hb =>
-    cases heqw; rw [heqb] at hb; contradiction
+  | wle₁ _ _ _ _ ih₂ => exact ih₂ heqw
+  | wle₂ hb => cases heqw; rw [heqb] at hb; contradiction
   | _ => contradiction
 
 theorem ℂ.ε.determ (h₁: ε c s t) (h₂: ε c s u): t = u :=
-  by
-  revert u
-  induction h₁ with
-  | cat₁ _ _ ih₁ ih₂ =>
-    rename_i u _ _
-    intro _ h; apply ih₂; cases h with | cat₁ =>
-      rename_i u' _ _
-      have hi: u = u' := by apply ih₁; assumption
-      cases hi; assumption
+  by induction h₁ generalizing u with
+  | cat₁ _ _ ih₁ ih₂ => cases h₂ with
+    | cat₁ hc hd => exact ih₂ (ih₁ hc ▸ hd)
 
-  | ife₁ hb _ ih =>
-    intro _ h; apply ih; cases h
-    . assumption
-    . rw [hb] at *; contradiction
+  | ife₁ hb _ ih => cases h₂ with
+    | ife₁ _ hd   => exact ih hd
+    | ife₂ hb₁ hd => simp [hb] at hb₁
 
-  | ife₂ hb _ ih =>
-    intro _ h; apply ih; cases h
-    . rw [hb] at *; contradiction
-    . assumption
+  | ife₂ hb _ ih => cases h₂ with
+    | ife₁ hb₁ hd => simp [hb] at hb₁
+    | ife₂ _ hd   => exact ih hd
 
-  | wle₁ hb _ _ ih₁ ih =>
-    rename_i u _ _ _ _
-    intro _ h; apply ih; cases h with
-    | wle₁ =>
-      rename_i s₃ _ _ _
-      have hi: u = s₃ := by apply ih₁; assumption
-      cases hi; assumption
-    | wle₂ hb₁ => rw [hb] at hb₁; contradiction
+  | wle₁ hb _ _ ih₁ ih₂ => cases h₂ with
+    | wle₁ _ hc hw => exact ih₂ (ih₁ hc ▸ hw)
+    | wle₂ hb₁     => simp [hb] at hb₁
 
-  | wle₂ hb =>
-    intro _ h; cases h
-    . rw [hb] at *; contradiction
-    . rfl
+  | wle₂ hb => cases h₂ with
+    | wle₁ hb₁ => simp [hb] at hb₁
+    | wle₂     => rfl
 
-  | _ => intro _ h; cases h; rfl
+  | _ => cases h₂; rfl

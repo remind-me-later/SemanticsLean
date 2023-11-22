@@ -4,25 +4,25 @@ import Imp.Syntax
 
 -- Operational semantics of 𝔹
 inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
-  | tt:
+  | tt₁:
     ε tt _ true
 
-  | ff:
+  | ff₁:
     ε ff _ false
 
-  | eq:
+  | eq₁:
     ε (a =ₛ b) s (a.ρ s = b.ρ s)
 
-  | le:
+  | le₁:
     ε (a ≤ₛ b) s (a.ρ s ≤ b.ρ s)
 
-  | not {a: 𝔹} {h: a.ε s n}:
+  | not₁ {a: 𝔹} (h: a.ε s n):
     ε (¬ₛa) s (¬n)
 
-  | and {a b: 𝔹} {hₗ: a.ε s n} {hᵣ: b.ε s m}:
+  | and₁ {a b: 𝔹} (hₗ: a.ε s n) (hᵣ: b.ε s m):
     ε (a ∧ₛ b) s (n ∧ m)
 
-  | or {a b: 𝔹} {hₗ: a.ε s n} {hᵣ: b.ε s m}:
+  | or₁ {a b: 𝔹} (hₗ: a.ε s n) (hᵣ: b.ε s m):
     ε (a ∨ₛ b) s (n ∨ m)
 
 -- Denotational semantics of 𝔹
@@ -37,29 +37,26 @@ inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
   | a ≤ₛ b => a.ρ s ≤ b.ρ s
 
 -- relational definition is equivalent to recursive
-@[simp] theorem 𝔹.ε_eq_ρ: ε b s r ↔ b.ρ s = r :=
-  by
-    constructor
-    . intro h; induction h with
-      | tt => rfl
-      | ff => rfl
-      | eq => rfl
-      | le => rfl
-      | not ih => cases ih; rfl
-      | _ ih₁ ih₂ => cases ih₁; cases ih₂; rfl
-    . revert r
-      induction b with
-        | tt => intro _ h; cases h; constructor
-        | ff => intro _ h; cases h; constructor
-        | eq => intro _ h; cases h; constructor
-        | le => intro _ h; cases h; constructor
-        | not _ ih =>
-          intro _ h; cases h; constructor
-          apply ih; rfl
-        | _ _ _ ih₁ ih₂ =>
-          intro _ h; cases h; constructor
-          . apply ih₁; rfl
-          . apply ih₂; rfl
+@[simp] theorem 𝔹.ε.from_ρ (h: b.ρ s = x): ε b s x :=
+  by induction b generalizing x with
+  | tt => exact h ▸ ε.tt₁
+  | ff => exact h ▸ ε.ff₁
+  | eq => exact h ▸ ε.eq₁
+  | le => exact h ▸ ε.le₁
+  | not _ ih => exact h ▸ ε.not₁ (ih rfl)
+  | and _ _ l r => exact h ▸ ε.and₁ (l rfl) (r rfl)
+  | or _ _  l r => exact h ▸ ε.or₁  (l rfl) (r rfl)
+
+@[simp] theorem 𝔹.ρ.from_ε (h: ε b s x): b.ρ s = x :=
+  by induction h with
+  | tt₁ => rfl
+  | ff₁ => rfl
+  | eq₁ => rfl
+  | le₁ => rfl
+  | not₁ _ ih => exact ih ▸ rfl
+  | _ _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
+
+@[simp] theorem 𝔹.ε_eq_ρ: ε b s r ↔ b.ρ s = r := ⟨ρ.from_ε, ε.from_ρ⟩
 
 theorem 𝔹.not_true_eq_false:
   !(ρ b s) = ρ (¬ₛb) s := by simp; cases b.ρ s <;> simp

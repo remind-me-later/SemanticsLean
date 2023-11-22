@@ -9,13 +9,13 @@ inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
   | loc₁:
     ε (loc x) s (s.ρ x)
 
-  | add₁ {h₁: a.ε s n} {h₂: b.ε s m}:
+  | add₁ (h₁: a.ε s n) (h₂: b.ε s m):
     ε (a + b) s (n + m)
 
-  | sub₁ {h₁: a.ε s n} {h₂: b.ε s m}:
+  | sub₁ (h₁: a.ε s n) (h₂: b.ε s m):
     ε (a - b) s (n - m)
 
-  | mul₁ {h₁: a.ε s n} {h₂: b.ε s m}:
+  | mul₁ (h₁: a.ε s n) (h₂: b.ε s m):
     ε (a * b) s (n * m)
 
 -- Denotational semantics of arithmetic expressions
@@ -28,23 +28,22 @@ inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
   | a * b => a.ρ s * b.ρ s
 
 -- relational definition is equal to recursive
-@[simp] theorem 𝔸.ε_eq_ρ (a: 𝔸): a.ε s n ↔ a.ρ s = n :=
-  by
-    constructor
-    . intro h; induction h with
-      | num₁ => rfl
-      | loc₁ => rfl
-      | _ ih₁ ih₂ => unfold ρ; rw [ih₁, ih₂]
-    . revert n;
-      induction a with
-      | num _ => intro _ h; cases h; constructor
-      | loc _ => intro _ h; cases h; constructor
-      | _ _ _ ih₁ ih₂ =>
-        intro _ h; cases h; constructor
-        . apply ih₁; rfl
-        . apply ih₂; rfl
+@[simp] theorem 𝔸.ρ.from_ε {a: 𝔸} (h: a.ε s n): a.ρ s = n :=
+  by induction h with
+  | num₁ => rfl
+  | loc₁ => rfl
+  | _ _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
 
-@[simp] theorem 𝔸.ε_eq_ρ' (a: 𝔸): a.ε s (a.ρ s) := by simp
+@[simp] theorem 𝔸.ε.from_ρ {a: 𝔸} (h: a.ρ s = n): a.ε s n :=
+  by induction a generalizing n with
+  | num _ => exact h ▸ num₁
+  | loc _ => exact h ▸ loc₁
+  | add _ _ l r => exact h ▸ add₁ (l rfl) (r rfl)
+  | sub _ _ l r => exact h ▸ sub₁ (l rfl) (r rfl)
+  | mul _ _ l r => exact h ▸ mul₁ (l rfl) (r rfl)
+
+@[simp] theorem 𝔸.ε_iff_ρ {a: 𝔸}: a.ε s n ↔ a.ρ s = n := ⟨ρ.from_ε, ε.from_ρ⟩
+@[simp] theorem 𝔸.ε_iff_ρ' (a: 𝔸): a.ε s (a.ρ s) := ε.from_ρ rfl
 
 protected instance 𝔸.ε.equiv: Setoid 𝔸 where
   r a b := ∀ s n, ε a s n ↔ ε b s n
@@ -87,16 +86,3 @@ protected theorem 𝔸.ε_eq_eq_ρ_eq: 𝔸.ε.equiv.r a b ↔ 𝔸.ρ.equiv.r a
     . specialize h s (ρ b s)
       simp at h; rw [h]
     . simp; rw [h]; simp
-
-inductive 𝔸.γ: 𝔸 → 𝕊 → 𝔸 → 𝕊 → Prop
-  | loc₁:
-    γ (loc x) s (num (s.ρ x)) s
-
-  | add₁ {h₁: γ a s a₁ s}:
-    γ (a + b) s (a₁ + b) s
-
-  | sub₁ {h₁: γ a s a₁ s}:
-    γ (a - b) s (a₁ * b) s
-
-  | mul₁ {h₁: γ a s a₁ s}:
-    γ (a * b) s (a₁ * b) s

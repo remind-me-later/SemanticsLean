@@ -3,66 +3,70 @@ import Imp.Aexp
 import Imp.Syntax
 
 -- Operational semantics of 𝔹
-inductive 𝔹.ε: 𝔹 → 𝕊 → Bool → Prop
+inductive 𝔹.Nat: 𝔹 × 𝕊 → Bool → Prop
   | tt₁:
-    ε tt _ true
+    Nat (tt, _) true
 
   | ff₁:
-    ε ff _ false
+    Nat (ff, _) false
 
   | eq₁:
-    ε (a =ₛ b) s (a.ρ s = b.ρ s)
+    Nat (a =ₛ b, s) (a↓s = b↓s)
 
   | le₁:
-    ε (a ≤ₛ b) s (a.ρ s ≤ b.ρ s)
+    Nat (a ≤ₛ b, s) (a↓s ≤ b↓s)
 
-  | not₁ {a: 𝔹} (h: a.ε s n):
-    ε (¬ₛa) s (¬n)
+  | not₁ {a: 𝔹} (h: Nat (a,s) n):
+    Nat (¬ₛa, s) (!n)
 
-  | and₁ {a b: 𝔹} (hₗ: a.ε s n) (hᵣ: b.ε s m):
-    ε (a ∧ₛ b) s (n ∧ m)
+  | and₁ {a b: 𝔹} (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
+    Nat (a ∧ₛ b, s) (n && m)
 
-  | or₁ {a b: 𝔹} (hₗ: a.ε s n) (hᵣ: b.ε s m):
-    ε (a ∨ₛ b) s (n ∨ m)
+  | or₁ {a b: 𝔹} (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
+    Nat (a ∨ₛ b, s) (n || m)
+
+infix:110 " ⟹ " => 𝔹.Nat
 
 -- Denotational semantics of 𝔹
-@[simp] def 𝔹.ρ (b: 𝔹) (s: 𝕊): Bool :=
+@[reducible, simp] def 𝔹.red (b: 𝔹) (s: 𝕊): Bool :=
   match b with
   | tt     => true
   | ff     => false
-  | not b  => ¬b.ρ s
-  | a ∧ₛ b => a.ρ s ∧ b.ρ s
-  | a ∨ₛ b => a.ρ s ∨ b.ρ s
-  | a =ₛ b => a.ρ s = b.ρ s
-  | a ≤ₛ b => a.ρ s ≤ b.ρ s
+  | ¬ₛb    => !red b s
+  | a ∧ₛ b => red a s && red b s
+  | a ∨ₛ b => red a s || red b s
+  | a =ₛ b => a↓s = b↓s
+  | a ≤ₛ b => a↓s ≤ b↓s
+
+infix:110 "↓" => 𝔹.red
 
 -- relational definition is equivalent to recursive
-@[simp] theorem 𝔹.ε.from_ρ (h: b.ρ s = x): ε b s x :=
+@[simp] theorem 𝔹.Nat.from_red {b: 𝔹} (h: b↓s = x): (b,s) ⟹ x :=
   by induction b generalizing x with
-  | tt => exact h ▸ ε.tt₁
-  | ff => exact h ▸ ε.ff₁
-  | eq => exact h ▸ ε.eq₁
-  | le => exact h ▸ ε.le₁
-  | not _ ih => exact h ▸ ε.not₁ (ih rfl)
-  | and _ _ l r => exact h ▸ ε.and₁ (l rfl) (r rfl)
-  | or _ _  l r => exact h ▸ ε.or₁  (l rfl) (r rfl)
+  | tt => unfold red at h; exact h ▸ Nat.tt₁
+  | ff => cases h; unfold red; exact Nat.ff₁
+  | eq => cases h; unfold red; exact Nat.eq₁
+  | le => cases h; unfold red; exact Nat.le₁
+  | not _ ih => cases h; unfold red; exact Nat.not₁ (ih rfl)
+  | and _ _ l r => cases h; unfold red; exact Nat.and₁ (l rfl) (r rfl)
+  | or _ _  l r => cases h; unfold red; exact Nat.or₁  (l rfl) (r rfl)
 
-@[simp] theorem 𝔹.ρ.from_ε (h: ε b s x): b.ρ s = x :=
+@[simp] theorem 𝔹.red.from_Nat {bs: 𝔹 × 𝕊} (h: bs ⟹ x): red.uncurry bs = x :=
   by induction h with
-  | tt₁ => rfl
-  | ff₁ => rfl
-  | eq₁ => rfl
-  | le₁ => rfl
-  | not₁ _ ih => exact ih ▸ rfl
-  | _ _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
+  | tt₁ => unfold Function.uncurry red; rfl
+  | ff₁ => unfold Function.uncurry red; rfl
+  | eq₁ => unfold Function.uncurry red; rfl
+  | le₁ => unfold Function.uncurry red; rfl
+  | not₁ _ ih => unfold Function.uncurry red; exact ih ▸ rfl
+  | _ _ _ ih₁ ih₂ => unfold Function.uncurry red; exact ih₁ ▸ ih₂ ▸ rfl
 
-@[simp] theorem 𝔹.ε_eq_ρ: ε b s r ↔ b.ρ s = r := ⟨ρ.from_ε, ε.from_ρ⟩
+@[simp] theorem 𝔹.Nat_eq_red {b: 𝔹}: (b,s) ⟹ r ↔ b↓s = r := ⟨red.from_Nat, Nat.from_red⟩
 
-theorem 𝔹.not_true_eq_false:
-  !(ρ b s) = ρ (¬ₛb) s := by simp; cases b.ρ s <;> simp
+theorem 𝔹.not_true_eq_false {b: 𝔹}:
+  !b↓s = ((¬ₛb)↓s) := by simp; cases b↓s <;> simp
 
-protected instance 𝔹.ε.equiv: Setoid 𝔹 where
-  r a b := ∀ s n, ε a s n ↔ ε b s n
+protected instance 𝔹.Nat.equiv: Setoid 𝔹 where
+  r a b := ∀ s n, (a,s) ⟹ n ↔ (b,s) ⟹ n
   iseqv := {
     refl := by simp
     symm := by {
@@ -75,12 +79,11 @@ protected instance 𝔹.ε.equiv: Setoid 𝔹 where
       specialize h₁ x
       specialize h₂ x
       rw [h₁, h₂]
-      simp
     }
   }
 
-instance 𝔹.ρ.equiv: Setoid 𝔹 where
-  r a b := ∀ s, a.ρ s = b.ρ s
+instance 𝔹.red.equiv: Setoid 𝔹 where
+  r a b := ∀ s, a.red s = b.red s
   iseqv := {
     refl := by simp
     symm := by {
@@ -96,10 +99,10 @@ instance 𝔹.ρ.equiv: Setoid 𝔹 where
     }
   }
 
-protected theorem 𝔹.ε_eq_eq_ρ_eq: 𝔹.ε.equiv.r a b ↔ 𝔹.ρ.equiv.r a b :=
+protected theorem 𝔹.Nat_eq_eq_red_eq: 𝔹.Nat.equiv.r a b ↔ 𝔹.red.equiv.r a b :=
   by
     constructor <;> intro h s
-    . specialize h s (ρ b s)
+    . specialize h s (red b s)
       simp at h; assumption
     . intro _; specialize h s
-      simp; rw [h]; simp
+      simp; rw [h]

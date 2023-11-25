@@ -1,52 +1,58 @@
 import Imp.State
 import Imp.Syntax
 
+import Mathlib.Init.Function
+
 -- Operational semantics of aexp
-inductive 𝔸.ε: 𝔸 → 𝕊 → Int → Prop
+inductive 𝔸.Nat: 𝔸 × 𝕊 → Int → Prop
   | num₁:
-    ε (num n) _ n
+    Nat (num n, _) n
 
   | loc₁:
-    ε (loc x) s (s.ρ x)
+    Nat (loc x, s) (s↓x)
 
-  | add₁ (h₁: a.ε s n) (h₂: b.ε s m):
-    ε (a + b) s (n + m)
+  | add₁ (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
+    Nat (a + b, s) (n + m)
 
-  | sub₁ (h₁: a.ε s n) (h₂: b.ε s m):
-    ε (a - b) s (n - m)
+  | sub₁ (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
+    Nat (a - b, s) (n - m)
 
-  | mul₁ (h₁: a.ε s n) (h₂: b.ε s m):
-    ε (a * b) s (n * m)
+  | mul₁ (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
+    Nat (a * b, s) (n * m)
+
+infix:110 " ⟹ " => 𝔸.Nat
 
 -- Denotational semantics of arithmetic expressions
-@[reducible] def 𝔸.ρ (a: 𝔸) (s: 𝕊): Int :=
+@[reducible] def 𝔸.red (a: 𝔸) (s: 𝕊): Int :=
   match a with
   | num n => n
-  | loc x => s.ρ x
-  | a + b => a.ρ s + b.ρ s
-  | a - b => a.ρ s - b.ρ s
-  | a * b => a.ρ s * b.ρ s
+  | loc x => s↓x
+  | a + b => red a s + red b s
+  | a - b => red a s - red b s
+  | a * b => red a s * red b s
+
+infix:110 "↓" => 𝔸.red
 
 -- relational definition is equal to recursive
-@[simp] theorem 𝔸.ρ.from_ε {a: 𝔸} (h: a.ε s n): a.ρ s = n :=
+@[simp] theorem 𝔸.red.from_Nat (h: as ⟹ n): red.uncurry as = n :=
   by induction h with
-  | num₁ => rfl
-  | loc₁ => rfl
-  | _ _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
+  | num₁ => unfold Function.uncurry red; rfl
+  | loc₁ => unfold Function.uncurry red; rfl
+  | _ _ _ ih₁ ih₂ => unfold Function.uncurry red; exact ih₁ ▸ ih₂ ▸ rfl
 
-@[simp] theorem 𝔸.ε.from_ρ {a: 𝔸} (h: a.ρ s = n): a.ε s n :=
+@[simp] theorem 𝔸.Nat.from_red {a: 𝔸} (h: a↓s = n): (a,s) ⟹ n :=
   by induction a generalizing n with
-  | num _ => exact h ▸ num₁
-  | loc _ => exact h ▸ loc₁
-  | add _ _ l r => exact h ▸ add₁ (l rfl) (r rfl)
-  | sub _ _ l r => exact h ▸ sub₁ (l rfl) (r rfl)
-  | mul _ _ l r => exact h ▸ mul₁ (l rfl) (r rfl)
+  | num _ => cases h; unfold red; exact num₁
+  | loc _ => cases h; unfold red; exact loc₁
+  | add _ _ l r => cases h; unfold red; exact add₁ (l rfl) (r rfl)
+  | sub _ _ l r => cases h; unfold red; exact sub₁ (l rfl) (r rfl)
+  | mul _ _ l r => cases h; unfold red; exact mul₁ (l rfl) (r rfl)
 
-@[simp] theorem 𝔸.ε_iff_ρ {a: 𝔸}: a.ε s n ↔ a.ρ s = n := ⟨ρ.from_ε, ε.from_ρ⟩
-@[simp] theorem 𝔸.ε_iff_ρ' (a: 𝔸): a.ε s (a.ρ s) := ε.from_ρ rfl
+@[simp] theorem 𝔸.Nat_iff_red: (a,s) ⟹ n ↔ a↓s = n := ⟨red.from_Nat, Nat.from_red⟩
+@[simp] theorem 𝔸.Nat_iff_red': (a,s) ⟹ (a↓s) := Nat.from_red rfl
 
-protected instance 𝔸.ε.equiv: Setoid 𝔸 where
-  r a b := ∀ s n, ε a s n ↔ ε b s n
+protected instance 𝔸.Nat.equiv: Setoid 𝔸 where
+  r a b := ∀ s n, (a,s) ⟹ n ↔ (b,s) ⟹ n
   iseqv := {
     refl := by simp
     symm := by {
@@ -59,12 +65,11 @@ protected instance 𝔸.ε.equiv: Setoid 𝔸 where
       specialize h₁ x
       specialize h₂ x
       rw [h₁, h₂]
-      simp
     }
   }
 
-instance 𝔸.ρ.equiv: Setoid 𝔸 where
-  r a b := ∀ s, a.ρ s = b.ρ s
+instance 𝔸.red.equiv: Setoid 𝔸 where
+  r a b := ∀ s, a↓s = b↓s
   iseqv := {
     refl := by simp
     symm := by {
@@ -80,9 +85,9 @@ instance 𝔸.ρ.equiv: Setoid 𝔸 where
     }
   }
 
-protected theorem 𝔸.ε_eq_eq_ρ_eq: 𝔸.ε.equiv.r a b ↔ 𝔸.ρ.equiv.r a b :=
+protected theorem 𝔸.Nat_eq_eq_red_eq: 𝔸.Nat.equiv.r a b ↔ 𝔸.red.equiv.r a b :=
   by
     constructor <;> intro h s
-    . specialize h s (ρ b s)
+    . specialize h s (b↓s)
       simp at h; rw [h]
     . simp; rw [h]; simp

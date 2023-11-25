@@ -11,28 +11,26 @@ theorem ℂ.Nat_imp_Star {cs: ℂ × 𝕊} (h: cs ⟹ t): cs ⇒* (skip, t) :=
     rename_i c _  s _ _
     apply Relation.ReflTransGen.head
     . apply Step.ife₁
-      assumption
-    . assumption
+    . exact hb ▸ ih
   | ife₂ hb _ ih =>
     rename_i c d s _ _
     apply Relation.ReflTransGen.head
-    . apply Step.ife₂
-      assumption
-    . assumption
-  | wle₁ hb _ _ _ ihc ihw => {
-    rename_i b c _ d s _ _
+    . apply Step.ife₁
+    . exact hb ▸ ih
+  | wle₁ _ hb _ _ ihc ihw => {
     apply Relation.ReflTransGen.head
     . apply Step.wle₁
     . apply Relation.ReflTransGen.head
       . constructor
-        assumption
-      . apply Star.cat ihc ihw
+      . exact hb ▸ Star.cat ihc ihw
   }
   | wle₂ => {
     rename_i b c s hb
     apply Relation.ReflTransGen.head
     . apply Step.wle₁
-    . exact Relation.ReflTransGen.head (Step.ife₂ hb) Relation.ReflTransGen.refl
+    . apply Relation.ReflTransGen.head _ Relation.ReflTransGen.refl
+      rw [Step.ite_iff]
+      exact Or.inr ⟨hb, rfl⟩
   }
 
 lemma ℂ.Step_imp_Nat (h₁: cs₀ ⇒ cs₁) (h₂: cs₁ ⟹ s₂): cs₀ ⟹ s₂ :=
@@ -44,8 +42,7 @@ lemma ℂ.Step_imp_Nat (h₁: cs₀ ⇒ cs₁) (h₂: cs₁ ⟹ s₂): cs₀ ⟹
     cases h₂ with
     | cat₁ _ hc hd =>
       exact Nat.cat₁ _ (ih hc) hd
-  | ife₁ hb => exact Nat.ife₁ hb h₂
-  | ife₂ hb => exact Nat.ife₂ hb h₂
+  | ife₁ => exact Nat.ife_ext''.mpr h₂
   | wle₁ => rw [Nat.wle_unfold]; exact h₂
 
 theorem ℂ.Star_imp_Nat (h: cs ⇒* (skip, t)): cs ⟹ t :=

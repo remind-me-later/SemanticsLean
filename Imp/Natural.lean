@@ -107,18 +107,11 @@ theorem ℂ.Nat.ife_ext: (ife b c d, s) ⟹ t ↔ cond (b↓s) ((c, s) ⟹ t) ((
   . rw [hb] at h
     exact ife₁ hb h
 
--- theorem Nat.ife_ext': (ife b c d, s) ⟹ t ↔ (cond (b↓s) c d, s) ⟹ t := by
---   constructor <;> intro h <;> cases hb: b↓s <;> simp at *
---   . cases h
---     simp [hb] at *
---     assumption
---   . cases h
---     assumption
---     simp [hb] at *
---   . rw [hb] at h
---     exact ife₂ hb h
---   . rw [hb] at h
---     exact ife₁ hb h
+theorem ℂ.Nat.ife_ext': (ife b c d, s) ⟹ t ↔ (cond (b↓s) c d, s) ⟹ t := by
+  rw [ife_ext]; cases b↓s <;> simp
+
+theorem ℂ.Nat.ife_ext'': (ife b c d, s) ⟹ t ↔ (cond (b↓s) (c, s) (d, s)) ⟹ t := by
+  rw [ife_ext]; cases b↓s <;> simp
 
 theorem ℂ.Nat.wle_iff:
   (wle b c, s) ⟹ u ↔

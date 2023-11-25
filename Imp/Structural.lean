@@ -15,11 +15,8 @@ inductive ℂ.Step: ℂ × 𝕊 → ℂ × 𝕊 → Prop
   | cat₂ (h: Step (c, s) (e, t)):
     Step (c;;d, s) (e;;d, t)
 
-  | ife₁ (hb: b↓s):
-    Step (ife b c d, s) (c, s)
-
-  | ife₂ {b: 𝔹} (hb: b↓s = false):
-    Step (ife b c d, s) (d, s)
+  | ife₁:
+    Step (ife b c d, s) (cond (b↓s) (c, s) (d, s))
 
   | wle₁:
     Step (wle b c, s) (ife b (c;;wle b c) skip, s)
@@ -34,44 +31,31 @@ theorem ℂ.Step.demo₁:
   (c₁;;c₂, s) ⇒ et ↔
   (∃e t, (c₁, s) ⇒ (e, t) ∧ et = (e;;c₂, t))
   ∨ (c₁ = skip ∧ et = (c₂, s)) :=
-  by {
-    constructor <;> intro h
-    . cases h with
-      | cat₁ => exact Or.inr ⟨rfl, rfl⟩
-      | cat₂ h =>
-        rename_i e t
-        exact Or.inl ⟨e, ⟨t, ⟨h, rfl⟩⟩⟩
-    . {
-      cases h with
-      | inl h => {
-        cases h
-        rename_i e h
-        cases h
-        rename_i t h
-        cases h
-        rename_i left right
-        cases right
-        constructor
-        assumption
-      }
-      | inr h =>
-        cases h with | intro left right =>
-          exact left ▸ right ▸ Step.cat₁
-    }
-  }
+  by
+  constructor <;> intro h
+  . cases h with
+    | cat₁ => exact Or.inr ⟨rfl, rfl⟩
+    | cat₂ h => exact Or.inl ⟨_, ⟨_, ⟨h, rfl⟩⟩⟩
+  . cases h with
+    | inl h =>
+      cases h with | intro e h =>
+        cases h with | intro t h =>
+          exact h.right ▸ cat₂ h.left
+    | inr h =>
+      cases h with | intro h₁ h₂ =>
+        exact h₁ ▸ h₂ ▸ Step.cat₁
 
 @[simp] lemma ℂ.Step.ite_iff:
   (ife b c d, s) ⇒ ss ↔
   (b↓s ∧ ss = (c, s)) ∨ (b↓s = false ∧ ss = (d, s)) :=
   by
   constructor <;> intro h
-  . cases h <;> rename_i hb
-    . exact Or.inl (And.intro hb rfl)
-    . exact Or.inr (And.intro hb rfl)
-  . cases h <;> rename_i h <;> cases h <;> rename_i left right <;> cases right
-    . apply Step.ife₁ left
-    . apply Step.ife₂ left
-
+  . cases hb: b↓s <;> cases h
+    . exact Or.inr (And.intro rfl (hb ▸ rfl))
+    . exact Or.inl (And.intro rfl (hb ▸ rfl))
+  . have hss: ss = cond (b↓s) (c,s) (d,s) := by
+      cases hb: b↓s <;> rw [hb] at h <;> simp at * <;> assumption
+    exact hss ▸ ife₁
 
 open Relation
 
@@ -93,8 +77,7 @@ theorem ℂ.Star.cat
   (c₁;;c₂, s) ⇒* (skip, s₂) :=
   by
   apply ReflTransGen.trans (cat_skip_cat h₁)
-  apply ReflTransGen.trans _ h₂
-  exact ReflTransGen.single Step.cat₁
+  exact ReflTransGen.trans (ReflTransGen.single Step.cat₁) h₂
 
 theorem ℂ.Star.cat_no_influence
   (h: (c₁, s) ⇒* (skip, s₁)):

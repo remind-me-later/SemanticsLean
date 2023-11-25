@@ -3,7 +3,6 @@ import Imp.Aexp
 import Imp.Bexp
 import Imp.Syntax
 
--- Semantics of commands.
 inductive ℂ.Nat: ℂ × 𝕊 → 𝕊 → Prop
   | skip₁:
     Nat (skip, s) s
@@ -11,16 +10,16 @@ inductive ℂ.Nat: ℂ × 𝕊 → 𝕊 → Prop
   | ass₁:
     Nat (x ≔ a, s) (s⟦x↦a↓s⟧)
 
-  | cat₁ t (hc: Nat (c,s) t) (hd: Nat (d,t) u):
-    Nat (c;;d,s) u
+  | cat₁ t (hc: Nat (c, s) t) (hd: Nat (d, t) u):
+    Nat (c;;d, s) u
 
-  | ife₁ (hb: b↓s) (hc: Nat (c,s) t):
+  | ife₁ (hb: b↓s) (hc: Nat (c, s) t):
     Nat (ife b c d, s) t
 
-  | ife₂ {b: 𝔹} (hb: b↓s = false) (hd: Nat (d,s) t):
+  | ife₂ {b: 𝔹} (hb: b↓s = false) (hd: Nat (d, s) t):
     Nat (ife b c d, s) t
 
-  | wle₁ u (hb: b↓s) (hc: Nat (c,s) u) (hw: Nat (wle b c,u) t):
+  | wle₁ u (hb: b↓s) (hc: Nat (c, s) u) (hw: Nat (wle b c, u) t):
     Nat (wle b c, s) t
 
   | wle₂ {b: 𝔹} (hb: b↓s = false):
@@ -36,7 +35,7 @@ theorem ℂ.Nat.demo₂:
 
 theorem ℂ.Nat.skip_same: (skip, s) ⟹ s₁ ↔ s = s₁ := ⟨(by cases .; rfl), (· ▸ skip₁)⟩
 
-instance ℂ.Nat.equiv: Setoid ℂ where
+instance Nat.equiv: Setoid ℂ where
   r c d := ∀ s t, (c, s) ⟹ t ↔ (d, s) ⟹ t
   iseqv := {
     refl := by simp
@@ -108,7 +107,7 @@ theorem ℂ.Nat.ife_ext: (ife b c d, s) ⟹ t ↔ cond (b↓s) ((c, s) ⟹ t) ((
   . rw [hb] at h
     exact ife₁ hb h
 
--- theorem ℂ.Nat.ife_ext': (ife b c d, s) ⟹ t ↔ (cond (b↓s) c d, s) ⟹ t := by
+-- theorem Nat.ife_ext': (ife b c d, s) ⟹ t ↔ (cond (b↓s) c d, s) ⟹ t := by
 --   constructor <;> intro h <;> cases hb: b↓s <;> simp at *
 --   . cases h
 --     simp [hb] at *
@@ -156,13 +155,12 @@ theorem ℂ.Nat.wle_iff:
 
 theorem ℂ.Nat.wle_tt (heqb: b ≈ 𝔹.tt):
   ¬((wle b c, s) ⟹ t) := by
-  sorry
-  -- intro h
-  -- generalize heqw: wle b c = w at h
-  -- induction h with
-  -- | wle₁ _ _ _ _ ih₂ => exact ih₂ heqw
-  -- | wle₂ hb => cases heqw; rw [heqb] at hb; contradiction
-  -- | _ => contradiction
+  intro h₁
+  generalize h₂: (wle b c, s) = ww at h₁
+  induction h₁ generalizing s with
+  | wle₁ _ _ _ _ _ ih₂ => cases h₂; apply ih₂; rfl
+  | wle₂ hb => cases h₂; rw [heqb] at hb; contradiction
+  | _ => cases h₂
 
 theorem ℂ.Nat.determ {cs: ℂ × 𝕊} (h₁: cs ⟹ t) (h₂: cs ⟹ u): t = u :=
   by induction h₁ generalizing u with

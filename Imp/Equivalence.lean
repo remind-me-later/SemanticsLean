@@ -1,45 +1,41 @@
 import Imp.Natural
 import Imp.Structural
 
-theorem ℂ.ε_imp_τ {cs: ℂ × 𝕊} (h: cs ⟹ t): cs ⇒* (skip, t) :=
-  by {
-    induction h with
-    | skip₁ => exact Relation.ReflTransGen.refl
-    | ass₁ => exact Relation.ReflTransGen.single (γ.ass₁)
-    | cat₁ _ _ _ ihc ihd  => apply τ.cat _ ihc ihd
-    | ife₁ hb _ ih =>
-      rename_i c _  s _ _
-      apply Relation.ReflTransGen.head
-      . apply γ.ife₁
+theorem ℂ.Nat_imp_Star {cs: ℂ × 𝕊} (h: cs ⟹ t): cs ⇒* (skip, t) :=
+  by
+  induction h with
+  | skip₁ => exact Relation.ReflTransGen.refl
+  | ass₁ => exact Relation.ReflTransGen.single (Step.ass₁)
+  | cat₁ _ _ _ ihc ihd  => apply Star.cat ihc ihd
+  | ife₁ hb _ ih =>
+    rename_i c _  s _ _
+    apply Relation.ReflTransGen.head
+    . apply Step.ife₁
+      assumption
+    . assumption
+  | ife₂ hb _ ih =>
+    rename_i c d s _ _
+    apply Relation.ReflTransGen.head
+    . apply Step.ife₂
+      assumption
+    . assumption
+  | wle₁ hb _ _ _ ihc ihw => {
+    rename_i b c _ d s _ _
+    apply Relation.ReflTransGen.head
+    . apply Step.wle₁
+    . apply Relation.ReflTransGen.head
+      . constructor
         assumption
-      . assumption
-    | ife₂ hb _ ih =>
-      rename_i c d s _ _
-      apply Relation.ReflTransGen.head
-      . apply γ.ife₂
-        assumption
-      . assumption
-    | wle₁ hb _ _ _ ihc ihw => {
-      rename_i b c _ d s _ _
-      apply Relation.ReflTransGen.head
-      . apply γ.wle₁
-      . apply Relation.ReflTransGen.head
-        . constructor
-          assumption
-        . apply τ.cat _ ihc ihw
-    }
-    | wle₂ => {
-      rename_i b c s hb
-      apply Relation.ReflTransGen.head
-      . apply γ.wle₁
-      . apply Relation.ReflTransGen.head
-        . apply γ.ife₂
-          assumption
-        . constructor
-    }
+      . apply Star.cat ihc ihw
+  }
+  | wle₂ => {
+    rename_i b c s hb
+    apply Relation.ReflTransGen.head
+    . apply Step.wle₁
+    . exact Relation.ReflTransGen.head (Step.ife₂ hb) Relation.ReflTransGen.refl
   }
 
-lemma ℂ.ε_imp_γ_imp_ε (h₁: cs₀ ⇒ cs₁) (h₂: cs₁ ⟹ s₂): cs₀ ⟹ s₂ :=
+lemma ℂ.Step_imp_Nat (h₁: cs₀ ⇒ cs₁) (h₂: cs₁ ⟹ s₂): cs₀ ⟹ s₂ :=
   by
   induction h₁ generalizing s₂ with
   | ass₁ => cases h₂; exact Nat.ass₁
@@ -52,9 +48,9 @@ lemma ℂ.ε_imp_γ_imp_ε (h₁: cs₀ ⇒ cs₁) (h₂: cs₁ ⟹ s₂): cs₀
   | ife₂ hb => exact Nat.ife₂ hb h₂
   | wle₁ => rw [Nat.wle_unfold]; exact h₂
 
-theorem ℂ.τ_imp_ε (h: cs ⇒* (skip, t)): cs ⟹ t :=
+theorem ℂ.Star_imp_Nat (h: cs ⇒* (skip, t)): cs ⟹ t :=
   by induction h using Relation.ReflTransGen.head_induction_on with
   | refl => exact Nat.skip₁
-  | head cs cs' ht => cases cs' <;> exact ε_imp_γ_imp_ε cs ht
+  | head cs cs' ht => cases cs' <;> exact Step_imp_Nat cs ht
 
-theorem ℂ.τ_iff_ε: cs ⇒* (skip, t) ↔ cs ⟹ t := ⟨τ_imp_ε, ε_imp_τ⟩
+theorem ℂ.Star_iff_Nat: cs ⇒* (skip, t) ↔ cs ⟹ t := ⟨Star_imp_Nat, Nat_imp_Star⟩

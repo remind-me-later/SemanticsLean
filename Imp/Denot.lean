@@ -29,13 +29,13 @@ infixl:90 " ⇃ " => SRel.restrictDomain
 theorem SRel.monotone_comp [PartialOrder α]
     (f g: α → Set (β × β)) (hf: Monotone f)
     (hg: Monotone g):
-  Monotone (λ a ↦ f a ○ g a) :=
-  sorry
+  Monotone λ x ↦ f x ○ g x :=
+  λ _ _ h _ ⟨z, h₁, h₂⟩ => ⟨z, hf h h₁, hg h h₂⟩
 
 theorem SRel.monotone_restrictDomain [PartialOrder α]
     (f : α → Set (β × β)) (p: β → Prop) (hf: Monotone f):
-  Monotone (λ a ↦ f a ⇃ p) :=
-  sorry
+  Monotone λ x ↦ f x ⇃ p :=
+  λ _ _ h _ ⟨z, h₁⟩ ↦ ⟨hf h z, h₁⟩
 
 def Com.Γ (b: Bexp) (f: Set (State × State)): Set (State × State) →o Set (State × State) := {
   toFun := (λ g ↦ (f ○ g ⇃ λ s↦b↓s) ∪ (SRel.id ⇃ λ s↦b↓s=false))
@@ -50,18 +50,18 @@ def Com.Γ (b: Bexp) (f: Set (State × State)): Set (State × State) →o Set (S
 }
 
 @[simp]
-def Com.red: Com → Set (State × State)
+def Com.denot: Com → Set (State × State)
   | skip      => SRel.id
   | x ≔ a     => {s | s.2 = s.1⟦x↦a↓s.1⟧}
-  | c;;d      => red c ○ red d
-  | ife b c d => (red c ⇃ λ s↦b↓s) ∪ (red d ⇃ λ s↦b↓s=false)
-  | wle b c   => OrderHom.lfp (Γ b (red c))
+  | c;;d      => denot c ○ denot d
+  | ife b c d => (denot c ⇃ λ s↦b↓s) ∪ (denot d ⇃ λ s↦b↓s=false)
+  | wle b c   => OrderHom.lfp (Γ b (denot c))
 
-notation (priority := high) "⟦" c "⟧" => Com.red c
+notation (priority := high) "⟦" c "⟧" => Com.denot c
 
-#simp ⟦⦃x ≔ 5; if x=1 {skip} else {x ≔ 1}⦄⟧
+#simp (⟦⟧, ⟦"x"↦5⟧⟦"x"↦1⟧) ∈ ⟦⦃x ≔ 5; if x=1 {skip} else {x ≔ 1}⦄⟧
 
-instance Com.red.equiv: Setoid Com where
+instance Com.denot.equiv: Setoid Com where
   r c d := ⟦c⟧ = ⟦d⟧
   iseqv := {
     refl := λ _ ↦ Eq.refl _
@@ -69,8 +69,8 @@ instance Com.red.equiv: Setoid Com where
     trans := (· ▸ ·)
   }
 
--- theorem Com.red.cat_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
+-- theorem Com.denot.cat_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
 --   (c₁;;d) ≈ (c₂;;d₂) :=
 --   by
---     unfold red
+--     unfold denot
 --     exact hc ▸ hd ▸ rfl

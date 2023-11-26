@@ -1,5 +1,5 @@
 inductive State
-  | init : State
+  | init   : State
   | update : State → String → Int → State
 
 @[simp] def State.red (s: State) (x: String): Int :=

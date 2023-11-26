@@ -1,113 +1,76 @@
-import Imp.State
-import Imp.Aexp
 import Imp.Bexp
-import Imp.Syntax
 
-import Mathlib.Control.Fix
-import Mathlib.Control.LawfulFix
-import Mathlib.Order.OmegaCompletePartialOrder
-import Mathlib.Data.PFun
-import Mathlib.Data.Part
+import Mathlib.Data.Set.Basic
+import Mathlib.Order.CompleteLattice
+import Mathlib.Data.Set.Lattice
+import Mathlib.Order.FixedPoints
 
-instance: PartialOrder (𝕊 →. 𝕊) where
-  le a b := ∀s s₁, a s = s₁ → b s = s₁
-  le_refl := by simp
-  le_trans := by {
-    intro a b c h₁ h₂ s s₁ h
-    simp at *
-    specialize h₁ s
-    specialize h₂ s
-    rw [h₂, h₁]
-    assumption
-  }
-  le_antisymm := by {
-    intro a b h₁ h₂
-    simp at *
-    apply funext
-    intro s
-    specialize h₁ s
-    specialize h₂ s
-    rw [h₂, h₁]
-  }
+def SRel.id: Set (α × α) := {p | p.1 = p.2}
 
-instance (c: OmegaCompletePartialOrder.Chain (𝕊 →. 𝕊)): Decidable (∃s₁, ∃ f ∈ c, s₁ ∈ f s) := sorry
+@[simp] theorem SRel.mem_id (a b: α):
+  (a, b) ∈ @id α ↔ a = b := Iff.rfl
 
-noncomputable def ρ_ωSup (c: OmegaCompletePartialOrder.Chain (𝕊 →. 𝕊)) : (𝕊 →. 𝕊) :=
-  fun s => if h: ∃s₁, ∃ f ∈ c, s₁ ∈ f s then Part.some (Classical.choose h) else Part.none
+def SRel.comp (r₁ r₂: Set (α × α)): Set (α × α) :=
+  {a | ∃z, (a.1, z) ∈ r₁ ∧ (z, a.2) ∈ r₂}
 
-theorem ρ_ωSup_eq_some {c : OmegaCompletePartialOrder.Chain (𝕊 →. 𝕊)} (h : ∃ f ∈ c, f s = Part.some s₁) : ρ_ωSup c = f := sorry
+infixl:90 " ○ " => SRel.comp
 
-noncomputable instance: OmegaCompletePartialOrder (𝕊 →. 𝕊) where
-  ωSup := ρ_ωSup
-  le_ωSup := by {
-    intro c i s s₁ h
-    unfold ρ_ωSup
-    sorry
-  }
-  ωSup_le := by {
-    intro c x h s s₁ h₁
-    sorry
-  }
+@[simp] theorem SRel.mem_comp (r₁ r₂: Set (α × α)):
+  a ∈ r₁ ○ r₂ ↔ (∃z, (a.1, z) ∈ r₁ ∧ (z, a.2) ∈ r₂) := Iff.rfl
 
-def Γ (b: Bool) (f: 𝕊 →. 𝕊): (𝕊 →. 𝕊) →𝒄 (𝕊 →. 𝕊) :=
-  {
-    toFun := fun g s => ite b (f s >>= g) s
-    monotone' := by sorry
-    cont := by {
-      unfold OmegaCompletePartialOrder.Continuous
-      simp
-      sorry
-    }
-  }
+def SRel.restrictDomain (r: Set (α × α)) (p: α → Prop): Set (α × α) :=
+  {a ∈ r | p a.1}
 
-@[simp] def ℂ.ρ (c: ℂ) (s: 𝕊): Part 𝕊 :=
-  match c with
-  | skip   => s
-  | x ≔ a => s⟦x↦a.ρ s⟧
-  | c₁;;c₂ => c₁.ρ s >>= c₂.ρ
-  | ife b c₁ c₂ => ite (b.ρ s) (c₁.ρ s) (c₂.ρ s)
-  | wle b c => Part.fix (Γ (b.ρ s) c.ρ) s
+infixl:90 " ⇃ " => SRel.restrictDomain
 
-#simp ℂ.ρ ⟪x ≔ 2; if x ≤ 1 {y ≔ 3} else {z ≔ 4}⟫ ⟦⟧
+@[simp] theorem SRel.mem_restrictDomain (r: Set (α × α)) (p: α → Prop):
+  a ∈ r ⇃ p ↔ a ∈ r ∧ p a.1 := Iff.rfl
 
-@[simp] instance ℂ.ρ.equiv: Setoid ℂ where
-  r a b := ∀ s, ρ a s = ρ b s
+theorem SRel.monotone_comp [PartialOrder α]
+    (f g: α → Set (β × β)) (hf: Monotone f)
+    (hg: Monotone g):
+  Monotone (λ a ↦ f a ○ g a) :=
+  sorry
+
+theorem SRel.monotone_restrictDomain [PartialOrder α]
+    (f : α → Set (β × β)) (p: β → Prop) (hf: Monotone f):
+  Monotone (λ a ↦ f a ⇃ p) :=
+  sorry
+
+def Com.Γ (b: Bexp) (f: Set (State × State)): Set (State × State) →o Set (State × State) := {
+  toFun := (λ g ↦ (f ○ g ⇃ λ s↦b↓s) ∪ (SRel.id ⇃ λ s↦b↓s=false))
+  monotone' := by
+    apply Monotone.union
+    . apply SRel.monotone_restrictDomain
+      apply SRel.monotone_comp
+      . exact monotone_const
+      . exact monotone_id
+    . apply SRel.monotone_restrictDomain
+      exact monotone_const
+}
+
+@[simp]
+def Com.red: Com → Set (State × State)
+  | skip      => SRel.id
+  | x ≔ a     => {s | s.2 = s.1⟦x↦a↓s.1⟧}
+  | c;;d      => red c ○ red d
+  | ife b c d => (red c ⇃ λ s↦b↓s) ∪ (red d ⇃ λ s↦b↓s=false)
+  | wle b c   => OrderHom.lfp (Γ b (red c))
+
+notation (priority := high) "⟦" c "⟧" => Com.red c
+
+#simp ⟦⦃x ≔ 5; if x=1 {skip} else {x ≔ 1}⦄⟧
+
+instance Com.red.equiv: Setoid Com where
+  r c d := ⟦c⟧ = ⟦d⟧
   iseqv := {
-    refl := by simp
-    symm := by {
-      intro _ _ h _
-      apply Eq.symm
-      apply h
-    }
-    trans := by {
-      intro _ _ _ h₁ h₂ x
-      specialize h₁ x
-      specialize h₂ x
-      rw [h₁, h₂]
-    }
+    refl := λ _ ↦ Eq.refl _
+    symm := Eq.symm
+    trans := (· ▸ ·)
   }
 
-theorem ℂ.ρ.wle_unfold: wle b c ≈ ife b (c;;wle b c) skip :=
-  by
-    intro s
-    sorry
-
-theorem ℂ.ρ.skipl: (skip;;c) ≈ c := by intro _; simp
-
-theorem ℂ.ρ.skipr: (c;;skip) ≈ c := by intro _; simp
-
-theorem ℂ.ρ.if_tt (hb: b ≈ 𝔹.tt):
-  ife b c₁ c₂ ≈ c₁ :=
-  by
-    intro _
-    simp
-    rw [hb]
-    simp
-
-theorem ℂ.ρ.if_ff (hb: b ≈ 𝔹.ff):
-  ife b c₁ c₂ ≈ c₂ :=
-  by
-    intro _
-    simp
-    rw [hb]
-    simp
+-- theorem Com.red.cat_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
+--   (c₁;;d) ≈ (c₂;;d₂) :=
+--   by
+--     unfold red
+--     exact hc ▸ hd ▸ rfl

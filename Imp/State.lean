@@ -1,15 +1,15 @@
-inductive 𝕊
-  | init : 𝕊
-  | update : 𝕊 → String → Int → 𝕊
+inductive State
+  | init : State
+  | update : State → String → Int → State
 
-@[simp] def 𝕊.red (s: 𝕊) (x: String): Int :=
+@[simp] def State.red (s: State) (x: String): Int :=
   match s with
-  | 𝕊.init => 0 -- unbound variables are 0
-  | 𝕊.update s₁ x₁ n₁ => if x₁ = x then n₁ else red s₁ x
+  | State.init => 0 -- unbound variables are 0
+  | State.update s₁ x₁ n₁ => if x₁ = x then n₁ else red s₁ x
 
-infix:110 "↓" => 𝕊.red
+infix:110 "↓" => State.red
 
-instance 𝕊.equiv: Setoid 𝕊 where
+instance State.equiv: Setoid State where
   r s₁ s₂ := ∀x, s₁↓x = s₂↓x
   iseqv := {
     refl := by simp
@@ -26,9 +26,9 @@ instance 𝕊.equiv: Setoid 𝕊 where
     }
   }
 
-notation "⟦⟧" => 𝕊.init
-notation "⟦" x "↦" e "⟧" => 𝕊.update ⟦⟧ x e
-notation s "⟦" x "↦" e "⟧" => 𝕊.update s x e
+notation "⟦⟧" => State.init
+notation "⟦" x "↦" e "⟧" => State.update ⟦⟧ x e
+notation s "⟦" x "↦" e "⟧" => State.update s x e
 
 #check ⟦⟧
 #check ⟦"x"↦3⟧⟦"x"↦4⟧

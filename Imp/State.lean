@@ -2,7 +2,7 @@ inductive State
   | init   : State
   | update : State → String → Int → State
 
-@[simp] def State.red (s: State) (x: String): Int :=
+@[simp, reducible] def State.red (s: State) (x: String): Int :=
   match s with
   | State.init => 0 -- unbound variables are 0
   | State.update s₁ x₁ n₁ => if x₁ = x then n₁ else red s₁ x

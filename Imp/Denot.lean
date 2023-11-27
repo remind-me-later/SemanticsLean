@@ -22,11 +22,11 @@ def SRel.comp (f g: α →ˢ α): α →ˢ α :=
 
 infixl:90 " ○ " => SRel.comp
 
-@[simp] theorem SRel.mem_comp {r₁ r₂: α →ˢ α}:
-  x ∈ r₁ ○ r₂ ↔ ∃z, (x.1, z) ∈ r₁ ∧ (z, x.2) ∈ r₂ := Iff.rfl
+@[simp] theorem SRel.mem_comp {f g: α →ˢ α}:
+  x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g := Iff.rfl
 
 @[reducible]
-def SRel.restrict (f: α →ˢ α) (s: Set α): α →ˢ α :=
+def SRel.restrict (f: α →ˢ β) (s: Set α): α →ˢ β :=
   {x ∈ f | x.1 ∈ s}
 
 theorem SRel.monotone_comp [PartialOrder α] {f g: α → (β →ˢ β)}
@@ -48,7 +48,6 @@ def Com.Γ (b: Bexp) (f: State →ˢ State): (State →ˢ State) →o (State →
     (SRel.monotone_restrict monotone_const)
 }
 
--- @[simp]
 def Com.denot: Com → (State →ˢ State)
   | skip       => SRel.id
   | ass x a    => {s | s.2 = s.1⟦x↦a↓s.1⟧}
@@ -64,7 +63,7 @@ notation (priority := high) "⟦" c "⟧" => Com.denot c
 
 @[simp]
 instance Com.denot.equiv: Setoid Com where
-  r c d := ⟦c⟧ = ⟦d⟧
+  r := (⟦·⟧ = ⟦·⟧)
   iseqv := {
     refl := λ _ ↦ Eq.refl _
     symm := Eq.symm

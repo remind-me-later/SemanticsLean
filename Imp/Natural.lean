@@ -37,16 +37,17 @@ theorem Com.Nat.demo₂:
 
 theorem Com.Nat.skip_same: (skip, s) ⟹ s₁ ↔ s = s₁ := ⟨(by cases .; rfl), (· ▸ skip₁)⟩
 
-instance Nat.equiv: Setoid Com where
-  r c d := ∀ s t, (c, s) ⟹ t ↔ (d, s) ⟹ t
+instance Com.Nat.equiv: Setoid Com where
+  r c d := ∀ s t, (c, s) ⟹ t = (d, s) ⟹ t
   iseqv := {
-    refl := by simp
-    symm := by intro _ _ h; simp [h]
-    trans := by intro _ _ _ h₁ h₂; simp [h₁, h₂]
+    refl := λ _ _ _ ↦ Eq.refl _
+    symm := λ h s n ↦ Eq.symm (h s n)
+    trans := λ h₁ h₂ x n ↦ (h₁ x n) ▸ (h₂ x n)
   }
 
 theorem Com.Nat.skipl: (skip;;c) ≈ c := by
   intro _ _
+  apply propext
   constructor
   . intro h; cases h with | cat₁ _ hc hd =>
     exact skip_same.mp hc ▸ hd
@@ -54,30 +55,30 @@ theorem Com.Nat.skipl: (skip;;c) ≈ c := by
 
 theorem Com.Nat.skipr: (c;;skip) ≈ c := by
   intro _ _
+  apply propext
   constructor
   . intro h; cases h with | cat₁ _ hc hd =>
     exact skip_same.mp hd ▸ hc
   . exact (cat₁ _ · skip₁)
 
 theorem Com.Nat.cond_tt (h: b ≈ Bexp.tt): cond b c d ≈ c := by
-  intro _ _; constructor <;> intro h₁
+  intro _ _; apply propext; constructor <;> intro h₁
   . cases h₁ with
     | cond₁ => assumption
     | cond₂ hb => rw [h] at hb; contradiction
-  . apply Nat.cond₁ _ h₁
-    . apply h
+  . exact Nat.cond₁ (h ▸ rfl) h₁
 
 theorem Com.Nat.cond_ff (h: b ≈ Bexp.ff): cond b c d ≈ d := by
-  intro _ _; constructor <;> intro h₁
+  intro _ _; apply propext; constructor <;> intro h₁
   . cases h₁ with
     | cond₂ => assumption
     | cond₁ hb => rw [h] at hb; contradiction
-  . apply Nat.cond₂ _ h₁
-    . apply h
+  . exact Nat.cond₂ (h ▸ rfl) h₁
 
 theorem Com.Nat.wle_unfold:
   wle b c ≈ cond b (c;;wle b c) skip := by
   intro s t
+  apply propext
   constructor <;> intro h
   . cases hb: b↓s
     . apply cond₂ hb

@@ -63,26 +63,29 @@ theorem Bexp.red.from_Nat {bs: Bexp × State} (h: bs ⟹ x): red.uncurry bs = x 
 theorem Bexp.not_true_eq_false: (!b↓s) = (not b)↓s := by simp
 
 protected instance Bexp.Nat.equiv: Setoid Bexp where
-  r a b := ∀ s n, (a,s) ⟹ n ↔ (b,s) ⟹ n
+  r a b := ∀ s n, (a, s) ⟹ n = (b, s) ⟹ n
   iseqv := {
-    refl := λ _ _ _ ↦ Iff.refl _
-    symm := λ h s n ↦ Iff.symm (h s n)
-    trans := λ h₁ h₂ x n ↦ Iff.trans (h₁ x n) (h₂ x n)
+    refl := λ _ _ _ ↦ Eq.refl _
+    symm := λ h s n ↦ Eq.symm (h s n)
+    trans := λ h₁ h₂ x n ↦ (h₁ x n) ▸ (h₂ x n)
   }
 
 instance Bexp.red.equiv: Setoid Bexp where
-  r a b := ∀ s, a.red s = b.red s
+  r := (red · = red ·)
   iseqv := {
-    refl := λ _ _ ↦ Eq.refl _
-    symm := λ h s ↦ Eq.symm (h s)
-    trans := λ h₁ h₂ s ↦ h₁ s ▸ h₂ s
+    refl := λ _ ↦ Eq.refl _
+    symm := (Eq.symm ·)
+    trans := (· ▸ ·)
   }
 
 protected theorem Bexp.Nat_eq_eq_red_eq: Bexp.Nat.equiv.r a b ↔ Bexp.red.equiv.r a b :=
   by
-  constructor <;> intro h s
-  . specialize h s (red b s)
+  constructor <;> intro h
+  . simp [Setoid.r] at *
+    apply funext
+    intro s
+    specialize h s (b↓s)
     simp at h
-    assumption
-  . specialize h s
+    exact h
+  . simp [Setoid.r] at *
     simp [h]

@@ -48,30 +48,33 @@ theorem Aexp.Nat.from_red {a: Aexp} (h: a↓s = n): (a,s) ⟹ n :=
   | sub _ _ l r => exact h ▸ sub₁ (l rfl) (r rfl)
   | mul _ _ l r => exact h ▸ mul₁ (l rfl) (r rfl)
 
-@[simp] theorem Aexp.Nat_iff_red: (a,s) ⟹ n ↔ a↓s = n := ⟨red.from_Nat, Nat.from_red⟩
-@[simp] theorem Aexp.Nat_iff_red': (a,s) ⟹ (a↓s) := Nat.from_red rfl
+@[simp] theorem Aexp.Nat_iff_red: (a, s) ⟹ n ↔ a↓s = n := ⟨red.from_Nat, Nat.from_red⟩
+@[simp] theorem Aexp.Nat_iff_red': (a, s) ⟹ (a↓s) := Nat.from_red rfl
 
 protected instance Aexp.Nat.equiv: Setoid Aexp where
-  r a b := ∀ s n, (a,s) ⟹ n ↔ (b,s) ⟹ n
+  r a b := ∀ s n, (a, s) ⟹ n = (b, s) ⟹ n
   iseqv := {
-    refl := λ _ _ _ ↦ Iff.refl _
-    symm := λ h s n ↦ Iff.symm (h s n)
-    trans := λ h₁ h₂ x n ↦ Iff.trans (h₁ x n) (h₂ x n)
+    refl := λ _ _ _ ↦ Eq.refl _
+    symm := λ h s n ↦ Eq.symm (h s n)
+    trans := λ h₁ h₂ x n ↦ (h₁ x n) ▸ (h₂ x n)
   }
 
 instance Aexp.red.equiv: Setoid Aexp where
-  r a b := ∀ s, a.red s = b.red s
+  r := (red · = red ·)
   iseqv := {
-    refl := λ _ _ ↦ Eq.refl _
-    symm := λ h s ↦ Eq.symm (h s)
-    trans := λ h₁ h₂ s ↦ h₁ s ▸ h₂ s
+    refl := λ _ ↦ Eq.refl _
+    symm := (Eq.symm ·)
+    trans := (· ▸ ·)
   }
 
 protected theorem Aexp.Nat_eq_eq_red_eq: Aexp.Nat.equiv.r a b ↔ Aexp.red.equiv.r a b :=
   by
-  constructor <;> intro h s
-  . specialize h s (red b s)
+  constructor <;> intro h
+  . simp [Setoid.r] at *
+    apply funext
+    intro s
+    specialize h s (b↓s)
     simp at h
-    assumption
-  . specialize h s
+    exact h
+  . simp [Setoid.r] at *
     simp [h]

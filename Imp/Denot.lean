@@ -25,6 +25,7 @@ infixl:90 " ○ " => SRel.comp
 @[simp] theorem SRel.mem_comp {r₁ r₂: α →ˢ α}:
   x ∈ r₁ ○ r₂ ↔ ∃z, (x.1, z) ∈ r₁ ∧ (z, x.2) ∈ r₂ := Iff.rfl
 
+@[reducible]
 def SRel.restrict (f: α →ˢ α) (s: Set α): α →ˢ α :=
   {x ∈ f | x.1 ∈ s}
 
@@ -47,7 +48,7 @@ def Com.Γ (b: Bexp) (f: State →ˢ State): (State →ˢ State) →o (State →
     (SRel.monotone_restrict monotone_const)
 }
 
-@[simp]
+-- @[simp]
 def Com.denot: Com → (State →ˢ State)
   | skip      => SRel.id
   | x ≔ a     => {s | s.2 = s.1⟦x↦a↓s.1⟧}
@@ -73,30 +74,30 @@ instance Com.denot.equiv: Setoid Com where
 theorem Com.denot.cat_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
   (c₁;;d₁) ≈ (c₂;;d₂) :=
   by
-    simp [HasEquiv.Equiv]
+    simp [HasEquiv.Equiv, denot]
     exact hc ▸ hd ▸ rfl
 
 theorem Com.denot.ife_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
   (ife b c₁ d₁) ≈ (ife b c₂ d₂) :=
   by
-    simp [HasEquiv.Equiv]
+    simp [HasEquiv.Equiv, denot]
     exact hc ▸ hd ▸ rfl
 
 theorem Com.denot.wle_congr (hc: c₁ ≈ c₂):
   (wle b c₁) ≈ (wle b c₂) :=
   by
-    simp [HasEquiv.Equiv]
+    simp [HasEquiv.Equiv, denot]
     exact hc ▸ rfl
 
 theorem Com.denot.cat_skipl:
   (skip;;c) ≈ c :=
-  by simp [HasEquiv.Equiv, SRel.comp]
+  by simp [HasEquiv.Equiv, denot, SRel.comp]
 
 theorem Com.denot.cat_skipr:
   (c;;skip) ≈ c :=
-  by simp [HasEquiv.Equiv, SRel.comp]
+  by simp [HasEquiv.Equiv, denot, SRel.comp]
 
-theorem Com.denot.ife_unfold:
-  ife b (c;;wle b c) skip ≈ wle b c := by
+theorem Com.denot.wle_unfold:
+  wle b c ≈ ife b (c;;wle b c) skip := by
   simp [HasEquiv.Equiv]
-  exact OrderHom.map_lfp (Γ b ⟦c⟧)
+  exact Eq.symm (OrderHom.map_lfp (Γ b ⟦c⟧))

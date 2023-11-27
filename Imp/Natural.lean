@@ -7,19 +7,24 @@ inductive Com.Nat: Com × State → State → Prop
   | ass₁:
     Nat (x ≔ a, s) (s⟦x↦a↓s⟧)
 
-  | cat₁ t (hc: Nat (c, s) t) (hd: Nat (d, t) u):
+  | cat₁ t
+    (hc: Nat (c, s) t) (hd: Nat (d, t) u):
     Nat (c;;d, s) u
 
-  | ife₁ (hb: b↓s) (hc: Nat (c, s) t):
+  | ife₁ {b: Bexp}
+    (hb: b↓s = true) (hc: Nat (c, s) t):
     Nat (ife b c d, s) t
 
-  | ife₂ {b: Bexp} (hb: b↓s = false) (hd: Nat (d, s) t):
+  | ife₂ {b: Bexp}
+    (hb: b↓s = false) (hd: Nat (d, s) t):
     Nat (ife b c d, s) t
 
-  | wle₁ u (hb: b↓s) (hc: Nat (c, s) u) (hw: Nat (wle b c, u) t):
+  | wle₁ {b: Bexp} u
+    (hb: b↓s = true) (hc: Nat (c, s) u) (hw: Nat (wle b c, u) t):
     Nat (wle b c, s) t
 
-  | wle₂ {b: Bexp} (hb: b↓s = false):
+  | wle₂ {b: Bexp}
+    (hb: b↓s = false):
     Nat (wle b c, s) s
 
 infix:110 " ⟹ " => Com.Nat

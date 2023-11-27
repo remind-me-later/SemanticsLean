@@ -48,8 +48,8 @@ theorem Com.Step.demo₁:
   by
   constructor <;> intro h
   . cases hb: b↓s <;> cases h
-    . exact Or.inr (And.intro rfl (hb ▸ rfl))
-    . exact Or.inl (And.intro rfl (hb ▸ rfl))
+    . exact Or.inr ⟨rfl, hb ▸ rfl⟩
+    . exact Or.inl ⟨rfl, hb ▸ rfl⟩
   . have hss: ss = bif b↓s then (c,s) else (d,s) := by
       cases hb: b↓s <;> rw [hb] at h <;> simp at * <;> assumption
     exact hss ▸ cond₁
@@ -60,27 +60,33 @@ theorem Com.Step.demo₁:
 
 open Relation
 
-infix:110 " ⇒* " => ReflTransGen Com.Step
+alias Com.Star        := ReflTransGen
+alias Com.Star.head   := ReflTransGen.head
+alias Com.Star.trans  := ReflTransGen.trans
+alias Com.Star.refl   := ReflTransGen.refl
+alias Com.Star.single := ReflTransGen.single
+alias Com.Star.lift   := ReflTransGen.lift
+alias Com.Star.head_induction_on := ReflTransGen.head_induction_on
+
+infix:110 " ⇒* " => Com.Star Com.Step
 
 theorem Com.Star.demo₂:
   (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟦⟧) ⇒*
       (⦃while 0 <= x {x = x - 1}⦄, (⟦"x"↦2⟧)) :=
-  ReflTransGen.head (Step.cat₂ Step.ass₁) (ReflTransGen.head Step.cat₁ ReflTransGen.refl)
+  head (Step.cat₂ Step.ass₁) (head Step.cat₁ Star.refl)
 
 theorem Com.Star.cat_skip_cat
   (h: (c, s) ⇒* (skip, t)):
   (c;;d, s) ⇒* (skip;;d, t) :=
-  ReflTransGen.lift (λ x ↦ (Prod.fst x;;d, Prod.snd x)) (λ _ _ h => Step.cat₂ h) h
+  lift (λ (x: Com × State) ↦ (x.1;;d, x.2)) (λ _ _ h => Step.cat₂ h) h
 
 theorem Com.Star.cat
   (h₁: (c₁, s) ⇒* (skip, s₁))
   (h₂: (c₂, s₁) ⇒* (skip, s₂)):
   (c₁;;c₂, s) ⇒* (skip, s₂) :=
-  by
-  apply ReflTransGen.trans (cat_skip_cat h₁)
-  exact ReflTransGen.trans (ReflTransGen.single Step.cat₁) h₂
+  trans (cat_skip_cat h₁) (trans (single Step.cat₁) h₂)
 
 theorem Com.Star.cat_no_influence
   (h: (c₁, s) ⇒* (skip, s₁)):
   (c₁;;c₂, s) ⇒* (c₂, s₁) :=
-  ReflTransGen.trans (cat_skip_cat h) (ReflTransGen.single Step.cat₁)
+  trans (cat_skip_cat h) (single Step.cat₁)

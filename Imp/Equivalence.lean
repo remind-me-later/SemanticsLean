@@ -2,63 +2,52 @@ import Imp.Natural
 import Imp.Structural
 import Imp.Denot
 
-theorem Com.Nat_imp_Star {cs: Com × State} (h: cs ⟹ t): cs ⇒* (skip, t) := by
+theorem Com.Star.of_Nat {x: Com × State} (h: x ⟹ s): x ⇒* (skip, s) := by
   induction h with
-  | skip₁ => exact Relation.ReflTransGen.refl
-  | ass₁ => exact Relation.ReflTransGen.single Step.ass₁
+  | skip₁ => exact refl
+  | ass₁ => exact single Step.ass₁
   | cat₁ _ _ _ ihc ihd => exact Star.cat ihc ihd
-  | cond₁ hb _ ih =>
-    exact Relation.ReflTransGen.head Step.cond₁ (hb ▸ ih)
-  | cond₂ hb _ ih =>
-    exact Relation.ReflTransGen.head Step.cond₁ (hb ▸ ih)
+  | cond₁ hb _ ih => exact head Step.cond₁ (hb ▸ ih)
+  | cond₂ hb _ ih => exact head Step.cond₁ (hb ▸ ih)
   | wle₁ _ hb _ _ ihc ihw =>
-    apply Relation.ReflTransGen.head Step.wle₁
-    exact Relation.ReflTransGen.head Step.cond₁ (hb ▸ Star.cat ihc ihw)
+    exact head Step.wle₁ (head Step.cond₁ (hb ▸ Star.cat ihc ihw))
   | wle₂ hb =>
-    apply Relation.ReflTransGen.head Step.wle₁
-    apply Relation.ReflTransGen.head _ Relation.ReflTransGen.refl
-    exact (Step.cond_false hb).mpr rfl
+    exact head Step.wle₁ (head ((Step.cond_false hb).mpr rfl) refl)
 
-lemma Com.Step_imp_Nat (h₁: cs₀ ⇒ cs₁) (h₂: cs₁ ⟹ s₂): cs₀ ⟹ s₂ := by
-  induction h₁ generalizing s₂ with
-  | ass₁ => cases h₂; exact Nat.ass₁
-  | cat₁ => exact Nat.cat₁ _ Nat.skip₁ h₂
+lemma Com.Nat.of_Step (h₁: x ⇒ y) (h₂: y ⟹ s): x ⟹ s := by
+  induction h₁ generalizing s with
+  | ass₁ => cases h₂; exact ass₁
+  | cat₁ => exact cat₁ _ skip₁ h₂
   | cat₂ _ ih =>
     cases h₂ with
-    | cat₁ _ hc hd => exact Nat.cat₁ _ (ih hc) hd
-  | cond₁ => exact Nat.cond_ext''.mpr h₂
-  | wle₁ => rw [Nat.wle_unfold]; exact h₂
+    | cat₁ w hc hd => exact cat₁ w (ih hc) hd
+  | cond₁ => exact cond_ext''.mpr h₂
+  | wle₁ => rw [wle_unfold]; exact h₂
 
-theorem Com.Star_imp_Nat (h: cs ⇒* (skip, t)): cs ⟹ t := by
-  induction h using Relation.ReflTransGen.head_induction_on with
-  | refl => exact Nat.skip₁
-  | head cs cs' ht => cases cs' <;> exact Step_imp_Nat cs ht
+theorem Com.Nat.of_Star (h: x ⇒* (skip, t)): x ⟹ t := by
+  induction h using Star.head_induction_on with
+  | refl => exact skip₁
+  | head x x' ht => cases x' <;> exact of_Step x ht
 
-theorem Com.Star_iff_Nat: cs ⇒* (skip, t) ↔ cs ⟹ t := ⟨Star_imp_Nat, Nat_imp_Star⟩
+theorem Com.Star_iff_Nat: x ⇒* (skip, t) ↔ x ⟹ t := ⟨Nat.of_Star, Star.of_Nat⟩
 
-theorem Com.denot.of_Nat {cs: Com × State} (h : cs ⟹ t):
-  (cs.2, t) ∈ ⟦cs.1⟧ := by
+theorem Com.denot.of_Nat {x: Com × State} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1⟧ := by
   induction h with
-  | skip₁ => simp [denot]
-  | ass₁  => simp [denot]
+  | skip₁ => rfl
+  | ass₁  => rfl
   | cat₁ t _ _ ih₁ ih₂ =>
-    simp at *
-    exists t
+    exact ⟨t, ⟨ih₁, ih₂⟩⟩
   | cond₁ hb _ ih =>
-    simp at *
-    simp [denot, Or.inl, SRel.restrict, hb, ih]
+    simp [denot]
+    exact Or.inl ⟨ih, hb⟩
   | cond₂ hb _ ih =>
-    simp at *
-    simp [denot, Or.inr, SRel.restrict, hb, ih]
+    simp [denot]
+    exact Or.inr ⟨ih, hb⟩
   | wle₁ t hb _ _ ih₁ ih₂ =>
-    simp at *
     rw [wle_unfold]
     simp [denot]
-    apply Or.inl
-    apply And.intro _ hb
-    exists t
+    exact Or.inl ⟨⟨t, ⟨ih₁, ih₂⟩⟩, hb⟩
   | wle₂ hb =>
-    simp at *
     rw [wle_unfold]
     simp [denot]
     exact Or.inr hb

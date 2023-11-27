@@ -9,32 +9,32 @@ inductive Bexp.Nat: Bexp × State → Bool → Prop
     Nat (ff, _) false
 
   | eq₁:
-    Nat (a =ₛ b, s) (a↓s = b↓s)
+    Nat (eq a b, s) (a↓s = b↓s)
 
   | le₁:
-    Nat (a ≤ₛ b, s) (a↓s ≤ b↓s)
+    Nat (le a b, s) (a↓s ≤ b↓s)
 
   | not₁ {a: Bexp} (h: Nat (a,s) n):
-    Nat (¬ₛa, s) (!n)
+    Nat (not a, s) (!n)
 
   | and₁ {a b: Bexp} (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
-    Nat (a ∧ₛ b, s) (n && m)
+    Nat (and a b, s) (n && m)
 
   | or₁ {a b: Bexp} (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
-    Nat (a ∨ₛ b, s) (n || m)
+    Nat (or a b, s) (n || m)
 
 infix:110 " ⟹ " => Bexp.Nat
 
 -- Denotational semantics of Bexp
 @[reducible, simp] def Bexp.red (b: Bexp) (s: State): Bool :=
   match b with
-  | tt     => true
-  | ff     => false
-  | ¬ₛb    => !red b s
-  | a ∧ₛ b => red a s && red b s
-  | a ∨ₛ b => red a s || red b s
-  | a =ₛ b => a↓s = b↓s
-  | a ≤ₛ b => a↓s ≤ b↓s
+  | tt      => true
+  | ff      => false
+  | not b   => !red b s
+  | and a b => red a s && red b s
+  | or a b  => red a s || red b s
+  | eq a b  => a↓s = b↓s
+  | le a b  => a↓s ≤ b↓s
 
 infix:110 "↓" => Bexp.red
 
@@ -60,7 +60,7 @@ theorem Bexp.red.from_Nat {bs: Bexp × State} (h: bs ⟹ x): red.uncurry bs = x 
 
 @[simp] theorem Bexp.Nat_eq_red {b: Bexp}: (b,s) ⟹ r ↔ b↓s = r := ⟨red.from_Nat, Nat.from_red⟩
 
-theorem Bexp.not_true_eq_false: (!b↓s) = (¬ₛb)↓s := by simp
+theorem Bexp.not_true_eq_false: (!b↓s) = (not b)↓s := by simp
 
 protected instance Bexp.Nat.equiv: Setoid Bexp where
   r a b := ∀ s n, (a,s) ⟹ n ↔ (b,s) ⟹ n

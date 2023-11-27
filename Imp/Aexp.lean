@@ -12,13 +12,13 @@ inductive Aexp.Nat: Aexp × State → Int → Prop
     Nat (loc x, s) (s↓x)
 
   | add₁ (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
-    Nat (a + b, s) (n + m)
+    Nat (add a b, s) (n + m)
 
   | sub₁ (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
-    Nat (a - b, s) (n - m)
+    Nat (sub a b, s) (n - m)
 
   | mul₁ (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
-    Nat (a * b, s) (n * m)
+    Nat (mul a b, s) (n * m)
 
 infix:110 " ⟹ " => Aexp.Nat
 
@@ -27,9 +27,9 @@ infix:110 " ⟹ " => Aexp.Nat
   match a with
   | num n => n
   | loc x => s↓x
-  | a + b => red a s + red b s
-  | a - b => red a s - red b s
-  | a * b => red a s * red b s
+  | add a b => red a s + red b s
+  | sub a b => red a s - red b s
+  | mul a b => red a s * red b s
 
 infix:110 "↓" => Aexp.red
 

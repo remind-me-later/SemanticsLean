@@ -4,7 +4,7 @@ import Mathlib.Logic.Relation
 
 inductive Com.Step: Com × State → Com × State → Prop
   | ass₁:
-    Step (x ≔ a, s) (skip, s⟦x↦a↓s⟧)
+    Step (ass x a, s) (skip, s⟦x↦a↓s⟧)
 
   | cat₁:
     Step (skip;;c, s) (c, s)
@@ -12,17 +12,17 @@ inductive Com.Step: Com × State → Com × State → Prop
   | cat₂ (h: Step (c, s) (e, t)):
     Step (c;;d, s) (e;;d, t)
 
-  | ife₁:
-    Step (ife b c d, s) (cond (b↓s) (c, s) (d, s))
+  | cond₁:
+    Step (cond b c d, s) (bif b↓s then (c, s) else (d, s))
 
   | wle₁:
-    Step (wle b c, s) (ife b (c;;wle b c) skip, s)
+    Step (wle b c, s) (cond b (c;;wle b c) skip, s)
 
 infix:110 " ⇒ " => Com.Step
 
 theorem Com.Step.demo₁:
-  (⦃x ≔ 2; while 0 ≤ x {x≔x-1}⦄, ⟦⟧) ⇒
-      (⦃skip; while 0 ≤ x {x≔x-1}⦄, ⟦"x"↦2⟧) := cat₂ ass₁
+  (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟦⟧) ⇒
+      (⦃skip; while 0 <= x {x = x - 1}⦄, ⟦"x"↦2⟧) := cat₂ ass₁
 
 @[simp] theorem Com.Step.cat_iff:
   (c₁;;c₂, s) ⇒ et ↔
@@ -42,29 +42,29 @@ theorem Com.Step.demo₁:
       cases h with | intro h₁ h₂ =>
         exact h₁ ▸ h₂ ▸ Step.cat₁
 
-@[simp] lemma Com.Step.ite_iff:
-  (ife b c d, s) ⇒ ss ↔
+@[simp] lemma Com.Step.cond_iff:
+  (cond b c d, s) ⇒ ss ↔
   (b↓s ∧ ss = (c, s)) ∨ (b↓s = false ∧ ss = (d, s)) :=
   by
   constructor <;> intro h
   . cases hb: b↓s <;> cases h
     . exact Or.inr (And.intro rfl (hb ▸ rfl))
     . exact Or.inl (And.intro rfl (hb ▸ rfl))
-  . have hss: ss = cond (b↓s) (c,s) (d,s) := by
+  . have hss: ss = bif b↓s then (c,s) else (d,s) := by
       cases hb: b↓s <;> rw [hb] at h <;> simp at * <;> assumption
-    exact hss ▸ ife₁
+    exact hss ▸ cond₁
 
-@[simp] lemma Com.Step.ite_false {b: Bexp} (hb: b↓s = false):
-  (ife b c d, s) ⇒ ss ↔ (ss = (d, s)) :=
-  by rw [ite_iff, hb]; simp
+@[simp] lemma Com.Step.cond_false {b: Bexp} (hb: b↓s = false):
+  (cond b c d, s) ⇒ ss ↔ (ss = (d, s)) :=
+  by rw [cond_iff, hb]; simp
 
 open Relation
 
 infix:110 " ⇒* " => ReflTransGen Com.Step
 
 theorem Com.Star.demo₂:
-  (⦃ x ≔ 2; while 0 ≤ x {x≔x-1}⦄, ⟦⟧) ⇒*
-      (⦃while 0 ≤ x {x≔x-1}⦄, (⟦"x"↦2⟧)) :=
+  (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟦⟧) ⇒*
+      (⦃while 0 <= x {x = x - 1}⦄, (⟦"x"↦2⟧)) :=
   ReflTransGen.head (Step.cat₂ Step.ass₁) (ReflTransGen.head Step.cat₁ ReflTransGen.refl)
 
 theorem Com.Star.cat_skip_cat

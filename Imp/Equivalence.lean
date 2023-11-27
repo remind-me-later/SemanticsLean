@@ -73,7 +73,7 @@ theorem Com.Nat.of_denot (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
       cases h with | intro h hb =>
         exact cond₂ hb (ih₂ h)
   | wle b c ih =>
-    suffices ⟦wle b c⟧ ≤ {s | (wle b c, s.1) ⟹ s.2} by apply this
+    suffices ⟦wle b c⟧ ⊆ {s | (wle b c, s.1) ⟹ s.2} by apply this
     apply OrderHom.lfp_le
     intro ss h
     cases ss with | mk =>
@@ -81,11 +81,10 @@ theorem Com.Nat.of_denot (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
       | inl h =>
         cases h with | intro h hb =>
           cases h with | intro w h =>
-            simp at *
             exact wle₁ w hb (ih h.left) h.right
       | inr h =>
         cases h with | intro hq hb =>
-          simp at *
+          simp at hq
           exact hq ▸ wle₂ hb
 
 theorem Com.Nat_iff_denot: (s, t) ∈ ⟦c⟧ ↔ (c, s) ⟹ t := ⟨Nat.of_denot, denot.of_Nat⟩

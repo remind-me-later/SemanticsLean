@@ -4,6 +4,7 @@ import Mathlib.Logic.Relation
 
 namespace Com
 
+@[reducible]
 inductive Step: Config → Config → Prop where
   | ass₁:
     Step (ass x a, s) (skip, s⟪x ≔ a⇓s⟫)

@@ -6,7 +6,7 @@ import Mathlib.Init.Function
 namespace Aexp
 
 -- Operational semantics of aexp
-inductive Nat: Aexp × State → Int → Prop
+inductive Nat: Aexp × State → Val → Prop
   | num₁:
     Nat (num n, _) n
 
@@ -25,7 +25,7 @@ inductive Nat: Aexp × State → Int → Prop
 infix:110 " ⟹ " => Nat
 
 -- Denotational semantics of arithmetic expressions
-@[reducible] def red (a: Aexp) (s: State): Int :=
+@[reducible] def red (a: Aexp) (s: State): Val :=
   match a with
   | num n => n
   | loc x => s x

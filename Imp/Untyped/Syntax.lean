@@ -1,7 +1,10 @@
 import Imp.State
 
+@[reducible]
+def Val := Int
+
 inductive Aexp where
-  | num : Int → Aexp
+  | num : Val → Aexp
   | loc : String → Aexp
   | add : Aexp → Aexp → Aexp
   | sub : Aexp → Aexp → Aexp

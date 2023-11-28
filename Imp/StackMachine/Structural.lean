@@ -8,17 +8,17 @@ inductive Instr.Step: Instr × StackMachine → StackMachine → Prop where
   | load₁:
     Step (load x, ⟨pc, s, stk⟩) ⟨pc + 1, s, stk.concat $ s x⟩
 
-  | add₁:
-    Step (add, ⟨pc, s, stk⟩) ⟨pc + 1, s, stk.concat (stk.take 2).sum⟩
+  | add₁ (h: [a, b] = stk.take 2):
+    Step (add, ⟨pc, s, stk⟩) ⟨pc + 1, s, stk.tail.tail.concat $ a + b⟩
 
-  | store₁:
-    Step (store x, ⟨pc, s, stk⟩) ⟨pc + 1, s⟪x ≔ stk.headD 0⟫, stk.tail⟩
+  | store₁ (h: some head = stk.head?):
+    Step (store x, ⟨pc, s, stk⟩) ⟨pc + 1, s⟪x ≔ head⟫, stk.tail⟩
 
   | jmp₁:
     Step (jmp n, ⟨pc, s, stk⟩) ⟨pc + 1 + n, s, stk⟩
 
-  | jmplt₁:
-    Step (jmplt n, ⟨pc, s, stk⟩) ⟨bif stk.tail.headD 0 < stk.headD 0 then pc + 1 + n else pc + 1, s, stk⟩
+  | jmplt₁ (h: [a, b] = stk.take 2):
+    Step (jmplt n, ⟨pc, s, stk⟩) ⟨bif b < a then pc + 1 + n else pc + 1, s, stk⟩
 
-  | jmpge₁:
-    Step (jmpge n, ⟨pc, s, stk⟩) ⟨bif stk.tail.headD 0 ≥ stk.headD 0 then pc + 1 + n else pc + 1, s, stk⟩
+  | jmpge₁ (h: [a, b] = stk.take 2):
+    Step (jmpge n, ⟨pc, s, stk⟩) ⟨bif b ≥ a then pc + 1 + n else pc + 1, s, stk⟩

@@ -6,30 +6,30 @@ theorem Com.Star.of_Nat {x: Config} (h: x ⟹ s): x ⇒* (skip, s) := by
   induction h with
   | skip₁ => exact refl
   | ass₁ => exact single Step.ass₁
-  | cat₁ _ _ _ ihc ihd => exact Star.cat ihc ihd
+  | cat₁ _ _ _ ihc ihd => exact cat ihc ihd
   | cond₁ hb _ ih => exact head Step.cond₁ (hb ▸ ih)
   | cond₂ hb _ ih => exact head Step.cond₁ (hb ▸ ih)
   | loop₁ _ hb _ _ ihc ihw =>
-    exact head Step.loop₁ (head Step.cond₁ (hb ▸ Star.cat ihc ihw))
+    exact head Step.loop₁ $ trans (hb ▸ cat ihc ihw) refl
   | loop₂ hb =>
-    exact head Step.loop₁ (head ((Step.cond_false hb).mpr rfl) refl)
+    exact head Step.loop₁ $ hb ▸ refl
 
-lemma Com.Nat.of_Step (h₁: x ⇒ y) (h₂: y ⟹ s): x ⟹ s := by
+lemma Com.Natural.of_Step (h₁: x ⇒ y) (h₂: y ⟹ s): x ⟹ s := by
   induction h₁ generalizing s with
-  | ass₁ => cases h₂; exact ass₁
+  | ass₁ => exact (skip_iff.mp h₂) ▸ ass₁
   | cat₁ => exact cat₁ _ skip₁ h₂
   | cat₂ _ ih =>
     cases h₂ with
     | cat₁ w hc hd => exact cat₁ w (ih hc) hd
-  | cond₁ => exact cond_ext'.mpr h₂
-  | loop₁ => rw [loop_unfold]; exact h₂
+  | cond₁ => rw [cond_iff']; exact h₂
+  | loop₁ => rw [loop_unfold, cond_iff']; exact h₂
 
-theorem Com.Nat.of_Star (h: x ⇒* (skip, t)): x ⟹ t := by
+theorem Com.Natural.of_Star (h: x ⇒* (skip, t)): x ⟹ t := by
   induction h using Star.head_induction_on with
   | refl => exact skip₁
   | head x x' ht => cases x' <;> exact of_Step x ht
 
-theorem Com.Star_iff_Nat: x ⇒* (skip, t) = x ⟹ t := propext ⟨Nat.of_Star, Star.of_Nat⟩
+theorem Com.Star_iff_Nat: x ⇒* (skip, t) = x ⟹ t := propext ⟨Natural.of_Star, Star.of_Nat⟩
 
 theorem Com.denot.of_Nat {x: Config} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1⟧ := by
   induction h with
@@ -52,7 +52,7 @@ theorem Com.denot.of_Nat {x: Config} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1⟧ := by
     simp [denot]
     exact Or.inr hb
 
-theorem Com.Nat.of_denot (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
+theorem Com.Natural.of_denot (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
   revert h
   induction c generalizing s t with
   | skip => intro h; cases h; exact skip₁
@@ -85,4 +85,4 @@ theorem Com.Nat.of_denot (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
           simp at hq
           exact hq ▸ loop₂ hb
 
-theorem Com.Nat_iff_denot: ((s, t) ∈ ⟦c⟧) = (c, s) ⟹ t := propext ⟨Nat.of_denot, denot.of_Nat⟩
+theorem Com.Nat_iff_denot: ((s, t) ∈ ⟦c⟧) = (c, s) ⟹ t := propext ⟨Natural.of_denot, denot.of_Nat⟩

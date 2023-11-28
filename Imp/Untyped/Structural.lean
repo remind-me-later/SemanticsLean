@@ -19,7 +19,7 @@ inductive Step: Config → Config → Prop where
     Step (cond b c d, s) (bif b⇓s then c else d, s)
 
   | loop₁:
-    Step (loop b c, s) (cond b (c;;loop b c) skip, s)
+    Step (loop b c, s) (bif b⇓s then c;;loop b c else skip, s)
 
 infix:110 " ⇒ " => Step
 
@@ -42,7 +42,7 @@ theorem Step.demo₁:
     | inl h =>
       cases h with | intro e h =>
         cases h with | intro t h =>
-          exact h.right ▸ cat₂ h.left
+          exact h.right ▸ cat₂ h.1
     | inr h =>
       cases h with | intro h₁ h₂ =>
         exact h₁ ▸ h₂ ▸ Step.cat₁

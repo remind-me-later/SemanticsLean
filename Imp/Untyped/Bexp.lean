@@ -1,4 +1,4 @@
-import Imp.Aexp
+import Imp.Untyped.Aexp
 
 namespace Bexp
 
@@ -72,22 +72,14 @@ protected instance Nat.equiv: Setoid Bexp where
     trans := λ h₁ h₂ x n ↦ (h₁ x n) ▸ (h₂ x n)
   }
 
-instance red.equiv: Setoid Bexp where
-  r := (red · = red ·)
-  iseqv := {
-    refl := λ _ ↦ Eq.refl _
-    symm := (Eq.symm ·)
-    trans := (· ▸ ·)
-  }
+instance red.equiv: Setoid Bexp := ⟨(red · = red ·), ⟨(Eq.refl $ red ·), Eq.symm, Eq.trans⟩⟩
 
-protected theorem Nat_eq_eq_red_eq: Nat.equiv.r a b ↔ red.equiv.r a b :=
-  by
+protected theorem Nat_eq_eq_red_eq: Nat.equiv.r a b ↔ red.equiv.r a b := by
   constructor <;> intro h
   . simp [Setoid.r] at *
     apply funext
     intro s
-    specialize h s (b⇓s)
-    simp at h
+    specialize h s
     exact h
   . simp [Setoid.r] at *
     simp [h]

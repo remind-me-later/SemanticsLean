@@ -1,12 +1,12 @@
-import Imp.Bexp
+import Imp.Untyped.Bexp
 
 import Mathlib.Logic.Relation
 
 namespace Com
 
-inductive Step: Com × State → Com × State → Prop
+inductive Step: Config → Config → Prop where
   | ass₁:
-    Step (ass x a, s) (skip, s⟦x↦a⇓s⟧)
+    Step (ass x a, s) (skip, s⟪x ≔ a⇓s⟫)
 
   | cat₁:
     Step (skip;;c, s) (c, s)
@@ -17,16 +17,16 @@ inductive Step: Com × State → Com × State → Prop
   | cond₁:
     Step (cond b c d, s) (bif b⇓s then (c, s) else (d, s))
 
-  | wle₁:
-    Step (wle b c, s) (cond b (c;;wle b c) skip, s)
+  | loop₁:
+    Step (loop b c, s) (cond b (c;;loop b c) skip, s)
 
 infix:110 " ⇒ " => Step
 
 namespace Step
 
 theorem Step.demo₁:
-  (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟦⟧) ⇒
-      (⦃skip; while 0 <= x {x = x - 1}⦄, ⟦"x"↦2⟧) := cat₂ ass₁
+  (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟪⟫) ⇒
+      (⦃skip; while 0 <= x {x = x - 1}⦄, ⟪⟫⟪"x"≔2⟫) := cat₂ ass₁
 
 @[simp] theorem cat_iff:
   (c₁;;c₂, s) ⇒ et ↔
@@ -78,14 +78,14 @@ alias head_induction_on := ReflTransGen.head_induction_on
 infix:110 " ⇒* " => ReflTransGen Step
 
 theorem demo₂:
-  (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟦⟧) ⇒*
-      (⦃while 0 <= x {x = x - 1}⦄, (⟦"x"↦2⟧)) :=
+  (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟪⟫) ⇒*
+      (⦃while 0 <= x {x = x - 1}⦄, ⟪⟫⟪"x"≔2⟫) :=
   head (Step.cat₂ Step.ass₁) (head Step.cat₁ Star.refl)
 
 theorem cat_skip_cat
   (h: (c, s) ⇒* (skip, t)):
   (c;;d, s) ⇒* (skip;;d, t) :=
-  lift (λ (x: Com × State) ↦ (x.1;;d, x.2)) (λ _ _ h => Step.cat₂ h) h
+  lift (λ (x: Config) ↦ (x.1;;d, x.2)) (λ _ _ h => Step.cat₂ h) h
 
 theorem cat
   (h₁: (c₁, s) ⇒* (skip, s₁))

@@ -1,11 +1,13 @@
-inductive Aexp
+import Imp.State
+
+inductive Aexp where
   | num : Int → Aexp
   | loc : String → Aexp
   | add : Aexp → Aexp → Aexp
   | sub : Aexp → Aexp → Aexp
   | mul : Aexp → Aexp → Aexp
 
-inductive Bexp
+inductive Bexp where
   | tt  : Bexp
   | ff  : Bexp
   | not : Bexp → Bexp
@@ -14,12 +16,14 @@ inductive Bexp
   | eq  : Aexp → Aexp → Bexp
   | le  : Aexp → Aexp → Bexp
 
-inductive Com
+inductive Com where
   | skip  : Com
   | cat   : Com → Com → Com
   | ass   : String → Aexp → Com
   | cond  : Bexp → Com → Com → Com
-  | wle   : Bexp → Com → Com
+  | loop  : Bexp → Com → Com
+
+def Config := Com × State
 
 -- Meta syntax
 notation:50 x:50 ";;" e:51 => Com.cat x e
@@ -53,8 +57,8 @@ syntax "⦃" imp "⦄" : term
 macro_rules
   -- keywords
   | `(⦃skip⦄) => `(Com.skip)
-  | `(⦃tt⦄)   => `(Bexp.tt)
-  | `(⦃ff⦄)   => `(Bexp.ff)
+  | `(⦃true⦄)   => `(Bexp.tt)
+  | `(⦃false⦄)   => `(Bexp.ff)
   -- general
   | `(⦃($x)⦄) => `(⦃$x⦄)
   -- imp
@@ -73,10 +77,10 @@ macro_rules
   | `(⦃$x:ident = $y⦄) => `(Com.ass $(Lean.quote (toString x.getId)) ⦃$y⦄)
   | `(⦃$x ; $y⦄)       => `(Com.cat ⦃$x⦄ ⦃$y⦄)
   | `(⦃if $b {$x} else {$y}⦄) => `(Com.cond ⦃$b⦄ ⦃$x⦄ ⦃$y⦄)
-  | `(⦃while $b {$x}⦄) => `(Com.wle ⦃$b⦄ ⦃$x⦄)
+  | `(⦃while $b {$x}⦄) => `(Com.loop ⦃$b⦄ ⦃$x⦄)
 
 #check ⦃z = 4; if 3 <= 2 {y = 4 + 2} else {skip}⦄
-#check ⦃while tt {skip}⦄
+#check ⦃while true {skip}⦄
 #check ⦃skip⦄
 #check ⦃x = 5⦄
 #check ⦃x = 5; y = 6⦄

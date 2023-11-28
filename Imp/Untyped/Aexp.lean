@@ -1,5 +1,5 @@
 import Imp.State
-import Imp.Syntax
+import Imp.Untyped.Syntax
 
 import Mathlib.Init.Function
 
@@ -11,7 +11,7 @@ inductive Nat: Aexp × State → Int → Prop
     Nat (num n, _) n
 
   | loc₁:
-    Nat (loc x, s) (s⇓x)
+    Nat (loc x, s) (s x)
 
   | add₁ (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
     Nat (add a b, s) (n + m)
@@ -28,7 +28,7 @@ infix:110 " ⟹ " => Nat
 @[reducible] def red (a: Aexp) (s: State): Int :=
   match a with
   | num n => n
-  | loc x => s⇓x
+  | loc x => s x
   | add a b => red a s + red b s
   | sub a b => red a s - red b s
   | mul a b => red a s * red b s
@@ -61,22 +61,14 @@ protected instance Nat.equiv: Setoid Aexp where
     trans := λ h₁ h₂ x n ↦ (h₁ x n) ▸ (h₂ x n)
   }
 
-instance red.equiv: Setoid Aexp where
-  r := (red · = red ·)
-  iseqv := {
-    refl := λ _ ↦ Eq.refl _
-    symm := (Eq.symm ·)
-    trans := (· ▸ ·)
-  }
+instance red.equiv: Setoid Aexp := ⟨(red · = red ·), ⟨(Eq.refl $ red ·), Eq.symm, Eq.trans⟩⟩
 
-protected theorem Nat_eq_eq_red_eq: Nat.equiv.r a b ↔ red.equiv.r a b :=
-  by
+protected theorem Nat_eq_eq_red_eq: Nat.equiv.r a b ↔ red.equiv.r a b := by
   constructor <;> intro h
   . simp [Setoid.r] at *
     apply funext
     intro s
-    specialize h s (b⇓s)
-    simp at h
+    specialize h s
     exact h
   . simp [Setoid.r] at *
     simp [h]

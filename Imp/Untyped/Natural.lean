@@ -1,13 +1,13 @@
-import Imp.Bexp
+import Imp.Untyped.Bexp
 
 namespace Com
 
-inductive Nat: Com × State → State → Prop
+inductive Nat: Config → State → Prop
   | skip₁:
     Nat (skip, s) s
 
   | ass₁:
-    Nat (ass x a, s) (s⟦x↦a⇓s⟧)
+    Nat (ass x a, s) (s⟪x ≔ a⇓s⟫)
 
   | cat₁ t
     (hc: Nat (c, s) t) (hd: Nat (d, t) u):
@@ -21,23 +21,23 @@ inductive Nat: Com × State → State → Prop
     (hb: b⇓s = false) (hd: Nat (d, s) t):
     Nat (cond b c d, s) t
 
-  | wle₁ {b: Bexp} u
-    (hb: b⇓s = true) (hc: Nat (c, s) u) (hw: Nat (wle b c, u) t):
-    Nat (wle b c, s) t
+  | loop₁ {b: Bexp} u
+    (hb: b⇓s = true) (hc: Nat (c, s) u) (hw: Nat (loop b c, u) t):
+    Nat (loop b c, s) t
 
-  | wle₂ {b: Bexp}
+  | loop₂ {b: Bexp}
     (hb: b⇓s = false):
-    Nat (wle b c, s) s
+    Nat (loop b c, s) s
 
 infix:110 " ⟹ " => Nat
 
 namespace Nat
 
-theorem demo₁: (⦃x = 5⦄, ⟦⟧) ⟹ ⟦"x"↦5⟧ := ass₁
+theorem demo₁: (⦃x = 5⦄, ⟪⟫) ⟹ ⟪⟫⟪"x"≔5⟫ := ass₁
 
 theorem demo₂:
-  (⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄, ⟦⟧) ⟹
-  (⟦"x"↦2⟧⟦"z"↦4⟧) := cat₁ _ ass₁ (cond₂ rfl ass₁)
+  (⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄, ⟪⟫) ⟹
+  (⟪⟫⟪"x"≔2⟫⟪"z"≔4⟫) := cat₁ _ ass₁ (cond₂ rfl ass₁)
 
 theorem skip_same: (skip, s) ⟹ s₁ ↔ s = s₁ := ⟨(by cases .; rfl), (· ▸ skip₁)⟩
 
@@ -79,8 +79,8 @@ theorem cond_ff (h: b ≈ Bexp.ff): cond b c d ≈ d := by
     | cond₁ hb => rw [h] at hb; contradiction
   . exact cond₂ (h ▸ rfl) h₁
 
-theorem wle_unfold:
-  wle b c ≈ cond b (c;;wle b c) skip := by
+theorem loop_unfold:
+  loop b c ≈ cond b (c;;loop b c) skip := by
   intro s t
   apply propext
   constructor <;> intro h
@@ -96,7 +96,7 @@ theorem wle_unfold:
   . cases hb: b⇓s
     . cases h
       . rw [hb] at *; contradiction
-      . rename_i hd; cases hd; apply wle₂; assumption
+      . rename_i hd; cases hd; apply loop₂; assumption
     . cases h
       . rename_i hc; cases hc; constructor <;> assumption
       . rw [hb] at *; contradiction
@@ -120,19 +120,19 @@ theorem cond_ext': (cond b c d, s) ⟹ t ↔ (bif b⇓s then c else d, s) ⟹ t 
 theorem cond_ext'': (cond b c d, s) ⟹ t ↔ (bif b⇓s then (c, s) else (d, s)) ⟹ t := by
   rw [cond_ext]; cases b⇓s <;> simp
 
-theorem wle_iff:
-  (wle b c, s) ⟹ u ↔
-  (∃t, b⇓s ∧ (c, s) ⟹ t ∧ (wle b c, t) ⟹ u)
+theorem loop_iff:
+  (loop b c, s) ⟹ u ↔
+  (∃t, b⇓s ∧ (c, s) ⟹ t ∧ (loop b c, t) ⟹ u)
   ∨ (¬ b⇓s ∧ u = s) :=
   by
     apply Iff.intro
     . intro h
       cases h with
-      | wle₁ t hb hc hw =>
+      | loop₁ t hb hc hw =>
         apply Or.inl
         apply Exists.intro t
         simp [*]
-      | wle₂ hb =>
+      | loop₂ hb =>
         apply Or.inr
         simp [*]
     . intro h
@@ -144,25 +144,25 @@ theorem wle_iff:
           | intro hB h =>
             cases h with
             | intro hS hwhile =>
-              apply wle₁ <;>
+              apply loop₁ <;>
                 assumption
       | inr h =>
         cases h with
         | intro hb heq =>
           rw [heq]
-          apply wle₂
+          apply loop₂
           simp [*]
 
-theorem wle_tt (heqb: b ≈ Bexp.tt):
-  ¬((wle b c, s) ⟹ t) := by
+theorem loop_tt (heqb: b ≈ Bexp.tt):
+  ¬((loop b c, s) ⟹ t) := by
   intro h₁
-  generalize h₂: (wle b c, s) = ww at h₁
+  generalize h₂: (loop b c, s) = ww at h₁
   induction h₁ generalizing s with
-  | wle₁ _ _ _ _ _ ih₂ => cases h₂; apply ih₂; rfl
-  | wle₂ hb => cases h₂; rw [heqb] at hb; contradiction
+  | loop₁ _ _ _ _ _ ih₂ => cases h₂; apply ih₂; rfl
+  | loop₂ hb => cases h₂; rw [heqb] at hb; contradiction
   | _ => cases h₂
 
-theorem determ {cs: Com × State} (h₁: cs ⟹ t) (h₂: cs ⟹ u): t = u :=
+theorem determ {cs: Config} (h₁: cs ⟹ t) (h₂: cs ⟹ u): t = u :=
   by induction h₁ generalizing u with
   | cat₁ _ _ _ ih₁ ih₂ => cases h₂ with
     | cat₁ _ hc hd => exact ih₂ (ih₁ hc ▸ hd)
@@ -175,13 +175,13 @@ theorem determ {cs: Com × State} (h₁: cs ⟹ t) (h₂: cs ⟹ u): t = u :=
     | cond₁ hb₁ hd => simp [hb] at hb₁
     | cond₂ _ hd   => exact ih hd
 
-  | wle₁ _ hb _ _ ih₁ ih₂ => cases h₂ with
-    | wle₁ _ _ hc hw => exact ih₂ (ih₁ hc ▸ hw)
-    | wle₂ hb₁ => simp [hb] at hb₁
+  | loop₁ _ hb _ _ ih₁ ih₂ => cases h₂ with
+    | loop₁ _ _ hc hw => exact ih₂ (ih₁ hc ▸ hw)
+    | loop₂ hb₁ => simp [hb] at hb₁
 
-  | wle₂ hb => cases h₂ with
-    | wle₁ _ hb₁ => simp [hb] at hb₁
-    | wle₂ => rfl
+  | loop₂ hb => cases h₂ with
+    | loop₁ _ hb₁ => simp [hb] at hb₁
+    | loop₂ => rfl
 
   | _ => cases h₂; rfl
 

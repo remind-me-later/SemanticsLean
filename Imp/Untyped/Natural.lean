@@ -2,50 +2,98 @@ import Imp.Untyped.Bexp
 
 namespace Com
 
-inductive Nat: Config → State → Prop
+inductive Natural: Config → State → Prop
   | skip₁:
-    Nat (skip, s) s
+    Natural (skip, s) s
 
   | ass₁:
-    Nat (ass x a, s) (s⟪x ≔ a⇓s⟫)
+    Natural (ass x a, s) (s⟪x ≔ a⇓s⟫)
 
   | cat₁ t
-    (hc: Nat (c, s) t) (hd: Nat (d, t) u):
-    Nat (c;;d, s) u
+    (hc: Natural (c, s) t) (hd: Natural (d, t) u):
+    Natural (c;;d, s) u
 
   | cond₁ {b: Bexp}
-    (hb: b⇓s = true) (hc: Nat (c, s) t):
-    Nat (cond b c d, s) t
+    (hb: b⇓s = true) (hc: Natural (c, s) t):
+    Natural (cond b c d, s) t
 
   | cond₂ {b: Bexp}
-    (hb: b⇓s = false) (hd: Nat (d, s) t):
-    Nat (cond b c d, s) t
+    (hb: b⇓s = false) (hd: Natural (d, s) t):
+    Natural (cond b c d, s) t
 
   | loop₁ {b: Bexp} u
-    (hb: b⇓s = true) (hc: Nat (c, s) u) (hw: Nat (loop b c, u) t):
-    Nat (loop b c, s) t
+    (hb: b⇓s = true) (hc: Natural (c, s) u) (hw: Natural (loop b c, u) t):
+    Natural (loop b c, s) t
 
   | loop₂ {b: Bexp}
     (hb: b⇓s = false):
-    Nat (loop b c, s) s
+    Natural (loop b c, s) s
 
-infix:110 " ⟹ " => Nat
+infix:110 " ⟹ " => Natural
 
-namespace Nat
+namespace Natural
 
 theorem demo₁: (⦃x = 5⦄, ⟪⟫) ⟹ ⟪⟫⟪"x"≔5⟫ := ass₁
 
 theorem demo₂:
   (⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄, ⟪⟫) ⟹
-  (⟪⟫⟪"x"≔2⟫⟪"z"≔4⟫) := cat₁ _ ass₁ (cond₂ rfl ass₁)
+  (⟪⟫⟪"x"≔2⟫⟪"z"≔4⟫) := cat₁ _ ass₁ $ cond₂ rfl ass₁
 
-theorem skip_same: (skip, s) ⟹ s₁ ↔ s = s₁ := ⟨(by cases .; rfl), (· ▸ skip₁)⟩
+/-
+## Rewriting rules
+-/
+
+theorem skip_same: (skip, s) ⟹ s₁ ↔ s = s₁ := by
+  apply Iff.intro <;> intro h
+  . cases h; rfl
+  . exact h ▸ skip₁
+
+theorem cat_iff: (c₁;;c₂, s) ⟹ s₁ ↔ ∃ t, (c₁, s) ⟹ t ∧ (c₂, t) ⟹ s₁ := by
+  apply Iff.intro <;> intro h
+  . cases h with | cat₁ t h₁ h₂ =>
+      exact ⟨t, ⟨h₁, h₂⟩⟩
+  . cases h with | intro w h =>
+      exact cat₁ w h.1 h.2
+
+theorem cond_iff: (cond b c d, s) ⟹ t ↔ bif b⇓s then (c, s) ⟹ t else (d, s) ⟹ t := by
+  constructor <;> intro h
+  . cases h with
+    | cond₁ hb hc => exact hb ▸ hc
+    | cond₂ hb hc => exact hb ▸ hc
+  . cases hb: b⇓s with
+    | true => exact cond₁ hb $ (cond_true ((c, s) ⟹ t) _) ▸ hb ▸ h
+    | false => exact cond₂ hb $ (cond_false _ ((d, s) ⟹ t)) ▸ hb ▸ h
+
+theorem cond_iff': (cond b c d, s) ⟹ t ↔ (bif b⇓s then c else d, s) ⟹ t := by
+  rw [cond_iff]; cases b⇓s <;> simp
+
+theorem loop_iff: (loop b c, s) ⟹ u ↔
+  (∃t, b⇓s = true ∧ (c, s) ⟹ t ∧ (loop b c, t) ⟹ u)
+  ∨ (b⇓s = false ∧ u = s) := by
+  apply Iff.intro <;> intro h
+  . cases h with
+    | loop₁ t hb hc hw =>
+      exact Or.inl ⟨t, ⟨hb, ⟨hc, hw⟩⟩⟩
+    | loop₂ hb =>
+      exact Or.inr ⟨hb, rfl⟩
+  . cases h with
+    | inl h =>
+      cases h with | intro w h =>
+        cases h with | intro hb h =>
+            exact loop₁ w hb h.1 h.2
+    | inr h =>
+      cases h with | intro hb h =>
+        exact (symm h) ▸ loop₂ hb
+
+/-
+## Behavioral equivalence
+-/
 
 instance equiv: Setoid Com where
   r c d := ∀ s t, (c, s) ⟹ t = (d, s) ⟹ t
   iseqv := {
     refl := λ _ _ _ ↦ Eq.refl _
-    symm := λ h s n ↦ Eq.symm (h s n)
+    symm := (Eq.symm $ · · ·)
     trans := λ h₁ h₂ x n ↦ (h₁ x n) ▸ (h₂ x n)
   }
 
@@ -65,14 +113,14 @@ theorem skipr: (c;;skip) ≈ c := by
     exact skip_same.mp hd ▸ hc
   . exact (cat₁ _ · skip₁)
 
-theorem cond_tt (h: b ≈ Bexp.tt): cond b c d ≈ c := by
+theorem cond_true (h: b ≈ Bexp.tt): cond b c d ≈ c := by
   intro _ _; apply propext; constructor <;> intro h₁
   . cases h₁ with
     | cond₁ => assumption
     | cond₂ hb => rw [h] at hb; contradiction
   . exact cond₁ (h ▸ rfl) h₁
 
-theorem cond_ff (h: b ≈ Bexp.ff): cond b c d ≈ d := by
+theorem cond_false (h: b ≈ Bexp.ff): cond b c d ≈ d := by
   intro _ _; apply propext; constructor <;> intro h₁
   . cases h₁ with
     | cond₂ => assumption
@@ -101,68 +149,24 @@ theorem loop_unfold:
       . rename_i hc; cases hc; constructor <;> assumption
       . rw [hb] at *; contradiction
 
-theorem cond_ext: (cond b c d, s) ⟹ t ↔ bif b⇓s then (c, s) ⟹ t else (d, s) ⟹ t := by
-  constructor <;> intro h <;> cases hb: b⇓s <;> simp at *
-  . cases h
-    simp [hb] at *
-    assumption
-  . cases h
-    assumption
-    simp [hb] at *
-  . rw [hb] at h
-    exact cond₂ hb h
-  . rw [hb] at h
-    exact cond₁ hb h
+/-
+## No normalization
+-/
 
-theorem cond_ext': (cond b c d, s) ⟹ t ↔ (bif b⇓s then c else d, s) ⟹ t := by
-  rw [cond_ext]; cases b⇓s <;> simp
-
-theorem cond_ext'': (cond b c d, s) ⟹ t ↔ (bif b⇓s then (c, s) else (d, s)) ⟹ t := by
-  rw [cond_ext]; cases b⇓s <;> simp
-
-theorem loop_iff:
-  (loop b c, s) ⟹ u ↔
-  (∃t, b⇓s ∧ (c, s) ⟹ t ∧ (loop b c, t) ⟹ u)
-  ∨ (¬ b⇓s ∧ u = s) :=
-  by
-    apply Iff.intro
-    . intro h
-      cases h with
-      | loop₁ t hb hc hw =>
-        apply Or.inl
-        apply Exists.intro t
-        simp [*]
-      | loop₂ hb =>
-        apply Or.inr
-        simp [*]
-    . intro h
-      cases h with
-      | inl hex =>
-        cases hex with
-        | intro t h =>
-          cases h with
-          | intro hB h =>
-            cases h with
-            | intro hS hwhile =>
-              apply loop₁ <;>
-                assumption
-      | inr h =>
-        cases h with
-        | intro hb heq =>
-          rw [heq]
-          apply loop₂
-          simp [*]
-
-theorem loop_tt (heqb: b ≈ Bexp.tt):
+theorem loop_tt (hq: b ≈ Bexp.tt):
   ¬((loop b c, s) ⟹ t) := by
   intro h₁
   generalize h₂: (loop b c, s) = ww at h₁
   induction h₁ generalizing s with
   | loop₁ _ _ _ _ _ ih₂ => cases h₂; apply ih₂; rfl
-  | loop₂ hb => cases h₂; rw [heqb] at hb; contradiction
+  | loop₂ hb => cases h₂; rw [hq] at hb; contradiction
   | _ => cases h₂
 
-theorem determ {cs: Config} (h₁: cs ⟹ t) (h₂: cs ⟹ u): t = u :=
+/-
+## Determinism
+-/
+
+theorem determinist {cs: Config} (h₁: cs ⟹ t) (h₂: cs ⟹ u): t = u :=
   by induction h₁ generalizing u with
   | cat₁ _ _ _ ih₁ ih₂ => cases h₂ with
     | cat₁ _ hc hd => exact ih₂ (ih₁ hc ▸ hd)
@@ -185,5 +189,5 @@ theorem determ {cs: Config} (h₁: cs ⟹ t) (h₂: cs ⟹ u): t = u :=
 
   | _ => cases h₂; rfl
 
-end Nat
+end Natural
 end Com

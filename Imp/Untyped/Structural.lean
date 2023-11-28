@@ -16,7 +16,7 @@ inductive Step: Config → Config → Prop where
     Step (c;;d, s) (e;;d, t)
 
   | cond₁:
-    Step (cond b c d, s) (bif b⇓s then (c, s) else (d, s))
+    Step (cond b c d, s) (bif b⇓s then c else d, s)
 
   | loop₁:
     Step (loop b c, s) (cond b (c;;loop b c) skip, s)
@@ -55,7 +55,7 @@ theorem Step.demo₁:
   . cases hb: b⇓s <;> cases h
     . exact Or.inr ⟨rfl, hb ▸ rfl⟩
     . exact Or.inl ⟨rfl, hb ▸ rfl⟩
-  . have hss: ss = bif b⇓s then (c,s) else (d,s) := by
+  . have hss: ss = (bif b⇓s then c else d, s) := by
       cases hb: b⇓s <;> rw [hb] at h <;> simp at * <;> assumption
     exact hss ▸ cond₁
 

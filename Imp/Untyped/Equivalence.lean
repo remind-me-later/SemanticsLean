@@ -21,7 +21,7 @@ lemma Com.Nat.of_Step (h₁: x ⇒ y) (h₂: y ⟹ s): x ⟹ s := by
   | cat₂ _ ih =>
     cases h₂ with
     | cat₁ w hc hd => exact cat₁ w (ih hc) hd
-  | cond₁ => exact cond_ext''.mpr h₂
+  | cond₁ => exact cond_ext'.mpr h₂
   | loop₁ => rw [loop_unfold]; exact h₂
 
 theorem Com.Nat.of_Star (h: x ⇒* (skip, t)): x ⟹ t := by

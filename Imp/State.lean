@@ -5,12 +5,12 @@ inductive State
 @[simp, reducible] def State.red (s: State) (x: String): Int :=
   match s with
   | State.init => 0 -- unbound variables are 0
-  | State.update s₁ x₁ n₁ => if x₁ = x then n₁ else red s₁ x
+  | State.update s y m => bif x = y then m else s.red x
 
-infix:110 "↓" => State.red
+infix:110 "⇓" => State.red
 
 instance State.equiv: Setoid State where
-  r s₁ s₂ := ∀x, s₁↓x = s₂↓x
+  r s₁ s₂ := ∀x, s₁⇓x = s₂⇓x
   iseqv := {
     refl := by simp
     symm := by {
@@ -32,4 +32,4 @@ notation s "⟦" x "↦" e "⟧" => State.update s x e
 
 #check ⟦⟧
 #check ⟦"x"↦3⟧⟦"x"↦4⟧
-#eval  ⟦"x"↦3⟧⟦"x"↦4⟧⟦"x"↦7⟧↓"x"
+#eval  ⟦"x"↦3⟧⟦"x"↦4⟧⟦"x"↦7⟧⇓"x"

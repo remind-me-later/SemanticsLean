@@ -65,11 +65,9 @@ theorem Com.Nat.of_denot (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
     intro h
     cases h with
     | inl h =>
-      simp at *
       cases h with | intro h hb =>
         exact cond₁ hb (ih₁ h)
     | inr h =>
-      simp at *
       cases h with | intro h hb =>
         exact cond₂ hb (ih₂ h)
   | wle b c ih =>

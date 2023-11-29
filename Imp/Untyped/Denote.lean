@@ -44,53 +44,57 @@ end SRel
 
 namespace Com
 
-def denot_loop (b: Bexp) (f: State →ᵍ State): (State →ᵍ State) →o (State →ᵍ State) :=
+def denote_loop (b: Bexp) (f: State →ᵍ State): (State →ᵍ State) →o (State →ᵍ State) :=
   ⟨λ g ↦ (SRel.restrict {s | b⇓s = true} $ f ○ g) ∪ (SRel.restrict {s | b⇓s = false} SRel.id),
     Monotone.union
       (SRel.monotone_restrict (SRel.monotone_comp monotone_const monotone_id))
       (SRel.monotone_restrict monotone_const)⟩
 
-def denot: Com → (State →ᵍ State)
+def denote: Com → (State →ᵍ State)
   | skip       => SRel.id
   | ass x a    => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
-  | c;;d       => c.denot ○ d.denot
-  | cond b c d => (SRel.restrict {s | b⇓s = true} c.denot) ∪ (SRel.restrict {s | b⇓s = false} d.denot)
-  | loop b c   => OrderHom.lfp (denot_loop b c.denot)
+  | c;;d       => c.denote ○ d.denote
+  | cond b c d => (SRel.restrict {s | b⇓s = true} c.denote) ∪ (SRel.restrict {s | b⇓s = false} d.denote)
+  | loop b c   => OrderHom.lfp (denote_loop b c.denote)
 
-notation (priority := high) "⟦" c "⟧" => denot c
+notation (priority := high) "⟦" c "⟧" => denote c
 
-#simp [denot] (⟪⟫, ⟪⟫⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x == 1 {skip} else {x = 1}⦄⟧
-#simp [denot] (⟪⟫, ⟪⟫⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x == 1 {x = 1}⦄⟧
+#simp [denote] (⟪⟫, ⟪⟫⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x == 1 {skip} else {x = 1}⦄⟧
+#simp [denote] (⟪⟫, ⟪⟫⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x == 1 {x = 1}⦄⟧
 
-namespace denot
+namespace denote
 
 @[simp]
 instance equiv: Setoid Com := ⟨(⟦·⟧ = ⟦·⟧), ⟨(refl ⟦.⟧), symm, Eq.trans⟩⟩
 
+theorem skipl: (skip;;c) ≈ c := by
+  simp [HasEquiv.Equiv, denote, SRel.comp]
+
+theorem skipr: (c;;skip) ≈ c := by
+  simp [HasEquiv.Equiv, denote, SRel.comp]
+
+theorem loop_unfold: loop b c ≈ cond b (c;;loop b c) skip := by
+  simp [HasEquiv.Equiv]
+  exact Eq.symm $ OrderHom.map_lfp $ denote_loop b ⟦c⟧
+
+/-
+## Congruence
+-/
+
 theorem cat_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
   (c₁;;d₁) ≈ (c₂;;d₂) := by
-  simp [HasEquiv.Equiv, denot]
+  simp [HasEquiv.Equiv, denote]
   exact hc ▸ hd ▸ rfl
 
 theorem cond_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
   (cond b c₁ d₁) ≈ (cond b c₂ d₂) := by
-  simp [HasEquiv.Equiv, denot]
+  simp [HasEquiv.Equiv, denote]
   exact hc ▸ hd ▸ rfl
 
 theorem loop_congr (hc: c₁ ≈ c₂):
   (loop b c₁) ≈ (loop b c₂) := by
-  simp [HasEquiv.Equiv, denot]
+  simp [HasEquiv.Equiv, denote]
   exact hc ▸ rfl
 
-theorem skipl: (skip;;c) ≈ c := by
-  simp [HasEquiv.Equiv, denot, SRel.comp]
-
-theorem skipr: (c;;skip) ≈ c := by
-  simp [HasEquiv.Equiv, denot, SRel.comp]
-
-theorem loop_unfold: loop b c ≈ cond b (c;;loop b c) skip := by
-  simp [HasEquiv.Equiv]
-  exact Eq.symm $ OrderHom.map_lfp $ denot_loop b ⟦c⟧
-
-end denot
+end denote
 end Com

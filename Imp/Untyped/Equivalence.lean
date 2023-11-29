@@ -1,6 +1,6 @@
 import Imp.Untyped.Natural
 import Imp.Untyped.Structural
-import Imp.Untyped.Denot
+import Imp.Untyped.Denote
 
 theorem Com.Star.of_Nat {x: Config} (h: x ⟹ s): x ⇒* (skip, s) := by
   induction h with
@@ -31,32 +31,21 @@ theorem Com.Natural.of_Star (h: x ⇒* (skip, t)): x ⟹ t := by
 
 theorem Com.Star_iff_Nat: x ⇒* (skip, t) = x ⟹ t := propext ⟨Natural.of_Star, Star.of_Nat⟩
 
-theorem Com.denot.of_Nat {x: Config} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1⟧ := by
+theorem Com.denote.of_Nat {x: Config} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1⟧ := by
   induction h with
-  | skip₁ => rfl
-  | ass₁  => rfl
-  | cat₁ t _ _ ih₁ ih₂ =>
-    exact ⟨t, ⟨ih₁, ih₂⟩⟩
-  | cond₁ hb _ ih =>
-    simp [denot]
-    exact Or.inl ⟨ih, hb⟩
-  | cond₂ hb _ ih =>
-    simp [denot]
-    exact Or.inr ⟨ih, hb⟩
-  | loop₁ t hb _ _ ih₁ ih₂ =>
-    rw [loop_unfold]
-    simp [denot]
-    exact Or.inl ⟨⟨t, ⟨ih₁, ih₂⟩⟩, hb⟩
-  | loop₂ hb =>
-    rw [loop_unfold]
-    simp [denot]
-    exact Or.inr hb
+  | skip₁ => exact SRel.mem_id.mpr rfl
+  | ass₁  => exact SRel.mem_id.mpr rfl
+  | cat₁ t _ _ ih₁ ih₂ => exact ⟨t, ⟨ih₁, ih₂⟩⟩
+  | cond₁ hb _ ih => exact Or.inl ⟨ih, hb⟩
+  | cond₂ hb _ ih => exact Or.inr ⟨ih, hb⟩
+  | loop₁ t hb _ _ ih₁ ih₂ => exact loop_unfold ▸ Or.inl ⟨⟨t, ⟨ih₁, ih₂⟩⟩, hb⟩
+  | loop₂ hb => exact loop_unfold ▸ Or.inr ⟨rfl, hb⟩
 
-theorem Com.Natural.of_denot (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
+theorem Com.Natural.of_denote (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
   revert h
   induction c generalizing s t with
   | skip => intro h; cases h; exact skip₁
-  | ass => intro h; simp [denot] at h; exact h ▸ ass₁
+  | ass => intro h; simp [denote] at h; exact h ▸ ass₁
   | cat _ _ ih₁ ih₂ =>
     intro h
     cases h with | intro w h =>
@@ -85,4 +74,4 @@ theorem Com.Natural.of_denot (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
           simp at hq
           exact hq ▸ loop₂ hb
 
-theorem Com.Nat_iff_denot: ((s, t) ∈ ⟦c⟧) = (c, s) ⟹ t := propext ⟨Natural.of_denot, denot.of_Nat⟩
+theorem Com.Nat_iff_denote: ((s, t) ∈ ⟦c⟧) = (c, s) ⟹ t := propext ⟨Natural.of_denote, denote.of_Nat⟩

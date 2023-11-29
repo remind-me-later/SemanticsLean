@@ -3,55 +3,55 @@ import Imp.Untyped.Aexp
 namespace Bexp
 
 -- Operational semantics of Bexp
-inductive Nat: Bexp × State → Bool → Prop
+inductive Natural: Bexp × State → Bool → Prop
   | tt₁:
-    Nat (tt, _) true
+    Natural (tt, _) true
 
   | ff₁:
-    Nat (ff, _) false
+    Natural (ff, _) false
 
   | eq₁:
-    Nat (eq a b, s) (a⇓s = b⇓s)
+    Natural (eq a b, s) (a⇓s = b⇓s)
 
   | le₁:
-    Nat (le a b, s) (a⇓s ≤ b⇓s)
+    Natural (le a b, s) (a⇓s ≤ b⇓s)
 
-  | not₁ {a: Bexp} (h: Nat (a,s) n):
-    Nat (not a, s) (!n)
+  | not₁ {a: Bexp} (h: Natural (a,s) n):
+    Natural (not a, s) (!n)
 
-  | and₁ {a b: Bexp} (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
-    Nat (and a b, s) (n && m)
+  | and₁ {a b: Bexp} (h₁: Natural (a,s) n) (h₂: Natural (b,s) m):
+    Natural (and a b, s) (n && m)
 
-  | or₁ {a b: Bexp} (h₁: Nat (a,s) n) (h₂: Nat (b,s) m):
-    Nat (or a b, s) (n || m)
+  | or₁ {a b: Bexp} (h₁: Natural (a,s) n) (h₂: Natural (b,s) m):
+    Natural (or a b, s) (n || m)
 
-infix:110 " ⟹ " => Nat
+infix:110 " ⟹ " => Natural
 
 -- Denotational semantics of Bexp
-@[reducible, simp] def red (b: Bexp) (s: State): Bool :=
+@[reducible, simp] def reduce (b: Bexp) (s: State): Bool :=
   match b with
   | tt      => true
   | ff      => false
-  | not b   => !red b s
-  | and a b => red a s && red b s
-  | or a b  => red a s || red b s
+  | not b   => !reduce b s
+  | and a b => reduce a s && reduce b s
+  | or a b  => reduce a s || reduce b s
   | eq a b  => a⇓s = b⇓s
   | le a b  => a⇓s ≤ b⇓s
 
-infix:110 "⇓" => red
+infix:110 "⇓" => reduce
 
 -- relational definition is equivalent to recursive
-theorem Nat.from_red {b: Bexp} (h: b⇓s = x): (b, s) ⟹ x :=
+theorem Natural.from_reduce {b: Bexp} (h: b⇓s = x): (b, s) ⟹ x :=
   by induction b generalizing x with
-  | tt => exact h ▸ Nat.tt₁
-  | ff => exact h ▸ Nat.ff₁
-  | eq => exact h ▸ Nat.eq₁
-  | le => exact h ▸ Nat.le₁
-  | not _ ih => exact h ▸ Nat.not₁ (ih rfl)
-  | and _ _ l r => exact h ▸ Nat.and₁ (l rfl) (r rfl)
-  | or _ _  l r => exact h ▸ Nat.or₁  (l rfl) (r rfl)
+  | tt => exact h ▸ Natural.tt₁
+  | ff => exact h ▸ Natural.ff₁
+  | eq => exact h ▸ Natural.eq₁
+  | le => exact h ▸ Natural.le₁
+  | not _ ih => exact h ▸ Natural.not₁ (ih rfl)
+  | and _ _ l r => exact h ▸ Natural.and₁ (l rfl) (r rfl)
+  | or _ _  l r => exact h ▸ Natural.or₁  (l rfl) (r rfl)
 
-theorem red.from_Nat {bs: Bexp × State} (h: bs ⟹ x): red.uncurry bs = x :=
+theorem reduce.from_Natural {bs: Bexp × State} (h: bs ⟹ x): reduce.uncurry bs = x :=
   by induction h with
   | tt₁ => rfl
   | ff₁ => rfl
@@ -60,11 +60,11 @@ theorem red.from_Nat {bs: Bexp × State} (h: bs ⟹ x): red.uncurry bs = x :=
   | not₁ _ ih => exact ih ▸ rfl
   | _ _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
 
-@[simp] theorem Nat_eq_red {b: Bexp}: (b,s) ⟹ r ↔ b⇓s = r := ⟨red.from_Nat, Nat.from_red⟩
+@[simp] theorem Natural_eq_reduce {b: Bexp}: (b,s) ⟹ r ↔ b⇓s = r := ⟨reduce.from_Natural, Natural.from_reduce⟩
 
 theorem not_true_eq_false: (!b⇓s) = (not b)⇓s := by simp
 
-protected instance Nat.equiv: Setoid Bexp where
+protected instance Natural.equiv: Setoid Bexp where
   r a b := ∀ s n, (a, s) ⟹ n = (b, s) ⟹ n
   iseqv := {
     refl := λ _ _ _ ↦ Eq.refl _
@@ -72,11 +72,12 @@ protected instance Nat.equiv: Setoid Bexp where
     trans := λ h₁ h₂ x n ↦ (h₁ x n) ▸ (h₂ x n)
   }
 
-instance red.equiv: Setoid Bexp where
-  r a  b:= ∀s, a⇓s = b⇓s
+@[reducible, simp]
+instance reduce.equiv: Setoid Bexp where
+  r a b:= ∀s, a⇓s = b⇓s
   iseqv := ⟨λ _ _ ↦ Eq.refl _, (Eq.symm $ · ·) , λ h₁ h₂ s ↦ (h₁ s) ▸ (h₂ s)⟩
 
-protected theorem Nat_eq_eq_red_eq: Nat.equiv.r a b ↔ red.equiv.r a b := by
+protected theorem Natural_eq_eq_reduce_eq: Natural.equiv.r a b ↔ reduce.equiv.r a b := by
   constructor <;> intro h
   . simp [Setoid.r] at *
     intro s

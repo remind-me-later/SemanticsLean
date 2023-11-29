@@ -32,8 +32,7 @@ theorem Step.demo₁:
 @[simp] theorem cat_iff:
   (c₁;;c₂, s) ⇒ et ↔
   (∃e t, (c₁, s) ⇒ (e, t) ∧ et = (e;;c₂, t))
-  ∨ (c₁ = skip ∧ et = (c₂, s)) :=
-  by
+  ∨ (c₁ = skip ∧ et = (c₂, s)) := by
   constructor <;> intro h
   . cases h with
     | cat₁ => exact Or.inr ⟨rfl, rfl⟩
@@ -49,8 +48,7 @@ theorem Step.demo₁:
 
 @[simp] lemma cond_iff:
   (cond b c d, s) ⇒ ss ↔
-  (b⇓s ∧ ss = (c, s)) ∨ (b⇓s = false ∧ ss = (d, s)) :=
-  by
+  (b⇓s ∧ ss = (c, s)) ∨ (b⇓s = false ∧ ss = (d, s)) := by
   constructor <;> intro h
   . cases hb: b⇓s <;> cases h
     . exact Or.inr ⟨rfl, hb ▸ rfl⟩

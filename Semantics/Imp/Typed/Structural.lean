@@ -1,8 +1,9 @@
-import Imp.Untyped.Bexp
+import Semantics.Imp.Untyped.Bexp
 
 import Mathlib.Logic.Relation
 
 namespace Com
+namespace Structural
 
 @[reducible]
 inductive Step: Config → Config → Prop where
@@ -23,13 +24,11 @@ inductive Step: Config → Config → Prop where
 
 infix:110 " ⇒ " => Step
 
-namespace Step
-
 theorem Step.demo₁:
   (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟪⟫) ⇒
       (⦃skip; while 0 <= x {x = x - 1}⦄, ⟪⟫⟪"x"≔2⟫) := cat₂ ass₁
 
-@[simp] theorem cat_iff:
+@[simp] theorem Step.cat_iff:
   (c₁;;c₂, s) ⇒ et ↔
   (∃e t, (c₁, s) ⇒ (e, t) ∧ et = (e;;c₂, t))
   ∨ (c₁ = skip ∧ et = (c₂, s)) := by
@@ -41,12 +40,12 @@ theorem Step.demo₁:
     | inl h =>
       cases h with | intro e h =>
         cases h with | intro t h =>
-          exact h.right ▸ cat₂ h.1
+          exact h.right ▸ Step.cat₂ h.1
     | inr h =>
       cases h with | intro h₁ h₂ =>
         exact h₁ ▸ h₂ ▸ Step.cat₁
 
-@[simp] lemma cond_iff:
+@[simp] lemma Step.cond_iff:
   (cond b c d, s) ⇒ ss ↔
   (b⇓s ∧ ss = (c, s)) ∨ (b⇓s = false ∧ ss = (d, s)) := by
   constructor <;> intro h
@@ -55,13 +54,11 @@ theorem Step.demo₁:
     . exact Or.inl ⟨rfl, hb ▸ rfl⟩
   . have hss: ss = (bif b⇓s then c else d, s) := by
       cases hb: b⇓s <;> rw [hb] at h <;> simp at * <;> assumption
-    exact hss ▸ cond₁
+    exact hss ▸ Step.cond₁
 
-@[simp] lemma cond_false {b: Bexp} (hb: b⇓s = false):
+@[simp] lemma Step.cond_false {b: Bexp} (hb: b⇓s = false):
   (cond b c d, s) ⇒ ss ↔ (ss = (d, s)) :=
   by rw [cond_iff, hb]; simp
-
-end Step
 
 open Relation
 
@@ -98,4 +95,5 @@ theorem cat_no_influence
   trans (cat_skip_cat h) (single Step.cat₁)
 
 end Star
+end Structural
 end Com

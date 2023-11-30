@@ -1,18 +1,18 @@
-import Imp.State
+import Semantics.State
 
 @[reducible]
 def Val := Int
 
 inductive Aexp where
-  | num : Val → Aexp
+  | val : Val → Aexp
   | loc : String → Aexp
   | add : Aexp → Aexp → Aexp
   | sub : Aexp → Aexp → Aexp
   | mul : Aexp → Aexp → Aexp
 
 inductive Bexp where
-  | tt  : Bexp
-  | ff  : Bexp
+  | tt
+  | ff
   | not : Bexp → Bexp
   | and : Bexp → Bexp → Bexp
   | or  : Bexp → Bexp → Bexp
@@ -20,7 +20,7 @@ inductive Bexp where
   | le  : Aexp → Aexp → Bexp
 
 inductive Com where
-  | skip  : Com
+  | skip
   | cat   : Com → Com → Com
   | ass   : String → Aexp → Com
   | cond  : Bexp → Com → Com → Com
@@ -66,7 +66,7 @@ macro_rules
   | `(⦃($x)⦄) => `(⦃$x⦄)
   -- imp
   | `(⦃$x:ident⦄) => `(Aexp.loc $(Lean.quote (toString x.getId)))
-  | `(⦃$n:num⦄)   => `(Aexp.num $n)
+  | `(⦃$n:num⦄)   => `(Aexp.val $n)
   | `(⦃$x + $y⦄)  => `(Aexp.add ⦃$x⦄ ⦃$y⦄)
   | `(⦃$x - $y⦄)  => `(Aexp.sub ⦃$x⦄ ⦃$y⦄)
   | `(⦃$x * $y⦄)  => `(Aexp.mul ⦃$x⦄ ⦃$y⦄)

@@ -1,4 +1,4 @@
-import Imp.Untyped.Aexp
+import Semantics.Imp.Untyped.Aexp
 
 namespace Bexp
 
@@ -51,7 +51,7 @@ theorem Natural.from_reduce {b: Bexp} (h: b⇓s = x): (b, s) ⟹ x :=
   | and _ _ l r => exact h ▸ Natural.and₁ (l rfl) (r rfl)
   | or _ _  l r => exact h ▸ Natural.or₁  (l rfl) (r rfl)
 
-theorem reduce.from_Natural {bs: Bexp × State} (h: bs ⟹ x): reduce.uncurry bs = x :=
+theorem reduce.from_natural {bs: Bexp × State} (h: bs ⟹ x): reduce.uncurry bs = x :=
   by induction h with
   | tt₁ => rfl
   | ff₁ => rfl
@@ -60,7 +60,7 @@ theorem reduce.from_Natural {bs: Bexp × State} (h: bs ⟹ x): reduce.uncurry bs
   | not₁ _ ih => exact ih ▸ rfl
   | _ _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
 
-@[simp] theorem Natural_eq_reduce {b: Bexp}: (b,s) ⟹ r ↔ b⇓s = r := ⟨reduce.from_Natural, Natural.from_reduce⟩
+@[simp] theorem Natural_eq_reduce {b: Bexp}: (b,s) ⟹ r ↔ b⇓s = r := ⟨reduce.from_natural, Natural.from_reduce⟩
 
 theorem not_true_eq_false: (!b⇓s) = (not b)⇓s := by simp
 

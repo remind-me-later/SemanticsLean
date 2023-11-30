@@ -1,4 +1,4 @@
-import Imp.Untyped.Bexp
+import Semantics.Imp.Untyped.Bexp
 
 import Mathlib.Data.Set.Basic
 import Mathlib.Order.CompleteLattice

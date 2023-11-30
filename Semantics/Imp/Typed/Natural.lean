@@ -1,43 +1,42 @@
-import Imp.Untyped.Bexp
+import Semantics.Imp.Untyped.Bexp
 
 namespace Com
+namespace Natural
 
-inductive Natural: Config → State → Prop
+inductive Step: Config → State → Prop
   | skip₁:
-    Natural (skip, s) s
+    Step (skip, s) s
 
   | ass₁:
-    Natural (ass x a, s) (s⟪x ≔ a⇓s⟫)
+    Step (ass x a, s) (s⟪x ≔ a⇓s⟫)
 
   | cat₁ t
-    (hc: Natural (c, s) t) (hd: Natural (d, t) u):
-    Natural (c;;d, s) u
+    (hc: Step (c, s) t) (hd: Step (d, t) u):
+    Step (c;;d, s) u
 
   | cond₁ {b: Bexp}
-    (hb: b⇓s = true) (hc: Natural (c, s) t):
-    Natural (cond b c d, s) t
+    (hb: b⇓s = true) (hc: Step (c, s) t):
+    Step (cond b c d, s) t
 
   | cond₂ {b: Bexp}
-    (hb: b⇓s = false) (hd: Natural (d, s) t):
-    Natural (cond b c d, s) t
+    (hb: b⇓s = false) (hd: Step (d, s) t):
+    Step (cond b c d, s) t
 
   | loop₁ {b: Bexp} u
-    (hb: b⇓s = true) (hc: Natural (c, s) u) (hw: Natural (loop b c, u) t):
-    Natural (loop b c, s) t
+    (hb: b⇓s = true) (hc: Step (c, s) u) (hw: Step (loop b c, u) t):
+    Step (loop b c, s) t
 
   | loop₂ {b: Bexp}
     (hb: b⇓s = false):
-    Natural (loop b c, s) s
+    Step (loop b c, s) s
 
-infix:110 " ⟹ " => Natural
+infix:110 " ⟹ " => Step
 
-namespace Natural
-
-theorem demo₁: (⦃x = 5⦄, ⟪⟫) ⟹ ⟪⟫⟪"x"≔5⟫ := ass₁
+theorem demo₁: (⦃x = 5⦄, ⟪⟫) ⟹ ⟪⟫⟪"x"≔5⟫ := Step.ass₁
 
 theorem demo₂:
   (⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄, ⟪⟫) ⟹
-  (⟪⟫⟪"x"≔2⟫⟪"z"≔4⟫) := cat₁ _ ass₁ $ cond₂ rfl ass₁
+  (⟪⟫⟪"x"≔2⟫⟪"z"≔4⟫) := Step.cat₁ _ Step.ass₁ $ Step.cond₂ rfl Step.ass₁
 
 /-
 ## Rewriting rules
@@ -46,14 +45,14 @@ theorem demo₂:
 theorem skip_iff: (skip, s) ⟹ t ↔ s = t := by
   apply Iff.intro <;> intro h
   . cases h; rfl
-  . exact h ▸ skip₁
+  . exact h ▸ Step.skip₁
 
 theorem cat_iff: (c;;d, s) ⟹ t ↔ ∃ w, (c, s) ⟹ w ∧ (d, w) ⟹ t := by
   apply Iff.intro <;> intro h
   . cases h with | cat₁ t h₁ h₂ =>
       exact ⟨t, ⟨h₁, h₂⟩⟩
   . cases h with | intro w h =>
-      exact cat₁ w h.1 h.2
+      exact Step.cat₁ w h.1 h.2
 
 theorem cond_iff: (cond b c d, s) ⟹ t ↔ bif b⇓s then (c, s) ⟹ t else (d, s) ⟹ t := by
   constructor <;> intro h
@@ -61,8 +60,8 @@ theorem cond_iff: (cond b c d, s) ⟹ t ↔ bif b⇓s then (c, s) ⟹ t else (d,
     | cond₁ hb hc => exact hb ▸ hc
     | cond₂ hb hc => exact hb ▸ hc
   . cases hb: b⇓s with
-    | true => exact cond₁ hb $ (cond_true ((c, s) ⟹ t) _) ▸ hb ▸ h
-    | false => exact cond₂ hb $ (cond_false _ ((d, s) ⟹ t)) ▸ hb ▸ h
+    | true => exact Step.cond₁ hb $ (cond_true ((c, s) ⟹ t) _) ▸ hb ▸ h
+    | false => exact Step.cond₂ hb $ (cond_false _ ((d, s) ⟹ t)) ▸ hb ▸ h
 
 theorem cond_iff': (cond b c d, s) ⟹ t ↔ (bif b⇓s then c else d, s) ⟹ t := by
   rw [cond_iff]; cases b⇓s <;> simp
@@ -79,9 +78,9 @@ theorem loop_iff: (loop b c, s) ⟹ t ↔
     | true =>
       rw [hb] at h
       cases h with | intro w h =>
-        exact loop₁ w hb h.1 h.2
+        exact Step.loop₁ w hb h.1 h.2
     | false =>
-      exact (hb ▸ h) ▸ loop₂ hb
+      exact (hb ▸ h) ▸ Step.loop₂ hb
 
 /-
 ## Behavioral equivalence
@@ -100,14 +99,14 @@ theorem skipl: (skip;;c) ≈ c := by
   constructor
   . intro h; cases h with | cat₁ _ hc hd =>
       exact skip_iff.mp hc ▸ hd
-  . exact (cat₁ _ skip₁ ·)
+  . exact (Step.cat₁ _ Step.skip₁ ·)
 
 theorem skipr: (c;;skip) ≈ c := by
   intro _ _
   constructor
   . intro h; cases h with | cat₁ _ hc hd =>
       exact skip_iff.mp hd ▸ hc
-  . exact (cat₁ _ · skip₁)
+  . exact (Step.cat₁ _ · Step.skip₁)
 
 theorem cond_true (h: b ≈ Bexp.tt): cond b c d ≈ c := by
   intro _ _
@@ -125,8 +124,8 @@ theorem loop_unfold:
   constructor <;> intro h
   . rw [cond_iff]
     cases h with
-    | loop₁ w hb hc hw => exact hb ▸ cat₁ w hc hw
-    | loop₂ hb => exact hb ▸ skip₁
+    | loop₁ w hb hc hw => exact hb ▸ Step.cat₁ w hc hw
+    | loop₂ hb => exact hb ▸ Step.skip₁
   . rw [loop_iff]
     rw [cond_iff] at h
     cases hb: b⇓s <;> rw [hb] at h

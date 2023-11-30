@@ -9,6 +9,6 @@ require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"
 
 @[default_target]
-lean_lib «Imp» {
+lean_lib «Semantics» {
   -- add any library configuration options here
 }

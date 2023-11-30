@@ -1,7 +1,4 @@
-import Imp.State
-import Imp.Untyped.Syntax
-
-import Mathlib.Init.Function
+import Semantics.Imp.Untyped.Syntax
 
 namespace Aexp
 
@@ -37,7 +34,7 @@ def reduce (a: Aexp) (s: State): Val :=
 infix:110 "⇓" => reduce
 
 -- relational definition is equal to recursive
-theorem reduce.from_Natural (h: as ⟹ n): reduce.uncurry as = n :=
+theorem reduce.from_natural (h: as ⟹ n): reduce.uncurry as = n :=
   by induction h with
   | num₁ => rfl
   | loc₁ => rfl
@@ -51,7 +48,7 @@ theorem Natural.from_reduce {a: Aexp} (h: a⇓s = n): (a,s) ⟹ n :=
   | sub _ _ l r => exact h ▸ sub₁ (l rfl) (r rfl)
   | mul _ _ l r => exact h ▸ mul₁ (l rfl) (r rfl)
 
-@[simp] theorem Natural_iff_reduce: (a, s) ⟹ n ↔ a⇓s = n := ⟨reduce.from_Natural, Natural.from_reduce⟩
+@[simp] theorem Natural_iff_reduce: (a, s) ⟹ n ↔ a⇓s = n := ⟨reduce.from_natural, Natural.from_reduce⟩
 @[simp] theorem Natural_iff_reduce': (a, s) ⟹ (a⇓s) := Natural.from_reduce rfl
 
 protected instance Natural.equiv: Setoid Aexp where

@@ -26,8 +26,6 @@ inductive Com where
   | cond  : Bexp → Com → Com → Com
   | loop  : Bexp → Com → Com
 
-def Config := Com × State
-
 -- Meta syntax
 notation:50 x:50 ";;" e:51 => Com.cat x e
 

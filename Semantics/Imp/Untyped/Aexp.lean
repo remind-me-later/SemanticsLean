@@ -1,5 +1,4 @@
 import Semantics.Imp.Untyped.Syntax
-import Semantics.Relation
 
 namespace Aexp
 namespace Natural
@@ -22,45 +21,6 @@ inductive Step: Aexp × State → Val → Prop
     Step (mul a b, s) (n * m)
 
 infix:110 " ⟹ " => Step
-
-theorem reducing: reducing Step := by {
-  unfold reducing
-  intro t
-  cases t with | mk f s => {
-    induction f with
-    | val n => exact ⟨n, Step.val₁⟩
-    | loc x => exact ⟨s x, Step.loc₁⟩
-    | add a b ih₁ ih₂ =>
-      cases ih₁ with | intro w₁ ih₁ =>
-        cases ih₂ with | intro w₂ ih₂ =>
-          exact ⟨w₁ + w₂, Step.add₁ ih₁ ih₂⟩
-    | sub a b ih₁ ih₂ =>
-      cases ih₁ with | intro w₁ ih₁ =>
-        cases ih₂ with | intro w₂ ih₂ =>
-          exact ⟨w₁ - w₂, Step.sub₁ ih₁ ih₂⟩
-    | mul a b ih₁ ih₂ =>
-      cases ih₁ with | intro w₁ ih₁ =>
-        cases ih₂ with | intro w₂ ih₂ =>
-          exact ⟨w₁ * w₂, Step.mul₁ ih₁ ih₂⟩
-  }
-}
-
-theorem determinist: determinist Step := by {
-  unfold determinist
-  intro a b c h₁ h₂
-  induction h₁ generalizing c with
-  | val₁ => cases h₂; rfl
-  | loc₁ => cases h₂; rfl
-  | add₁ _ _ ih₁ ih₂ =>
-    cases h₂ with | add₁ h₁ h₂ =>
-      exact (ih₁ _ h₁) ▸ (ih₂ _ h₂) ▸ rfl
-  | sub₁ _ _ ih₁ ih₂ =>
-    cases h₂ with | sub₁ h₁ h₂ =>
-      exact (ih₁ _ h₁) ▸ (ih₂ _ h₂) ▸ rfl
-  | mul₁ _ _ ih₁ ih₂ =>
-    cases h₂ with | mul₁ h₁ h₂ =>
-      exact (ih₁ _ h₁) ▸ (ih₂ _ h₂) ▸ rfl
-}
 
 end Natural
 

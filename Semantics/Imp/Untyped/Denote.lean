@@ -7,7 +7,7 @@ import Mathlib.Order.FixedPoints
 
 namespace SRel
 
-/-!
+/-
 ## Set relation `Set (α × β)`, aka graph of partial function, aka Lana Del Rey
 -/
 

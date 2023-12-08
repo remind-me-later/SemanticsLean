@@ -6,7 +6,7 @@ namespace Com
 namespace Structural
 
 @[reducible]
-inductive Step: Config → Config → Prop where
+inductive Step: Com × State → Com × State → Prop where
   | ass₁:
     Step (ass x a, s) (skip, s⟪x ≔ a⇓s⟫)
 
@@ -60,28 +60,28 @@ theorem Step.demo₁:
   (cond b c d, s) ⇒ ss ↔ (ss = (d, s)) :=
   by rw [cond_iff, hb]; simp
 
-infix:110 " ⇒* " => Star Step
+infix:110 " ⇒* " => Relation.ReflTransGen Step
 
 theorem StarStep.demo₂:
   (⦃x = 2; while 0 <= x {x = x - 1}⦄, ⟪⟫) ⇒*
       (⦃while 0 <= x {x = x - 1}⦄, ⟪⟫⟪"x"≔2⟫) :=
-  Star.head (Step.cat₂ Step.ass₁) (Star.head Step.cat₁ Star.refl)
+  Relation.ReflTransGen.head (Step.cat₂ Step.ass₁) (Relation.ReflTransGen.head Step.cat₁ Relation.ReflTransGen.refl)
 
 theorem StarStep.cat_skip_cat
   (h: (c, s) ⇒* (skip, t)):
   (c;;d, s) ⇒* (skip;;d, t) :=
-  Star.lift (λ (x: Config) ↦ (x.1;;d, x.2)) (λ _ _ h => Step.cat₂ h) h
+  Relation.ReflTransGen.lift (λ (x: Com × State) ↦ (x.1;;d, x.2)) (λ _ _ h => Step.cat₂ h) h
 
 theorem StarStep.cat
   (h₁: (c₁, s) ⇒* (skip, s₁))
   (h₂: (c₂, s₁) ⇒* (skip, s₂)):
   (c₁;;c₂, s) ⇒* (skip, s₂) :=
-  Star.trans (cat_skip_cat h₁) (Star.trans (Star.single Step.cat₁) h₂)
+  Relation.ReflTransGen.trans (cat_skip_cat h₁) (Relation.ReflTransGen.trans (Relation.ReflTransGen.single Step.cat₁) h₂)
 
 theorem StarStep.cat_no_influence
   (h: (c₁, s) ⇒* (skip, s₁)):
   (c₁;;c₂, s) ⇒* (c₂, s₁) :=
-  Star.trans (cat_skip_cat h) (Star.single Step.cat₁)
+  Relation.ReflTransGen.trans (cat_skip_cat h) (Relation.ReflTransGen.single Step.cat₁)
 
 end Structural
 end Com

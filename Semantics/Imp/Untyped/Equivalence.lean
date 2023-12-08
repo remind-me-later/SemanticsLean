@@ -4,17 +4,17 @@ import Semantics.Imp.Untyped.Denote
 
 namespace Com
 
-theorem Structural.from_natural {x: Config} (h: x ⟹ s): x ⇒* (skip, s) := by
+theorem Structural.from_natural {x: Com × State} (h: x ⟹ s): x ⇒* (skip, s) := by
   induction h with
-  | skip₁ => exact Star.refl
-  | ass₁ => exact Star.single Step.ass₁
+  | skip₁ => exact Relation.ReflTransGen.refl
+  | ass₁ => exact Relation.ReflTransGen.single Step.ass₁
   | cat₁ _ _ _ ihc ihd => exact StarStep.cat ihc ihd
-  | cond₁ hb _ ih => exact Star.head Step.cond₁ (hb ▸ ih)
-  | cond₂ hb _ ih => exact Star.head Step.cond₁ (hb ▸ ih)
+  | cond₁ hb _ ih => exact Relation.ReflTransGen.head Step.cond₁ (hb ▸ ih)
+  | cond₂ hb _ ih => exact Relation.ReflTransGen.head Step.cond₁ (hb ▸ ih)
   | loop₁ _ hb _ _ ihc ihw =>
-    exact Star.head Step.loop₁ $ Star.trans (hb ▸ StarStep.cat ihc ihw) Star.refl
+    exact Relation.ReflTransGen.head Step.loop₁ $ Relation.ReflTransGen.trans (hb ▸ StarStep.cat ihc ihw) Relation.ReflTransGen.refl
   | loop₂ hb =>
-    exact Star.head Step.loop₁ $ hb ▸ Star.refl
+    exact Relation.ReflTransGen.head Step.loop₁ $ hb ▸ Relation.ReflTransGen.refl
 
 lemma Natural.from_structural_step (h₁: x ⇒ y) (h₂: y ⟹ s): x ⟹ s := by
   induction h₁ generalizing s with
@@ -27,13 +27,13 @@ lemma Natural.from_structural_step (h₁: x ⇒ y) (h₂: y ⟹ s): x ⟹ s := b
   | loop₁ => rw [loop_unfold, cond_iff']; exact h₂
 
 theorem Natural.from_structural (h: x ⇒* (skip, t)): x ⟹ t := by
-  induction h using Star.head_induction_on with
+  induction h using Relation.ReflTransGen.head_induction_on with
   | refl => exact Step.skip₁
   | head h _ ht => exact from_structural_step h ht
 
 theorem structural_iff_natural: x ⇒* (skip, t) ↔ x ⟹ t := ⟨Natural.from_structural, Structural.from_natural⟩
 
-theorem denote.from_natural {x: Config} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1⟧ := by
+theorem denote.from_natural {x: Com × State} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1⟧ := by
   induction h with
   | skip₁ => exact SRel.mem_id.mpr rfl
   | ass₁  => exact SRel.mem_id.mpr rfl

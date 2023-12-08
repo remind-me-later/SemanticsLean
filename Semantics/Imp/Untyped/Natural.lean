@@ -3,7 +3,7 @@ import Semantics.Imp.Untyped.Bexp
 namespace Com
 namespace Natural
 
-inductive Step: Config → State → Prop
+inductive Step: Com × State → State → Prop
   | skip₁:
     Step (skip, s) s
 
@@ -136,20 +136,20 @@ theorem loop_unfold:
 ## No normalization
 -/
 
-theorem loop_tt (hq: b ≈ Bexp.tt):
+theorem loop_tt (h: b ≈ Bexp.tt):
   ¬((loop b c, s) ⟹ t) := by
   intro h₁
   generalize h₂: (loop b c, s) = ww at h₁
   induction h₁ generalizing s with
   | loop₁ _ _ _ _ _ ih₂ => cases h₂; apply ih₂; rfl
-  | loop₂ hb => cases h₂; rw [hq] at hb; contradiction
+  | loop₂ hb => cases h₂; rw [h] at hb; contradiction
   | _ => cases h₂
 
 /-
 ## Determinism
 -/
 
-theorem determinist {cs: Config} (h₁: cs ⟹ s) (h₂: cs ⟹ t): s = t :=
+theorem determinist {x: Com × State} (h₁: x ⟹ s) (h₂: x ⟹ t): s = t :=
   by induction h₁ generalizing t with
   | cat₁ _ _ _ ih₁ ih₂ => cases h₂ with
     | cat₁ _ hc hd => exact ih₂ (ih₁ hc ▸ hd)

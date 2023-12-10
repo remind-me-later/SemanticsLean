@@ -6,38 +6,38 @@ namespace Com
 
 theorem Structural.from_natural {x: Com × State} (h: x ⟹ s): x ⇒* (skip, s) := by
   induction h with
-  | skip₁ => exact Relation.ReflTransGen.refl
-  | ass₁ => exact Relation.ReflTransGen.single Step.ass₁
-  | cat₁ _ _ _ ihc ihd => exact StarStep.cat ihc ihd
-  | cond₁ hb _ ih => exact Relation.ReflTransGen.head Step.cond₁ (hb ▸ ih)
-  | cond₂ hb _ ih => exact Relation.ReflTransGen.head Step.cond₁ (hb ▸ ih)
+  | skip => exact Relation.ReflTransGen.refl
+  | ass => exact Relation.ReflTransGen.single Step.ass
+  | cat _ _ _ ihc ihd => exact Star.cat ihc ihd
+  | cond₁ hb _ ih => exact Relation.ReflTransGen.head Step.cond (hb ▸ ih)
+  | cond₂ hb _ ih => exact Relation.ReflTransGen.head Step.cond (hb ▸ ih)
   | loop₁ _ hb _ _ ihc ihw =>
-    exact Relation.ReflTransGen.head Step.loop₁ $ Relation.ReflTransGen.trans (hb ▸ StarStep.cat ihc ihw) Relation.ReflTransGen.refl
+    exact Relation.ReflTransGen.head Step.loop $ Relation.ReflTransGen.trans (hb ▸ Star.cat ihc ihw) Relation.ReflTransGen.refl
   | loop₂ hb =>
-    exact Relation.ReflTransGen.head Step.loop₁ $ hb ▸ Relation.ReflTransGen.refl
+    exact Relation.ReflTransGen.head Step.loop $ hb ▸ Relation.ReflTransGen.refl
 
 lemma Natural.from_structural_step (h₁: x ⇒ y) (h₂: y ⟹ s): x ⟹ s := by
   induction h₁ generalizing s with
-  | ass₁ => exact (skip_iff.mp h₂) ▸ Step.ass₁
-  | cat₁ => exact Step.cat₁ _ Step.skip₁ h₂
+  | ass => exact (skip_iff.mp h₂) ▸ Step.ass
+  | cat₁ => exact Step.cat _ Step.skip h₂
   | cat₂ _ ih =>
     cases h₂ with
-    | cat₁ w hc hd => exact Step.cat₁ w (ih hc) hd
-  | cond₁ => rw [cond_iff']; exact h₂
-  | loop₁ => rw [loop_unfold, cond_iff']; exact h₂
+    | cat w hc hd => exact Step.cat w (ih hc) hd
+  | cond => rw [cond_iff']; exact h₂
+  | loop => rw [loop_unfold, cond_iff']; exact h₂
 
 theorem Natural.from_structural (h: x ⇒* (skip, t)): x ⟹ t := by
   induction h using Relation.ReflTransGen.head_induction_on with
-  | refl => exact Step.skip₁
+  | refl => exact Step.skip
   | head h _ ht => exact from_structural_step h ht
 
 theorem structural_iff_natural: x ⇒* (skip, t) ↔ x ⟹ t := ⟨Natural.from_structural, Structural.from_natural⟩
 
 theorem denote.from_natural {x: Com × State} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1⟧ := by
   induction h with
-  | skip₁ => exact SRel.mem_id.mpr rfl
-  | ass₁  => exact SRel.mem_id.mpr rfl
-  | cat₁ t _ _ ih₁ ih₂ => exact ⟨t, ⟨ih₁, ih₂⟩⟩
+  | skip => exact SRel.mem_id.mpr rfl
+  | ass  => exact SRel.mem_id.mpr rfl
+  | cat t _ _ ih₁ ih₂ => exact ⟨t, ⟨ih₁, ih₂⟩⟩
   | cond₁ hb _ ih => exact Or.inl ⟨ih, hb⟩
   | cond₂ hb _ ih => exact Or.inr ⟨ih, hb⟩
   | loop₁ t hb _ _ ih₁ ih₂ => exact loop_unfold ▸ Or.inl ⟨⟨t, ⟨ih₁, ih₂⟩⟩, hb⟩
@@ -46,12 +46,12 @@ theorem denote.from_natural {x: Com × State} (h: x ⟹ t): (x.2, t) ∈ ⟦x.1�
 theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
   revert h
   induction c generalizing s t with
-  | skip => intro h; cases h; exact Step.skip₁
-  | ass => intro h; simp [denote] at h; exact h ▸ Step.ass₁
+  | skip => intro h; cases h; exact Step.skip
+  | ass => intro h; simp [denote] at h; exact h ▸ Step.ass
   | cat _ _ ih₁ ih₂ =>
     intro h
     cases h with | intro w h =>
-      exact Step.cat₁ w (ih₁ h.left) (ih₂ h.right)
+      exact Step.cat w (ih₁ h.left) (ih₂ h.right)
   | cond _ _ _ ih₁ ih₂ =>
     intro h
     cases h with

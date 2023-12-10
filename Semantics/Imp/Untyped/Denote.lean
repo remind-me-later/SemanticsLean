@@ -45,22 +45,22 @@ end SRel
 namespace Com
 
 def denote_loop (b: Bexp) (f: State →ᵍ State): (State →ᵍ State) →o (State →ᵍ State) :=
-  ⟨λ g ↦ (SRel.restrict {s | b⇓s = true} $ f ○ g) ∪ (SRel.restrict {s | b⇓s = false} SRel.id),
+  ⟨λ g ↦ (SRel.restrict {s | b.reduce s = true} $ f ○ g) ∪ (SRel.restrict {s | b.reduce s = false} SRel.id),
     Monotone.union
       (SRel.monotone_restrict (SRel.monotone_comp monotone_const monotone_id))
       (SRel.monotone_restrict monotone_const)⟩
 
 def denote: Com → (State →ᵍ State)
   | skip       => SRel.id
-  | ass x a    => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
+  | ass x a    => {s | s.2 = s.1⟪x ≔ a.reduce s.1⟫}
   | c;;d       => c.denote ○ d.denote
-  | cond b c d => (SRel.restrict {s | b⇓s = true} c.denote) ∪ (SRel.restrict {s | b⇓s = false} d.denote)
+  | cond b c d => (SRel.restrict {s | b.reduce s = true} c.denote) ∪ (SRel.restrict {s | b.reduce s = false} d.denote)
   | loop b c   => OrderHom.lfp (denote_loop b c.denote)
 
 notation (priority := high) "⟦" c "⟧" => denote c
 
-#simp [denote] (⟪⟫, ⟪⟫⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x == 1 {skip} else {x = 1}⦄⟧
-#simp [denote] (⟪⟫, ⟪⟫⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x == 1 {x = 1}⦄⟧
+#simp [denote] (⟪⟫, ⟪⟫⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x <= 1 {skip} else {x = 1}⦄⟧
+#simp [denote] (⟪⟫, ⟪⟫⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x <= 1 {x = 1}⦄⟧
 
 namespace denote
 

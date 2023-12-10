@@ -1,25 +1,31 @@
-import Semantics.State
-import Std.Data.Rat.Basic
+import Mathlib.Logic.Function.Basic
 
-@[reducible]
 inductive Val where
-  | int : Int → Val
-  | nat : Nat → Val
+  | int: Int → Val
+  | nat: Nat → Val
+
+def State := String → Val
+def State.nil: State := λ _ ↦ Val.int 0
+
+notation "⟪⟫" => State.nil
+notation s "⟪" x "≔" e "⟫" => Function.update s x e
+
+#reduce ⟪⟫ "x"
+#reduce (⟪⟫⟪"x" ≔ Val.int 3⟫⟪"x" ≔ Val.int 4⟫) "x"
+#reduce (⟪⟫⟪"x" ≔ Val.nat 3⟫⟪"x" ≔ Val.nat 4⟫⟪"x" ≔ Val.nat 7⟫) "x"
+
+theorem State.demo₁: (⟪⟫⟪"x"≔Val.int 3⟫) = (⟪⟫⟪"x"≔Val.int 4⟫⟪"x"≔ Val.int 3⟫) := by simp
 
 inductive Aexp where
   | val : Val → Aexp
-  | loc : String → Aexp
+  | var : String → Aexp
   | add : Aexp → Aexp → Aexp
-  | sub : Aexp → Aexp → Aexp
-  | mul : Aexp → Aexp → Aexp
 
 inductive Bexp where
   | tt
   | ff
   | not : Bexp → Bexp
   | and : Bexp → Bexp → Bexp
-  | or  : Bexp → Bexp → Bexp
-  | eq  : Aexp → Aexp → Bexp
   | le  : Aexp → Aexp → Bexp
 
 inductive Com where
@@ -28,8 +34,6 @@ inductive Com where
   | ass   : String → Aexp → Com
   | cond  : Bexp → Com → Com → Com
   | loop  : Bexp → Com → Com
-
-def Config := Com × State
 
 -- Meta syntax
 notation:50 x:50 ";;" e:51 => Com.cat x e
@@ -40,17 +44,13 @@ declare_syntax_cat imp
 -- general
 syntax "(" imp ")" : imp
 -- imp
-syntax num : imp
-syntax "[" num "]" : imp
+syntax num: imp
+syntax num "nat": imp
 syntax ident: imp
 syntax:60 imp:60 "+" imp:61 : imp
-syntax:60 imp:60 "-" imp:61 : imp
-syntax:70 imp:70 "*" imp:71 : imp
 -- bexp
 syntax:80 "!" imp:81 : imp
-syntax:70 imp:70 "==" imp:71 : imp
 syntax:70 imp:70 "<=" imp:71 : imp
-syntax:65 imp:65 "||" imp:66 : imp
 syntax:65 imp:65 "&&" imp:66 : imp
 -- stmt
 syntax:50 imp:50 "=" imp:51 : imp
@@ -64,23 +64,19 @@ syntax "⦃" imp "⦄" : term
 macro_rules
   -- keywords
   | `(⦃skip⦄) => `(Com.skip)
-  | `(⦃true⦄)   => `(Bexp.tt)
-  | `(⦃false⦄)   => `(Bexp.ff)
+  | `(⦃true⦄) => `(Bexp.tt)
+  | `(⦃false⦄) => `(Bexp.ff)
   -- general
   | `(⦃($x)⦄) => `(⦃$x⦄)
   -- imp
-  | `(⦃$x:ident⦄) => `(Aexp.loc $(Lean.quote (toString x.getId)))
-  | `(⦃$n:num⦄) => `(Aexp.val (Val.int $n))
-  | `(⦃[$n:num]⦄) => `(Aexp.val (Val.nat $n))
+  | `(⦃$x:ident⦄) => `(Aexp.var $(Lean.quote (toString x.getId)))
+  | `(⦃$n:num⦄)   => `(Aexp.val (Val.int $n))
+  | `(⦃$n:num nat⦄)   => `(Aexp.val (Val.nat $n))
   | `(⦃$x + $y⦄)  => `(Aexp.add ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x - $y⦄)  => `(Aexp.sub ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x * $y⦄)  => `(Aexp.mul ⦃$x⦄ ⦃$y⦄)
   -- bexp
   | `(⦃!$x⦄)      => `(Bexp.not ⦃$x⦄)
-  | `(⦃$x == $y⦄)  => `(Bexp.eq ⦃$x⦄ ⦃$y⦄)
   | `(⦃$x <= $y⦄)  => `(Bexp.le ⦃$x⦄ ⦃$y⦄)
   | `(⦃$x && $y⦄)  => `(Bexp.and ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x || $y⦄)  => `(Bexp.or ⦃$x⦄ ⦃$y⦄)
   -- stmt
   | `(⦃$x:ident = $y⦄) => `(Com.ass $(Lean.quote (toString x.getId)) ⦃$y⦄)
   | `(⦃$x ; $y⦄)       => `(Com.cat ⦃$x⦄ ⦃$y⦄)
@@ -91,6 +87,6 @@ macro_rules
 #check ⦃while true {skip}⦄
 #check ⦃skip⦄
 #check ⦃x = 5⦄
-#check ⦃x = 5; y = [6]⦄
-#check ⦃if x == 5 {y = 6} else {z = 7}⦄
-#check ⦃x = 0; while !(x == 5) {skip; skip; x = x + 1}⦄
+#check ⦃x = 5 nat + 2 nat; y = 6⦄
+#check ⦃if x <= 5 {y = 6} else {z = 7}⦄
+#check ⦃x = 0; while !(x <= 5) {skip; skip; x = x + 1}⦄

@@ -3,7 +3,6 @@ import Semantics.Imp.Untyped.Lang
 namespace Aexp
 namespace Natural
 
--- Operational semantics of aexp
 inductive Step: Aexp → State → Val → Prop
   | val: Step (val n) _ n
   | var: Step (var x) s (s x)
@@ -13,7 +12,6 @@ inductive Step: Aexp → State → Val → Prop
 
 end Natural
 
--- Denotational semantics of arithmetic expressions
 @[reducible]
 def reduce (a: Aexp) (s: State): Val :=
   match a with

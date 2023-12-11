@@ -47,16 +47,17 @@ theorem Step.demo₁:
 
 @[simp] lemma cond_iff:
   (cond b c d, s) ⇒ ss ↔
-  (b⇓s ∧ ss = (c, s)) ∨ (b⇓s = false ∧ ss = (d, s)) := by
+  (b.reduce s ∧ ss = (c, s)) ∨ (b.reduce s = false ∧ ss = (d, s)) := by
   constructor <;> intro h
-  . cases hb: b⇓s <;> cases h
-    . exact Or.inr ⟨rfl, hb ▸ rfl⟩
+  . cases hb: b.reduce s <;> cases h
+    . rename_i h; simp;
+      cases h
     . exact Or.inl ⟨rfl, hb ▸ rfl⟩
-  . have hss: ss = (bif b⇓s then c else d, s) := by
-      cases hb: b⇓s <;> rw [hb] at h <;> simp at * <;> assumption
+  . have hss: ss = (bif b.reduce s then c else d, s) := by
+      cases hb: b.reduce s <;> rw [hb] at h <;> simp at * <;> assumption
     exact hss ▸ Step.cond
 
-@[simp] lemma cond_false {b: Bexp} (hb: b⇓s = false):
+@[simp] lemma cond_false {b: Bexp} (hb: b.reduce s = false):
   (cond b c d, s) ⇒ ss ↔ (ss = (d, s)) :=
   by rw [cond_iff, hb]; simp
 
@@ -65,7 +66,7 @@ infix:110 " ⇒* " => Relation.ReflTransGen Step
 theorem Star.demo₂:
   (⦃x = 2; while 0 <= x {x = x + 1}⦄, ⟪⟫) ⇒*
       (⦃while 0 <= x {x = x + 1}⦄, ⟪⟫⟪"x"≔2⟫) :=
-  Relation.ReflTransGen.head (Step.cat₂ Step.ass) (Relation.ReflTransGen.head Step.cat₁ Relation.ReflTransGen.refl)
+  Relation.ReflTransGen.head (Step.cat₂ (Step.ass (by simp))) (Relation.ReflTransGen.head Step.cat₁ Relation.ReflTransGen.refl)
 
 theorem Star.cat_skip_cat
   (h: (c, s) ⇒* (skip, t)):

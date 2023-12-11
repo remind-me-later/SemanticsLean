@@ -10,6 +10,8 @@ inductive Step: Aexp → State → Val → Prop
     (h₁: Step a s n) (h₂: Step b s m):
     Step (add a b) s (n + m)
 
+notation s "⊨" a "⟹" v => Step a s v
+
 end Natural
 
 @[reducible]
@@ -20,22 +22,22 @@ def reduce (a: Aexp) (s: State): Val :=
   | add a b => reduce a s + reduce b s
 
 -- relational definition is equal to recursive
-theorem reduce.from_natural (h: Natural.Step a s n): reduce a s = n :=
+theorem reduce.from_natural (h: s ⊨ a ⟹ n): reduce a s = n :=
   by induction h with
   | add _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
   | _ => rfl
 
-theorem Natural.from_reduce {a: Aexp} (h: reduce a s = n): Step a s n :=
+theorem Natural.from_reduce {a: Aexp} (h: reduce a s = n): s ⊨ a ⟹ n :=
   by induction a generalizing n with
   | val _ => exact h ▸ Step.val
   | var _ => exact h ▸ Step.var
   | add _ _ l r => exact h ▸ Step.add (l rfl) (r rfl)
 
-@[simp] theorem Step_iff_reduce: Natural.Step a s n ↔ reduce a s = n := ⟨reduce.from_natural, Natural.from_reduce⟩
-@[simp] theorem Step_iff_reduce': Natural.Step a s (reduce a s) := Natural.from_reduce rfl
+@[simp] theorem Step_iff_reduce: (s ⊨ a ⟹ n) ↔ reduce a s = n := ⟨reduce.from_natural, Natural.from_reduce⟩
+@[simp] theorem Step_iff_reduce': s ⊨ a ⟹ (reduce a s) := Natural.from_reduce rfl
 
 protected instance Step.equiv: Setoid Aexp where
-  r a b := ∀ s n, Natural.Step a s n = Natural.Step b s n
+  r a b := ∀ s n, (s ⊨ a ⟹ n) = (s ⊨ b ⟹ n)
   iseqv := {
     refl := λ _ _ _ ↦ Eq.refl _
     symm := λ h s n ↦ Eq.symm (h s n)

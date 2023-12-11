@@ -1,8 +1,7 @@
-import Semantics.Stlc.Syntax
+import Semantics.Stlc.Lang
 import Mathlib.Logic.Relation
 
 namespace Term
-namespace Natural
 
 inductive Value: Term → Prop where
   | abs: Value (abs _ _ _)
@@ -45,5 +44,4 @@ infix:110 " ⇒* " => Relation.ReflTransGen Step
 
 
 
-end Natural
 end Term

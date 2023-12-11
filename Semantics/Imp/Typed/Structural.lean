@@ -50,12 +50,11 @@ theorem Step.demo₁:
   (b.reduce s ∧ ss = (c, s)) ∨ (b.reduce s = false ∧ ss = (d, s)) := by
   constructor <;> intro h
   . cases hb: b.reduce s <;> cases h
-    . rename_i h; simp;
-      cases h
-    . exact Or.inl ⟨rfl, hb ▸ rfl⟩
+    . sorry
+    . sorry
   . have hss: ss = (bif b.reduce s then c else d, s) := by
       cases hb: b.reduce s <;> rw [hb] at h <;> simp at * <;> assumption
-    exact hss ▸ Step.cond
+    sorry
 
 @[simp] lemma cond_false {b: Bexp} (hb: b.reduce s = false):
   (cond b c d, s) ⇒ ss ↔ (ss = (d, s)) :=

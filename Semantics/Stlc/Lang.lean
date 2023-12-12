@@ -6,8 +6,8 @@ inductive Term where
   | var: String → Term
   | app: Term → Term → Term
   | abs: String → Ty → Term → Term
-  | true
-  | false
+  | tt
+  | ff
   | cond: Term → Term → Term → Term
 
 -- Syntax of the language
@@ -25,8 +25,8 @@ syntax "⦃" stlc "⦄" : term
 
 macro_rules
   -- keywords
-  | `(⦃true⦄)   => `(Term.true)
-  | `(⦃false⦄)  => `(Term.false)
+  | `(⦃true⦄)   => `(Term.tt)
+  | `(⦃false⦄)  => `(Term.ff)
   | `(⦃Bool⦄)   => `(Ty.Bool)
   | `(⦃$x → $y⦄) => `(Ty.Arrow ⦃$x⦄ ⦃$y⦄)
   -- general

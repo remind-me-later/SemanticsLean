@@ -10,7 +10,7 @@ inductive Step: Aexp → State → Val → Prop
     (h₁: Step a s n) (h₂: Step b s m):
     Step (add a b) s (n + m)
 
-notation s "⊨" a "⟹" v => Step a s v
+notation s " ⊢ " a " ⟹ " v => Step a s v
 
 end Natural
 
@@ -21,23 +21,25 @@ def reduce (a: Aexp) (s: State): Val :=
   | var x => s x
   | add a b => reduce a s + reduce b s
 
+infix:100 "⇓" => reduce
+
 -- relational definition is equal to recursive
-theorem reduce.from_natural (h: s ⊨ a ⟹ n): reduce a s = n :=
+theorem reduce.from_natural (h: s ⊢ a ⟹ n): a⇓s = n :=
   by induction h with
   | add _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
   | _ => rfl
 
-theorem Natural.from_reduce {a: Aexp} (h: reduce a s = n): s ⊨ a ⟹ n :=
+theorem Natural.from_reduce {a: Aexp} (h: a⇓s = n): s ⊢ a ⟹ n :=
   by induction a generalizing n with
   | val _ => exact h ▸ Step.val
   | var _ => exact h ▸ Step.var
   | add _ _ l r => exact h ▸ Step.add (l rfl) (r rfl)
 
-@[simp] theorem Step_iff_reduce: (s ⊨ a ⟹ n) ↔ reduce a s = n := ⟨reduce.from_natural, Natural.from_reduce⟩
-@[simp] theorem Step_iff_reduce': s ⊨ a ⟹ (reduce a s) := Natural.from_reduce rfl
+@[simp] theorem Step_iff_reduce: (s ⊢ a ⟹ n) ↔ a⇓s = n := ⟨reduce.from_natural, Natural.from_reduce⟩
+@[simp] theorem Step_iff_reduce': s ⊢ a ⟹ (a⇓s) := Natural.from_reduce rfl
 
 protected instance Step.equiv: Setoid Aexp where
-  r a b := ∀ s n, (s ⊨ a ⟹ n) = (s ⊨ b ⟹ n)
+  r a b := ∀ s n, (s ⊢ a ⟹ n) = (s ⊢ b ⟹ n)
   iseqv := {
     refl := λ _ _ _ ↦ Eq.refl _
     symm := λ h s n ↦ Eq.symm (h s n)
@@ -45,7 +47,7 @@ protected instance Step.equiv: Setoid Aexp where
   }
 
 instance reduce.equiv: Setoid Aexp where
-  r a b := ∀s, reduce a s = reduce b s
+  r a b := ∀s, a⇓s = b⇓s
   iseqv := ⟨λ _ _ ↦ Eq.refl _, (Eq.symm $ · ·) , λ h₁ h₂ s ↦ (h₁ s) ▸ (h₂ s)⟩
 
 protected theorem Step_eq_eq_reduce_eq: Step.equiv.r a b ↔ reduce.equiv.r a b := by

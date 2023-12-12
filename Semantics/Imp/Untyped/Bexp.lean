@@ -7,13 +7,15 @@ namespace Natural
 inductive Step: Bexp → State → Bool → Prop
   | tt: Step tt _ true
   | ff: Step ff _ false
-  | le: Step (le a b) s (a.reduce s ≤ b.reduce s)
+  | le: Step (le a b) s (a⇓s ≤ b⇓s)
   | not
     (h: Step a s n):
     Step (not a) s (!n)
   | and
     (h₁: Step a s n) (h₂: Step b s m):
     Step (and a b) s (n && m)
+
+notation s " ⊢ " a " ⟹ " v => Step a s v
 
 end Natural
 
@@ -26,8 +28,10 @@ end Natural
   | and a b => reduce a s && reduce b s
   | le a b  => a.reduce s ≤ b.reduce s
 
+infix:100 "⇓" => reduce
+
 -- relational definition is equivalent to recursive
-theorem Natural.from_reduce {b: Bexp} (h: b.reduce s = x): Step b s x :=
+theorem Natural.from_reduce {b: Bexp} (h: b⇓s = x): s ⊢ b ⟹ x :=
   by induction b generalizing x with
   | tt => exact h ▸ Step.tt
   | ff => exact h ▸ Step.ff
@@ -35,15 +39,15 @@ theorem Natural.from_reduce {b: Bexp} (h: b.reduce s = x): Step b s x :=
   | not _ ih => exact h ▸ Step.not (ih rfl)
   | and _ _ l r => exact h ▸ Step.and (l rfl) (r rfl)
 
-theorem reduce.from_natural (h: Natural.Step b s x): reduce b s = x :=
+theorem reduce.from_natural {b: Bexp} (h: s ⊢ b ⟹ x): b⇓s = x :=
   by induction h with
   | not _ ih => exact ih ▸ rfl
   | and _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
   | _ => rfl
 
-@[simp] theorem Step_eq_reduce {b: Bexp}: Natural.Step b s r ↔ reduce b s = r := ⟨reduce.from_natural, Natural.from_reduce⟩
+@[simp] theorem Step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) ↔ b⇓s = x := ⟨reduce.from_natural, Natural.from_reduce⟩
 
-theorem not_true_eq_false: (!b.reduce s) = (not b).reduce s := by simp
+theorem not_true_eq_false: (!b⇓s) = (not b)⇓s := by simp
 
 protected instance Step.equiv: Setoid Bexp where
   r a b := ∀ s n, Natural.Step a s n = Natural.Step b s n
@@ -55,7 +59,7 @@ protected instance Step.equiv: Setoid Bexp where
 
 @[reducible, simp]
 instance reduce.equiv: Setoid Bexp where
-  r a b:= ∀s, a.reduce s = b.reduce s
+  r a b:= ∀s, a⇓s = b⇓s
   iseqv := ⟨λ _ _ ↦ Eq.refl _, (Eq.symm $ · ·) , λ h₁ h₂ s ↦ (h₁ s) ▸ (h₂ s)⟩
 
 protected theorem Step_eq_eq_reduce_eq: Step.equiv.r a b ↔ reduce.equiv.r a b := by

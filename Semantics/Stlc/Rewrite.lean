@@ -13,7 +13,7 @@ def subst (x: String) (s: Term) (t: Term): Term :=
   | t₁ ? t₂ | t₃ => (subst x s t₁) ? subst x s t₂ | subst x s t₃
   | otherwise => otherwise
 
-notation "[" x "≔" s "]" t => subst x s t
+notation "[" x " ≔ " s "]" t => subst x s t
 
 inductive step: Term → Term → Prop where
   | appabs (h: value v):

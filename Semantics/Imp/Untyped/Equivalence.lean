@@ -39,9 +39,16 @@ theorem denote.from_natural {c: Com} (h: s ⊢ c ⟹ t): (s, t) ∈ ⟦c⟧ := b
   | ass  => exact SRel.mem_id.mpr rfl
   | cat t _ _ ih₁ ih₂ => exact ⟨t, ⟨ih₁, ih₂⟩⟩
   | cond₁ hb _ ih => exact Or.inl ⟨ih, hb⟩
-  | cond₂ hb _ ih => exact Or.inr ⟨ih, hb⟩
+  | cond₂ hb _ ih =>
+      apply Or.inr
+      simp [hb]
+      exact ih
   | loop₁ t hb _ _ ih₁ ih₂ => exact loop_unfold ▸ Or.inl ⟨⟨t, ⟨ih₁, ih₂⟩⟩, hb⟩
-  | loop₂ hb => exact loop_unfold ▸ Or.inr ⟨rfl, hb⟩
+  | loop₂ hb =>
+      rw [loop_unfold]
+      apply Or.inr
+      simp [hb]
+      rfl
 
 theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
   revert h
@@ -60,6 +67,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
         exact step.cond₁ hb (ih₁ h)
     | inr h =>
       cases h with | intro h hb =>
+        simp at hb
         exact step.cond₂ hb (ih₂ h)
   | loop b c ih =>
     suffices ⟦loop b c⟧ ⊆ {s | s.1 ⊢ loop b c ⟹ s.2} by apply this
@@ -73,7 +81,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
             exact step.loop₁ w hb (ih h.left) h.right
       | inr h =>
         cases h with | intro hq hb =>
-          simp at hq
+          simp at hq hb
           exact hq ▸ step.loop₂ hb
 
 theorem natural_iff_denote: (s, t) ∈ ⟦c⟧ ↔ (s ⊢ c ⟹ t) := ⟨Natural.from_denote, denote.from_natural⟩

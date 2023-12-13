@@ -26,35 +26,23 @@ infixl:90 " ○ " => SRel.comp
 @[simp] theorem mem_comp {f g: α →ᵍ α}:
   x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g := Iff.rfl
 
-@[reducible]
-def restrict (s: Set α) (f: α →ᵍ β): α →ᵍ β :=
-  {x ∈ f | x.1 ∈ s}
-
-theorem monotone_comp [PartialOrder α] {f g: α → (β →ᵍ β)}
-  (hf: Monotone f) (hg: Monotone g):
-  Monotone λ x ↦ f x ○ g x :=
-  λ _ _ h _ ⟨z, h₁, h₂⟩ ↦ ⟨z, hf h h₁, hg h h₂⟩
-
-theorem monotone_restrict [PartialOrder α] {f : α → (β →ᵍ β)} {s: Set β}
-  (hf: Monotone f):
-  Monotone (restrict s $ f ·) :=
-  λ _ _ h _ ⟨z, h₁⟩ ↦ ⟨hf h z, h₁⟩
+theorem comp_mono {α: Type} {f g h k : Set (α × α)} (h₁ : f ⊆ h) (h₂ : g ⊆ k) : f ○ g ⊆ h ○ k :=
+  fun _ ⟨z, h, h'⟩ => ⟨z, h₁ h, h₂ h'⟩
 
 end SRel
 
 namespace Com
 
-def denote_loop (b: Bexp) (f: State →ᵍ State): (State →ᵍ State) →o (State →ᵍ State) :=
-  ⟨λ g ↦ (SRel.restrict {s | b.reduce s = true} $ f ○ g) ∪ (SRel.restrict {s | b.reduce s = false} SRel.id),
-    Monotone.union
-      (SRel.monotone_restrict (SRel.monotone_comp monotone_const monotone_id))
-      (SRel.monotone_restrict monotone_const)⟩
+def denote_loop (b: Bexp) (f: State →ᵍ State): (State →ᵍ State) →o (State →ᵍ State) := {
+  toFun := λ g ↦ Set.ite {s | b⇓s.1} (f ○ g) SRel.id
+  monotone' := λ _ _ h ↦ Set.ite_mono _ (SRel.comp_mono le_rfl h) le_rfl
+}
 
 def denote: Com → (State →ᵍ State)
   | skip       => SRel.id
-  | ass x a    => {s | s.2 = s.1⟪x ≔ a.reduce s.1⟫}
+  | ass x a    => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
   | c;;d       => c.denote ○ d.denote
-  | cond b c d => (SRel.restrict {s | b.reduce s = true} c.denote) ∪ (SRel.restrict {s | b.reduce s = false} d.denote)
+  | cond b c d => Set.ite {s | b⇓s.1} c.denote d.denote
   | loop b c   => OrderHom.lfp (denote_loop b c.denote)
 
 notation (priority := high) "⟦" c "⟧" => denote c

@@ -4,18 +4,18 @@ namespace Bexp
 namespace Natural
 
 -- Operational semantics of Bexp
-inductive Step: Bexp → State → Bool → Prop
-  | tt: Step tt _ true
-  | ff: Step ff _ false
-  | le: Step (le a b) s (a⇓s ≤ b⇓s)
+inductive step: Bexp → State → Bool → Prop
+  | tt: step tt _ true
+  | ff: step ff _ false
+  | le: step (le a b) s (a⇓s ≤ b⇓s)
   | not
-    (h: Step a s n):
-    Step (not a) s (!n)
+    (h: step a s n):
+    step (not a) s (!n)
   | and
-    (h₁: Step a s n) (h₂: Step b s m):
-    Step (and a b) s (n && m)
+    (h₁: step a s n) (h₂: step b s m):
+    step (and a b) s (n && m)
 
-notation s " ⊢ " a " ⟹ " v => Step a s v
+notation s " ⊢ " a " ⟹ " v => step a s v
 
 end Natural
 
@@ -33,11 +33,11 @@ infix:100 "⇓" => reduce
 -- relational definition is equivalent to recursive
 theorem Natural.from_reduce {b: Bexp} (h: b⇓s = x): s ⊢ b ⟹ x :=
   by induction b generalizing x with
-  | tt => exact h ▸ Step.tt
-  | ff => exact h ▸ Step.ff
-  | le => exact h ▸ Step.le
-  | not _ ih => exact h ▸ Step.not (ih rfl)
-  | and _ _ l r => exact h ▸ Step.and (l rfl) (r rfl)
+  | tt => exact h ▸ step.tt
+  | ff => exact h ▸ step.ff
+  | le => exact h ▸ step.le
+  | not _ ih => exact h ▸ step.not (ih rfl)
+  | and _ _ l r => exact h ▸ step.and (l rfl) (r rfl)
 
 theorem reduce.from_natural {b: Bexp} (h: s ⊢ b ⟹ x): b⇓s = x :=
   by induction h with
@@ -45,12 +45,12 @@ theorem reduce.from_natural {b: Bexp} (h: s ⊢ b ⟹ x): b⇓s = x :=
   | and _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
   | _ => rfl
 
-@[simp] theorem Step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) ↔ b⇓s = x := ⟨reduce.from_natural, Natural.from_reduce⟩
+@[simp] theorem step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) ↔ b⇓s = x := ⟨reduce.from_natural, Natural.from_reduce⟩
 
 theorem not_true_eq_false: (!b⇓s) = (not b)⇓s := by simp
 
-protected instance Step.equiv: Setoid Bexp where
-  r a b := ∀ s n, Natural.Step a s n = Natural.Step b s n
+protected instance step.equiv: Setoid Bexp where
+  r a b := ∀ s n, Natural.step a s n = Natural.step b s n
   iseqv := {
     refl := λ _ _ _ ↦ Eq.refl _
     symm := λ h s n ↦ Eq.symm (h s n)
@@ -62,12 +62,12 @@ instance reduce.equiv: Setoid Bexp where
   r a b:= ∀s, a⇓s = b⇓s
   iseqv := ⟨λ _ _ ↦ Eq.refl _, (Eq.symm $ · ·) , λ h₁ h₂ s ↦ (h₁ s) ▸ (h₂ s)⟩
 
-protected theorem Step_eq_eq_reduce_eq: Step.equiv.r a b ↔ reduce.equiv.r a b := by
+protected theorem step_eq_eq_reduce_eq: step.equiv.r a b ↔ reduce.equiv.r a b := by
   constructor <;> intro h
   . simp [Setoid.r] at *
     intro s
-    specialize h s
-    exact h
+    specialize h s (b⇓s)
+    rw [h]
   . simp [Setoid.r] at *
     simp [h]
 

@@ -30,12 +30,12 @@ inductive step: Com → State → State → Prop
     (hb: b⇓s = false):
     step (loop b c) s s
 
-notation s " ⊢ " c " ⟹ " t => step c s t
+notation:10 s " ⊢ " c " ⟹ " t => step c s t
 
-theorem demo₁: ⟪⟫ ⊢ ⦃x = 5⦄ ⟹ ⟪"x" ≔ 5⟫ := step.ass
+theorem demo₁: σ₀ ⊢ ⦃x = 5⦄ ⟹ σ₀⟪"x" ≔ 5⟫ := step.ass
 
 theorem demo₂:
-  ⟪⟫ ⊢ ⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄ ⟹ ⟪"x" ≔ 2⟫⟪"z" ≔ 4⟫ :=
+  σ₀ ⊢ ⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄ ⟹ σ₀⟪"x" ≔ 2⟫⟪"z" ≔ 4⟫ :=
     step.cat _ step.ass $ step.cond₂ rfl step.ass
 
 /-
@@ -67,7 +67,7 @@ theorem cond_iff': (s ⊢ cond b c d ⟹ t) ↔ (s ⊢ bif b⇓s then c else d �
   rw [cond_iff]; cases b⇓s <;> simp
 
 theorem loop_iff: (s ⊢ loop b c ⟹ t) ↔
-  (bif b⇓s then ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ loop b c ⟹ t) else s = t) := by
+  bif b⇓s then ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ loop b c ⟹ t) else s = t := by
   apply Iff.intro <;> intro h
   . cases h with
     | loop₁ t hb hc hw =>
@@ -111,7 +111,7 @@ theorem skipr: (c;;skip) ≈ c := by
 theorem cond_true (h: b ≈ Bexp.tt): cond b c d ≈ c := by
   intro _ _
   rw [cond_iff, h]
-  rfl
+  exact Iff.rfl
 
 theorem cond_false (h: b ≈ Bexp.ff): cond b c d ≈ d := by
   intro _ _
@@ -121,7 +121,7 @@ theorem cond_false (h: b ≈ Bexp.ff): cond b c d ≈ d := by
 theorem loop_unfold:
   loop b c ≈ cond b (c;;loop b c) skip := by
   intro s t
-  constructor <;> intro h
+  apply Iff.intro <;> intro h
   . rw [cond_iff]
     cases h with
     | loop₁ w hb hc hw => exact hb ▸ step.cat w hc hw
@@ -153,23 +153,18 @@ theorem determinist {c: Com} (h₁: w ⊢ c ⟹ s) (h₂: w ⊢ c ⟹ t): s = t 
   by induction h₁ generalizing t with
   | cat _ _ _ ih₁ ih₂ => cases h₂ with
     | cat _ hc hd => exact ih₂ (ih₁ hc ▸ hd)
-
   | cond₁ hb _ ih => cases h₂ with
     | cond₁ _ hd => exact ih hd
     | cond₂ hb₁ hd => simp [hb] at hb₁
-
   | cond₂ hb _ ih => cases h₂ with
     | cond₁ hb₁ hd => simp [hb] at hb₁
     | cond₂ _ hd   => exact ih hd
-
   | loop₁ _ hb _ _ ih₁ ih₂ => cases h₂ with
     | loop₁ _ _ hc hw => exact ih₂ (ih₁ hc ▸ hw)
     | loop₂ hb₁ => simp [hb] at hb₁
-
   | loop₂ hb => cases h₂ with
     | loop₁ _ hb₁ => simp [hb] at hb₁
     | loop₂ => rfl
-
   | _ => cases h₂; rfl
 
 end Natural

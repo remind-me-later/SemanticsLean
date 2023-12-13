@@ -1,13 +1,13 @@
 import Semantics.Stlc.Rewrite
-import Mathlib.Logic.Function.Basic
+import Semantics.Maps
 
-def Context := String → Option Ty
-def Γ₀: Context := λ _ ↦ none
+def Context := partial_map Ty
+def Γ₀: Context := partial_map.default
 
 inductive has_type: Context → Term → Ty → Prop where
   | var (h: Γ x = some T):
     has_type Γ (Term.var x) T
-  | abs (h: has_type (Function.update Γ x (some T₂)) t T₁):
+  | abs (h: has_type (Γ⟪x ≔ some T₂⟫) t T₁):
     has_type Γ (Λ x:T₂ ↦ t) (T₂ → T₁)
   | app t₁ t₂
     (h₁: has_type Γ t₁ (T₂ → T₁)) (h₂: has_type Γ t₂ T₂):
@@ -52,20 +52,17 @@ theorem progress (h: Γ₀ ⊢ t : T): value t ∨ ∃w, t ⇒ w := by
   | var h => cases he; cases h
   | app t₁ t₂ h₁ _ ih₁ ih₂ =>
     cases he
-    simp at *
+    simp at ih₁ ih₂
     apply Or.inr
     cases ih₁ with
     | inl h =>
       cases ih₂ with
       | inl hh =>
-        have hc := canonical_form_fun h₁ h
-        cases hc with
+        cases canonical_form_fun h₁ h with
         | intro x hc =>
           cases hc with
           | intro w hc =>
-            rw [hc]
-            exists [x ≔ t₂]w
-            exact step.appabs hh
+            exact ⟨[x ≔ t₂]w, hc ▸ step.appabs hh⟩
       | inr hh =>
         cases hh with
         | intro w hh =>
@@ -74,21 +71,34 @@ theorem progress (h: Γ₀ ⊢ t : T): value t ∨ ∃w, t ⇒ w := by
     | inr h =>
       cases h with
       | intro w h =>
-        exists (Term.app w t₂)
-        apply step.app₁ h
+        exact ⟨Term.app w t₂, step.app₁ h⟩
   | cond t₁ t₂ h₁ _ _ ih₁ =>
     cases he
-    simp at *
+    simp at ih₁
     cases ih₁ with
     | inl hh =>
       apply Or.inr
-      have hc := canonical_form_bool h₁ hh
-      cases hc with
+      cases canonical_form_bool h₁ hh with
       | inl hc => exists t₁; rw [hc]; exact step.cond₁
       | inr hc => exists t₂; rw [hc]; exact step.cond₂
     | inr hh =>
       apply Or.inr
       cases hh with
       | intro w hh =>
-        exists w ? t₁ | t₂
-        exact step.cond₃ hh
+        exact ⟨w ? t₁ | t₂, step.cond₃ hh⟩
+
+/-
+## Preservation of types
+-/
+
+theorem weakening (h: includedin Γ Γ') (h₁: Γ ⊢ t : T):
+  Γ' ⊢ t : T := by
+{
+  -- induction h₁ generalizing Γ'
+  -- . apply has_type.var
+  --   rename_i T x hh
+  --   unfold includedin at h
+  --   exact h x T hh
+  -- sorry
+  sorry
+}

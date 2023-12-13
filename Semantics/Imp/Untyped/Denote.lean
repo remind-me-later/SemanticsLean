@@ -59,8 +59,8 @@ def denote: Com → (State →ᵍ State)
 
 notation (priority := high) "⟦" c "⟧" => denote c
 
-#simp [denote] (⟪⟫, ⟪⟫⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x <= 1 {skip} else {x = 1}⦄⟧
-#simp [denote] (⟪⟫, ⟪⟫⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x <= 1 {x = 1}⦄⟧
+#simp [denote] (σ₀, σ₀⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x <= 1 {skip} else {x = 1}⦄⟧
+#simp [denote] (σ₀, σ₀⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x <= 1 {x = 1}⦄⟧
 
 namespace denote
 

@@ -10,8 +10,6 @@ inductive Term where
   | ff
   | cond: Term → Term → Term → Term
 
-
-
 -- Syntax of the language
 declare_syntax_cat stlc
 

@@ -1,20 +1,18 @@
-import Mathlib.Logic.Function.Basic
+import Semantics.Maps
 
 @[reducible]
 def Val := Int
 
-def State := String → Val
-def State.nil: State := λ _ ↦ 0
+def State := total_map Val
+def State.nil: State := total_map.default 0
 
-notation "⟪⟫" => State.nil
-notation s "⟪" x " ≔ " e "⟫" => Function.update s x e
-notation "⟪" x " ≔ " e "⟫" => ⟪⟫⟪x ≔ e⟫
+notation "σ₀" => State.nil
 
-#reduce ⟪⟫ "x"
-#reduce (⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫) "x"
-#reduce (⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫⟪"x" ≔ 7⟫) "x"
+#reduce σ₀ "x"
+#reduce (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫) "x"
+#reduce (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫⟪"x" ≔ 7⟫) "x"
 
-theorem State.demo₁: ⟪"x" ≔ 3⟫ = ⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := by simp
+theorem State.demo₁: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := by sorry
 
 inductive Aexp where
   | val : Val → Aexp

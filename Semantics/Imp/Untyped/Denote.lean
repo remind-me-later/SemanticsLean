@@ -8,7 +8,9 @@ import Mathlib.Order.FixedPoints
 namespace SRel
 
 /-
-## Set relation `Set (α × β)`, aka graph of partial function, aka Lana Del Rey
+# Relational denotational semantics
+
+From Concrete semantics with Isabelle
 -/
 
 notation:20 α " →ᵍ " β => Set (α × β)
@@ -27,7 +29,7 @@ infixl:90 " ○ " => SRel.comp
   x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g := Iff.rfl
 
 theorem comp_mono {α: Type} {f g h k : Set (α × α)} (h₁ : f ⊆ h) (h₂ : g ⊆ k) : f ○ g ⊆ h ○ k :=
-  fun _ ⟨z, h, h'⟩ => ⟨z, h₁ h, h₂ h'⟩
+  λ _ ⟨z, h, h'⟩ ↦ ⟨z, h₁ h, h₂ h'⟩
 
 end SRel
 
@@ -43,11 +45,11 @@ def denote: Com → (State →ᵍ State)
   | ass x a    => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
   | c;;d       => c.denote ○ d.denote
   | cond b c d => Set.ite {s | b⇓s.1} c.denote d.denote
-  | loop b c   => OrderHom.lfp (denote_loop b c.denote)
+  | loop b c   => OrderHom.lfp $ denote_loop b c.denote
 
 notation (priority := high) "⟦" c "⟧" => denote c
 
-#simp [denote] (σ₀, σ₀⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x <= 1 {skip} else {x = 1}⦄⟧
+#simp (σ₀, σ₀⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x <= 1 {skip} else {x = 1}⦄⟧
 #simp [denote] (σ₀, σ₀⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x <= 1 {x = 1}⦄⟧
 
 namespace denote

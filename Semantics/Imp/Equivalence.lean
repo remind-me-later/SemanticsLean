@@ -1,6 +1,6 @@
-import Semantics.Imp.Untyped.Natural
-import Semantics.Imp.Untyped.Structural
-import Semantics.Imp.Untyped.Denote
+import Semantics.Imp.Natural
+import Semantics.Imp.Structural
+import Semantics.Imp.Denotational
 
 namespace Com
 

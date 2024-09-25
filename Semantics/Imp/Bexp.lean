@@ -1,4 +1,4 @@
-import Semantics.Imp.Untyped.Aexp
+import Semantics.Imp.Aexp
 
 namespace Bexp
 namespace Natural
@@ -66,8 +66,8 @@ protected theorem step_eq_eq_reduce_eq: step.equiv.r a b ↔ reduce.equiv.r a b 
   constructor <;> intro h
   . simp [Setoid.r] at *
     intro s
-    specialize h s (b⇓s)
-    rw [h]
+    specialize h s
+    rw [h.right]
   . simp [Setoid.r] at *
     simp [h]
 

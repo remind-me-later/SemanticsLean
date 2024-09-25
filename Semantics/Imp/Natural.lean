@@ -1,4 +1,4 @@
-import Semantics.Imp.Untyped.Bexp
+import Semantics.Imp.Bexp
 
 namespace Com
 namespace Natural
@@ -12,7 +12,7 @@ inductive step: Com → State → State → Prop
 
   | cat t
     (hc: step c s t) (hd: step d t u):
-    step (c;;d) s u
+    step (cat c d) s u
 
   | cond₁ {b: Bexp}
     (hb: b⇓s = true) (hc: step c s t):
@@ -32,11 +32,18 @@ inductive step: Com → State → State → Prop
 
 notation:10 s " ⊢ " c " ⟹ " t => step c s t
 
-theorem demo₁: σ₀ ⊢ ⦃x = 5⦄ ⟹ σ₀⟪"x" ≔ 5⟫ := step.ass
+private def x := "x"
+private def z := "z"
 
-theorem demo₂:
-  σ₀ ⊢ ⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄ ⟹ σ₀⟪"x" ≔ 2⟫⟪"z" ≔ 4⟫ :=
+private example: σ₀ ⊢ ⦃x = 5⦄ ⟹ σ₀⟪x ≔ 5⟫ := step.ass
+private example:
+  σ₀ ⊢ ⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄ ⟹ σ₀⟪x ≔ 2⟫⟪z ≔ 4⟫ :=
     step.cat _ step.ass $ step.cond₂ rfl step.ass
+private example:
+  σ₀ ⊢ ⦃x = 2; x = 3⦄ ⟹ σ₀⟪x ≔ 3⟫ := by
+  have h₁: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := by simp
+  rw [h₁]
+  apply step.cat _ step.ass step.ass
 
 /-
 ## Rewriting rules
@@ -149,7 +156,7 @@ theorem loop_tt (h: b ≈ Bexp.tt):
 ## Determinism
 -/
 
-theorem determinist {c: Com} (h₁: w ⊢ c ⟹ s) (h₂: w ⊢ c ⟹ t): s = t :=
+theorem deterministic {c: Com} (h₁: w ⊢ c ⟹ s) (h₂: w ⊢ c ⟹ t): s = t :=
   by induction h₁ generalizing t with
   | cat _ _ _ ih₁ ih₂ => cases h₂ with
     | cat _ hc hd => exact ih₂ (ih₁ hc ▸ hd)

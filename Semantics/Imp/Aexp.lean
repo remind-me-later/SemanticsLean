@@ -1,4 +1,4 @@
-import Semantics.Imp.Untyped.Lang
+import Semantics.Imp.Lang
 
 namespace Aexp
 namespace Natural

@@ -1,11 +1,10 @@
-import Semantics.Imp.Untyped.Bexp
+import Semantics.Imp.Bexp
 
 import Mathlib.Logic.Relation
 
 namespace Com
 namespace Structural
 
-@[reducible]
 inductive step: Com × State → Com × State → Prop where
   | ass:
     step (ass x a, s) (skip, s⟪x ≔ a⇓s⟫)
@@ -24,9 +23,9 @@ inductive step: Com × State → Com × State → Prop where
 
 infix:110 " ⇒ " => step
 
-theorem step.demo₁:
+private example:
   (⦃x = 0; while x <= 2 {x = x + 1}⦄, σ₀) ⇒
-      (⦃skip; while x <= 2 {x = x + 1}⦄, σ₀⟪"x" ≔ 0⟫) := cat₂ ass
+      (⦃skip; while x <= 2 {x = x + 1}⦄, σ₀⟪"x" ≔ 0⟫) := step.cat₂ step.ass
 
 @[simp] theorem cat_iff:
   (c₁;;c₂, s) ⇒ et ↔

@@ -1,4 +1,4 @@
-import Semantics.Imp.Untyped.Bexp
+import Semantics.Imp.Bexp
 
 import Mathlib.Data.Set.Basic
 import Mathlib.Order.CompleteLattice
@@ -50,7 +50,7 @@ def denote: Com → (State →ᵍ State)
 notation (priority := high) "⟦" c "⟧" => denote c
 
 #simp (σ₀, σ₀⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x <= 1 {skip} else {x = 1}⦄⟧
-#simp [denote] (σ₀, σ₀⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x <= 1 {x = 1}⦄⟧
+#simp (σ₀, σ₀⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x <= 1 {x = 1}⦄⟧
 
 namespace denote
 

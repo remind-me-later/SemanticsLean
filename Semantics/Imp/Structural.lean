@@ -27,7 +27,7 @@ private example:
   (⦃x = 0; while x <= 2 {x = x + 1}⦄, σ₀) ⇒
       (⦃skip; while x <= 2 {x = x + 1}⦄, σ₀⟪"x" ≔ 0⟫) := step.cat₂ step.ass
 
-@[simp] theorem cat_iff:
+theorem cat_iff:
   (c₁;;c₂, s) ⇒ et ↔
   (∃e t, (c₁, s) ⇒ (e, t) ∧ et = (e;;c₂, t))
   ∨ (c₁ = skip ∧ et = (c₂, s)) := by
@@ -44,7 +44,7 @@ private example:
       cases h with | intro h₁ h₂ =>
         exact h₁ ▸ h₂ ▸ step.cat₁
 
-@[simp] lemma cond_iff:
+lemma cond_iff:
   (cond b c d, s) ⇒ ss ↔
   (b⇓s ∧ ss = (c, s)) ∨ (b⇓s = false ∧ ss = (d, s)) := by
   constructor <;> intro h
@@ -55,9 +55,10 @@ private example:
       cases hb: b⇓s <;> rw [hb] at h <;> simp at * <;> assumption
     exact hss ▸ step.cond
 
-@[simp] lemma cond_false {b: Bexp} (hb: b⇓s = false):
+lemma cond_false {b: Bexp} (hb: b⇓s = false):
   (cond b c d, s) ⇒ ss ↔ (ss = (d, s)) :=
-  by rw [cond_iff, hb]; simp
+  by
+    simp [cond_iff, hb]
 
 infix:110 " ⇒* " => Relation.ReflTransGen step
 

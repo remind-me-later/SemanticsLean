@@ -13,7 +13,7 @@ notation "σ₀" => State.nil
 #eval (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫⟪"x" ≔ 7⟫) "x"
 
 theorem State.demo₁: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := by
-  simp
+  rw [update_override]
 
 inductive Aexp where
   | val : Val → Aexp

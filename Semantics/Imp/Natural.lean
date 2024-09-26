@@ -41,7 +41,7 @@ private example:
     step.cat _ step.ass $ step.cond₂ rfl step.ass
 private example:
   σ₀ ⊢ ⦃x = 2; x = 3⦄ ⟹ σ₀⟪x ≔ 3⟫ := by
-  have h₁: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := by simp
+  have h₁: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := update_override.symm
   rw [h₁]
   apply step.cat _ step.ass step.ass
 
@@ -71,7 +71,10 @@ theorem cond_iff: (s ⊢ cond b c d ⟹ t) ↔ bif b⇓s then (s ⊢ c ⟹ t) el
     | false => exact step.cond₂ hb $ (cond_false _ (s ⊢ d ⟹ t)) ▸ hb ▸ h
 
 theorem cond_iff': (s ⊢ cond b c d ⟹ t) ↔ (s ⊢ bif b⇓s then c else d ⟹ t) := by
-  rw [cond_iff]; cases b⇓s <;> simp
+  rw [cond_iff]
+  cases b⇓s with
+  | false => rw [cond_false, cond_false]
+  | true => rw [cond_true, cond_true]
 
 theorem loop_iff: (s ⊢ loop b c ⟹ t) ↔
   bif b⇓s then ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ loop b c ⟹ t) else s = t := by
@@ -162,15 +165,15 @@ theorem deterministic {c: Com} (h₁: w ⊢ c ⟹ s) (h₂: w ⊢ c ⟹ t): s = 
     | cat _ hc hd => exact ih₂ (ih₁ hc ▸ hd)
   | cond₁ hb _ ih => cases h₂ with
     | cond₁ _ hd => exact ih hd
-    | cond₂ hb₁ hd => simp [hb] at hb₁
+    | cond₂ hb₁ hd => rw [hb] at hb₁; contradiction
   | cond₂ hb _ ih => cases h₂ with
-    | cond₁ hb₁ hd => simp [hb] at hb₁
+    | cond₁ hb₁ hd => rw [hb] at hb₁; contradiction
     | cond₂ _ hd   => exact ih hd
   | loop₁ _ hb _ _ ih₁ ih₂ => cases h₂ with
     | loop₁ _ _ hc hw => exact ih₂ (ih₁ hc ▸ hw)
-    | loop₂ hb₁ => simp [hb] at hb₁
+    | loop₂ hb₁ => rw [hb] at hb₁; contradiction
   | loop₂ hb => cases h₂ with
-    | loop₁ _ hb₁ => simp [hb] at hb₁
+    | loop₁ _ hb₁ => rw [hb] at hb₁; contradiction
     | loop₂ => rfl
   | _ => cases h₂; rfl
 

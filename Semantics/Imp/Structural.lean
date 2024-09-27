@@ -70,7 +70,7 @@ theorem star.demo₂:
 theorem star.cat_skip_cat
   (h: (c, s) ⇒* (skip, t)):
   (c;;d, s) ⇒* (skip;;d, t) :=
-  Relation.ReflTransGen.lift (λ (x: Com × State) ↦ (x.1;;d, x.2)) (λ _ _ h => step.cat₂ h) h
+  Relation.ReflTransGen.lift (fun (x: Com × State) => (x.1;;d, x.2)) (fun _ _ h => step.cat₂ h) h
 
 theorem star.cat
   (h₁: (c₁, s) ⇒* (skip, s₁))

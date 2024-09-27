@@ -52,15 +52,15 @@ theorem not_true_eq_false: (!b⇓s) = (not b)⇓s := by simp
 protected instance step.equiv: Setoid Bexp where
   r a b := ∀ s n, Natural.step a s n = Natural.step b s n
   iseqv := {
-    refl := λ _ _ _ ↦ Eq.refl _
-    symm := λ h s n ↦ Eq.symm (h s n)
-    trans := λ h₁ h₂ x n ↦ (h₁ x n) ▸ (h₂ x n)
+    refl := fun _ _ _ => Eq.refl _
+    symm := fun h s n => Eq.symm (h s n)
+    trans := fun h₁ h₂ x n => (h₁ x n) ▸ (h₂ x n)
   }
 
 @[reducible, simp]
 instance reduce.equiv: Setoid Bexp where
   r a b:= ∀s, a⇓s = b⇓s
-  iseqv := ⟨λ _ _ ↦ Eq.refl _, (Eq.symm $ · ·) , λ h₁ h₂ s ↦ (h₁ s) ▸ (h₂ s)⟩
+  iseqv := ⟨fun _ _ => Eq.refl _, (Eq.symm $ · ·) , fun h₁ h₂ s => (h₁ s) ▸ (h₂ s)⟩
 
 protected theorem step_eq_eq_reduce_eq: step.equiv.r a b ↔ reduce.equiv.r a b := by
   constructor <;> intro h

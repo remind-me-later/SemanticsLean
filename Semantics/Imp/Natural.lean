@@ -41,7 +41,7 @@ private example:
     step.cat _ step.ass $ step.cond₂ rfl step.ass
 private example:
   σ₀ ⊢ ⦃x = 2; x = 3⦄ ⟹ σ₀⟪x ≔ 3⟫ := by
-  have h₁: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := update_override.symm
+  have h₁: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := overwr.symm
   rw [h₁]
   apply step.cat _ step.ass step.ass
 
@@ -99,9 +99,9 @@ theorem loop_iff: (s ⊢ loop b c ⟹ t) ↔
 instance equiv: Setoid Com where
   r c d := ∀ s t, (s ⊢ c ⟹ t) ↔ (s ⊢ d ⟹ t)
   iseqv := {
-    refl := λ _ _ _ ↦ Iff.refl _
+    refl := fun _ _ _ => Iff.refl _
     symm := (Iff.symm $ · · ·)
-    trans := λ h₁ h₂ x n ↦ Iff.trans (h₁ x n) (h₂ x n)
+    trans := fun h₁ h₂ x n => Iff.trans (h₁ x n) (h₂ x n)
   }
 
 theorem skipl: (skip;;c) ≈ c := by

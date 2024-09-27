@@ -12,8 +12,7 @@ notation "σ₀" => State.nil
 #eval (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫) "x"
 #eval (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫⟪"x" ≔ 7⟫) "x"
 
-theorem State.demo₁: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := by
-  rw [update_override]
+example: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := clobber.symm
 
 inductive Aexp where
   | val : Val → Aexp

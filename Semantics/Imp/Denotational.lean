@@ -1,36 +1,11 @@
 import Semantics.Imp.Bexp
 import Semantics.KnasterTarski
 
-namespace SRel
-
 /-
 # Relational denotational semantics
 
 From Concrete semantics with Isabelle
 -/
-
-notation:20 α " →ᵍ " β => Set (α × β)
-
-def id: α →ᵍ α := {p | p.1 = p.2}
-
-@[simp]
-theorem mem_id:
-  (a, b) ∈ @id α ↔ a = b := Iff.rfl
-
-def comp (f g: α →ᵍ α): α →ᵍ α :=
-  {x | ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g}
-
-infixl:90 " ○ " => SRel.comp
-
-@[simp]
-theorem mem_comp {f g: α →ᵍ α}:
-  x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g := Iff.rfl
-
-@[simp]
-theorem comp_mono {α: Type} {f g h k : Set (α × α)} (h₁ : f ⊆ h) (h₂ : g ⊆ k): f ○ g ⊆ h ○ k :=
-  fun _ ⟨z, h, h'⟩ => ⟨z, h₁ h, h₂ h'⟩
-
-end SRel
 
 namespace Com
 
@@ -58,15 +33,14 @@ namespace denote
 @[simp]
 instance equiv: Setoid Com := ⟨(⟦·⟧ = ⟦·⟧), ⟨(Eq.refl ⟦.⟧), Eq.symm, Eq.trans⟩⟩
 
--- theorem skipl: (skip;;c) ≈ c := by
---   simp [HasEquiv.Equiv, denote, SRel.comp]
+theorem skipl: (skip;;c) ≈ c :=
+  by simp [HasEquiv.Equiv, denote]
 
--- theorem skipr: (c;;skip) ≈ c := by
---   simp [HasEquiv.Equiv, denote, SRel.comp]
+theorem skipr: (c;;skip) ≈ c :=
+  by simp [HasEquiv.Equiv, denote]
 
--- theorem loop_unfold: loop b c ≈ cond b (c;;loop b c) skip := by
---   simp [HasEquiv.Equiv]
---   exact Eq.symm $ OrderHom.map_lfp $ denote_loop b ⟦c⟧
+theorem loop_unfold: loop b c ≈ cond b (c;;loop b c) skip :=
+  lfp_eq _ monotone_denote_loop
 
 -- /-
 -- ## Congruence

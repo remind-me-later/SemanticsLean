@@ -1,7 +1,7 @@
 import Mathlib.Data.Set.Defs
 
 /-
-  ### Set theorems
+  # Set theorems
 -/
 
 @[simp] theorem Set.Mem_empty {α : Type} (a : α) :

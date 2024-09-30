@@ -6,9 +6,12 @@ namespace Natural
 inductive step: Aexp → State → Val → Prop
   | val: step (val n) _ n
   | var: step (var x) s (s x)
-  | add
-    (h₁: step a s n) (h₂: step b s m):
+  | add (ha: step a s n) (hb: step b s m):
     step (add a b) s (n + m)
+  | sub (ha: step a s n) (hb: step b s m):
+    step (sub a b) s (n - m)
+  | mul (ha: step a s n) (hb: step b s m):
+    step (mul a b) s (n * m)
 
 notation s " ⊢ " a " ⟹ " v => step a s v
 
@@ -20,6 +23,8 @@ def reduce (a: Aexp) (s: State): Val :=
   | val n => n
   | var x => s x
   | add a b => reduce a s + reduce b s
+  | sub a b => reduce a s - reduce b s
+  | mul a b => reduce a s * reduce b s
 
 infix:100 "⇓" => reduce
 
@@ -27,6 +32,8 @@ infix:100 "⇓" => reduce
 theorem reduce.from_natural (h: s ⊢ a ⟹ n): a⇓s = n :=
   by induction h with
   | add _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
+  | sub _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
+  | mul _ _ ih₁ ih₂ => exact ih₁ ▸ ih₂ ▸ rfl
   | _ => rfl
 
 theorem Natural.from_reduce {a: Aexp} (h: a⇓s = n): s ⊢ a ⟹ n :=
@@ -34,6 +41,8 @@ theorem Natural.from_reduce {a: Aexp} (h: a⇓s = n): s ⊢ a ⟹ n :=
   | val _ => exact h ▸ step.val
   | var _ => exact h ▸ step.var
   | add _ _ l r => exact h ▸ step.add (l rfl) (r rfl)
+  | sub _ _ l r => exact h ▸ step.sub (l rfl) (r rfl)
+  | mul _ _ l r => exact h ▸ step.mul (l rfl) (r rfl)
 
 @[simp] theorem step_iff_reduce: (s ⊢ a ⟹ n) ↔ a⇓s = n := ⟨reduce.from_natural, Natural.from_reduce⟩
 @[simp] theorem step_iff_reduce': s ⊢ a ⟹ (a⇓s) := Natural.from_reduce rfl

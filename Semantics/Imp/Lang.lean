@@ -17,14 +17,28 @@ example: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := clobber.s
 inductive Aexp where
   | val : Val → Aexp
   | var : String → Aexp
+  -- arithmetic
   | add : Aexp → Aexp → Aexp
+  | sub : Aexp → Aexp → Aexp
+  | mul : Aexp → Aexp → Aexp
+
+-- x + 3
+#check Aexp.add (Aexp.val 3) (Aexp.var "x")
 
 inductive Bexp where
+  -- constants
   | tt
   | ff
+  -- boolean
   | not : Bexp → Bexp
   | and : Bexp → Bexp → Bexp
-  | le  : Aexp → Aexp → Bexp
+  | or  : Bexp → Bexp → Bexp
+  -- comparison
+  | eq : Aexp → Aexp → Bexp
+  | le : Aexp → Aexp → Bexp
+
+-- !(x <= 3)
+#check Bexp.not (Bexp.le (Aexp.var "x") (Aexp.val 3))
 
 inductive Com where
   | skip
@@ -45,6 +59,7 @@ syntax "(" imp ")" : imp
 syntax num: imp
 syntax ident: imp
 syntax:60 imp:60 "+" imp:61 : imp
+syntax:60 imp:60 "-" imp:61: imp
 -- bexp
 syntax:80 "!" imp:81 : imp
 syntax:70 imp:70 "<=" imp:71 : imp
@@ -69,6 +84,7 @@ macro_rules
   | `(⦃$x:ident⦄) => `(Aexp.var $(Lean.quote (toString x.getId)))
   | `(⦃$n:num⦄)   => `(Aexp.val $n)
   | `(⦃$x + $y⦄)  => `(Aexp.add ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x - $y⦄)  => `(Aexp.add ⦃$x⦄ ⦃$y⦄)
   -- bexp
   | `(⦃!$x⦄)      => `(Bexp.not ⦃$x⦄)
   | `(⦃$x <= $y⦄)  => `(Bexp.le ⦃$x⦄ ⦃$y⦄)

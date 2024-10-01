@@ -63,6 +63,8 @@ instance Set.completeLattice: CompleteLattice (Set α) :=
 ## Least Fixed Points
 -/
 
+namespace Fix
+
 def lfp {α: Type} [CompleteLattice α] (f: α → α): α :=
   CompleteLattice.Inf {a | f a ≤ a}
 
@@ -75,6 +77,8 @@ theorem le_lfp {α: Type} [CompleteLattice α] {f: α → α}
     {a: α} (h: ∀a', f a' ≤ a' → a ≤ a'):
   a ≤ lfp f :=
   CompleteLattice.le_Inf _ _ h
+
+end Fix
 
 /-
 ## Monotonic Functions
@@ -104,8 +108,12 @@ theorem monotone_union {α β: Type} [PartialOrder α]
 ## The Knaster-Tarski Fixpoint Theorem
 -/
 
+namespace Fix
+
 theorem lfp_eq {α: Type} [CompleteLattice α] (f: α → α)
     (hf: monotone f): lfp f = f (lfp f) :=
   let h: f (lfp f) ≤ lfp f :=
     le_lfp (fun a h => PartialOrder.le_trans _ _ _ (hf _ a $ lfp_le h) h)
   PartialOrder.le_antisymm _ _ (lfp_le $ hf _ _ h) h
+
+end Fix

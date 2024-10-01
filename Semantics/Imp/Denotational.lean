@@ -17,7 +17,7 @@ def denote: Com → (State →ᵍ State)
   | ass x a             => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
   | c;;d                => c.denote ○ d.denote
   | if b then c else d end => Set.ite {s | b⇓s.1} c.denote d.denote
-  | while b loop c end   => lfp $ denote_loop b c.denote
+  | while b loop c end   => Fix.lfp $ denote_loop b c.denote
 
 theorem monotone_denote_loop: monotone (denote_loop b c) :=
   fun _ _ h => Set.ite_mono _ (SRel.comp_mono PartialOrder.le_rfl h) PartialOrder.le_rfl
@@ -41,7 +41,7 @@ theorem skipr: (c;;skip) ≈ c :=
 
 theorem loop_unfold:
   while b loop c end ≈ if b then c;; while b loop c end else skip end :=
-  lfp_eq _ monotone_denote_loop
+  Fix.lfp_eq _ monotone_denote_loop
 
 -- /-
 -- ## Congruence

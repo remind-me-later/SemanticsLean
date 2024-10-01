@@ -89,7 +89,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
         exact step.cond_false hb (ih₂ h)
   | _ b c ih =>
     suffices ⟦while b loop c end⟧ ⊆ {s | s.1 ⊢ while b loop c end ⟹ s.2} by apply this
-    apply lfp_le
+    apply Fix.lfp_le
     intro ss h
     cases ss with | mk =>
       cases h with

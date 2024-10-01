@@ -34,12 +34,10 @@ theorem Set.union_empty {α : Type} (A : Set α) :
   by simp [Set.mem_empty,  Set.mem_self, Union.union, Set.union]
 
 theorem Set.mem_union {α : Type} (a : α) (A B : Set α) :
-  a ∈ A ∪ B ↔ a ∈ A ∨ a ∈ B :=
-  by rfl
+  a ∈ A ∪ B ↔ a ∈ A ∨ a ∈ B := Iff.rfl
 
 theorem Set.mem_diff.{u} {α : Type u} {s t : Set α} (x : α) :
-  x ∈ s \ t ↔ x ∈ s ∧ x ∉ t :=
-  by rfl
+  x ∈ s \ t ↔ x ∈ s ∧ x ∉ t := Iff.rfl
 
 /-
   ### Basic subset properties
@@ -54,7 +52,7 @@ theorem subset_antisymm {α : Type} {x y : Set α} (h1 : x ⊆ y) (h2 : y ⊆ x)
   funext fun _ => propext ⟨fun h => h1 h, fun h => h2 h⟩
 
 theorem subset_from_eq {α : Type} {x y : Set α} (h : x = y) : x ⊆ y :=
-  fun _ h' => h ▸ h'
+  fun _ h1 => h ▸ h1
 
 /-
   ### Set if then else

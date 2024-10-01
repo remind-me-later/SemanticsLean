@@ -43,9 +43,9 @@ theorem while_unfold:
   while b loop c end ≈ if b then c;; while b loop c end else skip₁ end :=
   Fix.lfp_eq _ monotone_denote_loop
 
--- /-
--- ## Congruence
--- -/
+/-
+## Congruence
+-/
 
 theorem cat_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
   (c₁;;d₁) ≈ (c₂;;d₂) := by

@@ -10,26 +10,21 @@ inductive step: Com → State → State → Prop
   | assₙ:
     step (x = a) s (s⟪x ≔ a⇓s⟫)
 
-  | catₙ t
-    (hc: step c s t) (hd: step d t u):
+  | catₙ (t: State) (hc: step c s t) (hd: step d t u):
     step (c;;d) s u
 
-  | if₁ₙ {b: Bexp}
-    (hb: b⇓s = true) (hc: step c s t):
+  | if₀ₙ {b: Bexp} (hb: b⇓s = false) (hd: step d s t):
     step if b then c else d end s t
 
-  | if₀ₙ {b: Bexp}
-    (hb: b⇓s = false) (hd: step d s t):
+  | if₁ₙ {b: Bexp} (hb: b⇓s = true) (hc: step c s t):
     step if b then c else d end s t
 
-  | while₁ₙ {b: Bexp} u
-    (hb: b⇓s = true) (hc: step c s u)
+  | while₀ₙ {b: Bexp} (hb: b⇓s = false):
+    step while b loop c end s s
+
+  | while₁ₙ {b: Bexp} (u: State) (hb: b⇓s = true) (hc: step c s u)
     (hw: step while b loop c end u t):
     step while b loop c end s t
-
-  | while₀ₙ {b: Bexp}
-    (hb: b⇓s = false):
-    step while b loop c end s s
 
 notation:10 s " ⊢ " c " ⟹ " t => step c s t
 

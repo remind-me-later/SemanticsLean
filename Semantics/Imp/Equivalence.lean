@@ -41,20 +41,38 @@ theorem denote.from_natural {c: Com} (h: s ⊢ c ⟹ t): (s, t) ∈ ⟦c⟧ := b
   | cond_true hb _ ih => exact Or.inl ⟨ih, hb⟩
   | cond_false hb _ ih =>
       apply Or.inr
-      simp [hb]
+      rw [
+        Set.mem_diff,
+        Set.mem_comprehend,
+        hb,
+        Bool.false_eq_true,
+        not_false_eq_true,
+        and_true
+      ]
       exact ih
   | loop_true t hb _ _ ih₁ ih₂ => exact loop_unfold ▸ Or.inl ⟨⟨t, ⟨ih₁, ih₂⟩⟩, hb⟩
   | loop_false hb =>
       rw [loop_unfold]
       apply Or.inr
-      simp [hb]
+      rw [
+        Set.mem_diff,
+        Set.mem_comprehend,
+        hb,
+        Bool.false_eq_true,
+        not_false_eq_true,
+        and_true
+      ]
       rfl
 
 theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
   revert h
   induction c generalizing s t with
   | skip => intro h; cases h; exact step.skip
-  | ass => intro h; simp [denote] at h; exact h ▸ step.ass
+  | ass =>
+    intro h
+    rw [denote.eq_def, Set.mem_comprehend] at h
+    simp at h
+    exact h ▸ step.ass
   | cat _ _ ih₁ ih₂ =>
     intro h
     cases h with | intro w h =>
@@ -67,7 +85,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
         exact step.cond_true hb (ih₁ h)
     | inr h =>
       cases h with | intro h hb =>
-        simp at hb
+        simp [Set.mem_comprehend] at hb
         exact step.cond_false hb (ih₂ h)
   | _ b c ih =>
     suffices ⟦while b loop c end⟧ ⊆ {s | s.1 ⊢ while b loop c end ⟹ s.2} by apply this
@@ -81,7 +99,8 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
             exact step.loop_true w hb (ih h.left) h.right
       | inr h =>
         cases h with | intro hq hb =>
-          simp at hq hb
+          simp [Set.mem_comprehend] at hb
+          rw [SRel.mem_id] at hq
           exact hq ▸ step.loop_false hb
 
 theorem natural_iff_denote: (s, t) ∈ ⟦c⟧ ↔ (s ⊢ c ⟹ t) := ⟨Natural.from_denote, denote.from_natural⟩

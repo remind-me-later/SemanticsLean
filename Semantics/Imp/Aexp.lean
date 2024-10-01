@@ -44,10 +44,9 @@ theorem Natural.from_reduce {a: Aexp} (h: a⇓s = n): s ⊢ a ⟹ n :=
   | sub a b iha ihb => exact h ▸ step.sub (iha rfl) (ihb rfl)
   | mul a b iha ihb => exact h ▸ step.mul (iha rfl) (ihb rfl)
 
-@[simp]
 theorem step_iff_reduce: (s ⊢ a ⟹ n) ↔ a⇓s = n :=
   ⟨reduce.from_natural, Natural.from_reduce⟩
-@[simp]
+
 theorem step_iff_reduce': s ⊢ a ⟹ (a⇓s) :=
   Natural.from_reduce rfl
 
@@ -69,8 +68,9 @@ protected theorem step_eq_eq_reduce_eq:
   . simp [Setoid.r] at *
     intro s
     specialize h s (b⇓s)
-    rw [h]
+    rw [step_iff_reduce] at h
+    exact h.mpr $ step_iff_reduce.mpr rfl
   . simp [Setoid.r] at *
-    simp [h]
+    simp [step_iff_reduce, h]
 
 end Aexp

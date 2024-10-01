@@ -52,7 +52,6 @@ theorem reduce.from_natural {b: Bexp} (h: s ⊢ b ⟹ x): b⇓s = x :=
   | or _ _ iha ihb => exact iha ▸ ihb ▸ rfl
   | _ => rfl
 
-@[simp]
 theorem step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) ↔ b⇓s = x :=
   ⟨reduce.from_natural, Natural.from_reduce⟩
 
@@ -77,8 +76,9 @@ protected theorem step_eq_eq_reduce_eq:
   . simp [Setoid.r] at *
     intro s
     specialize h s
-    rw [h.right]
+    simp [step_eq_reduce] at h
+    exact h.right
   . simp [Setoid.r] at *
-    simp [h]
+    simp [step_eq_reduce, h]
 
 end Bexp

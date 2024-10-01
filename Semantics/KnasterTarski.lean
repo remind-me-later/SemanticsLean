@@ -12,18 +12,16 @@ class PartialOrder (α: Type) extends LE α, LT α where
 
 theorem PartialOrder.le_rfl [PartialOrder α] {a: α}: a ≤ a := le_refl a
 
-@[simp] theorem Set.le_def {α : Type} (A B : Set α) :
-  A ≤ B ↔ A ⊆ B :=
-  by rfl
+theorem Set.le_def {α : Type} (A B : Set α) :
+  A ≤ B ↔ A ⊆ B := Iff.rfl
 
 instance Set.LT (α: Type): LT (Set α) :=
   {
     lt := fun A B => A ⊆ B ∧ A ≠ B
   }
 
-@[simp] theorem Set.lt_def {α : Type} (A B : Set α) :
-  A < B ↔ A ⊆ B ∧ A ≠ B :=
-  by rfl
+theorem Set.lt_def {α : Type} (A B : Set α) :
+  A < B ↔ A ⊆ B ∧ A ≠ B := Iff.rfl
 
 instance Set.partialOrder: PartialOrder (Set α) :=
   {

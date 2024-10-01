@@ -19,7 +19,6 @@ def denote: Com → (State →ᵍ State)
   | if b then c else d end => Set.ite {s | b⇓s.1} c.denote d.denote
   | while b loop c end   => lfp $ denote_loop b c.denote
 
-@[simp]
 theorem monotone_denote_loop: monotone (denote_loop b c) :=
   fun _ _ h => Set.ite_mono _ (SRel.comp_mono PartialOrder.le_rfl h) PartialOrder.le_rfl
 
@@ -30,14 +29,15 @@ notation (priority := high) "⟦" c "⟧" => denote c
 
 namespace denote
 
+
 @[simp]
 instance equiv: Setoid Com := ⟨(⟦·⟧ = ⟦·⟧), ⟨(Eq.refl ⟦.⟧), Eq.symm, Eq.trans⟩⟩
 
 theorem skipl: (skip;;c) ≈ c :=
-  by simp [HasEquiv.Equiv, denote]
+  by simp [HasEquiv.Equiv, denote, SRel.comp_id_left]
 
 theorem skipr: (c;;skip) ≈ c :=
-  by simp [HasEquiv.Equiv, denote]
+  by simp [HasEquiv.Equiv, denote, SRel.comp_id_right]
 
 theorem loop_unfold:
   while b loop c end ≈ if b then c;; while b loop c end else skip end :=

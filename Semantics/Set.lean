@@ -4,42 +4,42 @@ import Mathlib.Data.Set.Defs
   # Set theorems
 -/
 
-@[simp] theorem Set.Mem_empty {α : Type} (a : α) :
-  a ∈ (∅ : Set α) ↔ False :=
-  by simp [Membership.mem, Set.Mem, EmptyCollection.emptyCollection]
+set_option trace.Meta.Tactic.simp true
 
-@[simp] theorem Set.compreh_False {α : Type} :
-  {a | False} = (∅ : Set α) :=
-  by rfl
+theorem Set.mem_empty {α : Type} (a : α) :
+  a ∈ (∅ : Set α) ↔ False := by
+  simp [Membership.mem, Set.Mem, EmptyCollection.emptyCollection]
 
-@[simp] theorem Set.subseteq_def {α : Type} (A B : Set α) :
-  A ⊆ B ↔ ∀a, a ∈ A → a ∈ B :=
-  by rfl
+theorem Set.empty_of_false_prop {α : Type} :
+  {a | False} = (∅ : Set α) := rfl
 
-@[simp] theorem Set.Mem_singleton {α : Type} (a b : α) :
-  a ∈ ({b} : Set α) ↔ a = b :=
-  by rfl
+theorem Set.subseteq_def {α : Type} (A B : Set α) :
+  A ⊆ B ↔ ∀a, a ∈ A → a ∈ B := Iff.rfl
 
-@[simp] theorem Set.Mem_compreh {α : Type} (A : Set α) :
-  {a | a ∈ A} = A :=
-  by rfl
+theorem Set.mem_singleton {α : Type} (a b : α) :
+  a ∈ ({b} : Set α) ↔ a = b := Iff.rfl
 
-@[simp] theorem Set.compreh_Mem {α : Type} (a : α) (P : α → Prop) :
-  a ∈ ({a | P a} : Set α) ↔ P a :=
-  by rfl
+theorem Set.mem_self {α : Type} (A : Set α) :
+  {a | a ∈ A} = A := rfl
 
-@[simp] theorem Set.empty_union {α : Type} (A : Set α) :
-  ∅ ∪ A = A :=
-  by simp [Union.union, Set.union]
+theorem Set.mem_comprehend {α : Type} (a : α) (P : α → Prop) :
+  a ∈ ({a | P a} : Set α) ↔ P a := Iff.rfl
 
-@[simp] theorem Set.union_empty {α : Type} (A : Set α) :
+theorem Set.empty_union {α : Type} (A : Set α) :
+  ∅ ∪ A = A := by
+  simp [Set.mem_empty, Set.mem_self, Union.union, Set.union]
+
+theorem Set.union_empty {α : Type} (A : Set α) :
   A ∪ ∅ = A :=
-  by simp [Union.union, Set.union]
+  by simp [Set.mem_empty,  Set.mem_self, Union.union, Set.union]
 
-@[simp] theorem Set.Mem_union {α : Type} (a : α) (A B : Set α) :
+theorem Set.mem_union {α : Type} (a : α) (A B : Set α) :
   a ∈ A ∪ B ↔ a ∈ A ∨ a ∈ B :=
   by rfl
 
+theorem Set.mem_diff.{u} {α : Type u} {s t : Set α} (x : α) :
+  x ∈ s \ t ↔ x ∈ s ∧ x ∉ t :=
+  by rfl
 
 /-
   ### Basic subset properties
@@ -63,7 +63,7 @@ theorem subset_from_eq {α : Type} {x y : Set α} (h : x = y) : x ⊆ y :=
 protected def Set.ite (t s s' : Set α) : Set α :=
   s ∩ t ∪ s' \ t
 
-@[simp]
+
 theorem Set.ite_mono (t : Set α) {s₁ s₁' s₂ s₂' : Set α} (h : s₁ ⊆ s₂) (h' : s₁' ⊆ s₂') :
     t.ite s₁ s₁' ⊆ t.ite s₂ s₂' :=
   fun _ h2 =>
@@ -81,7 +81,6 @@ notation:20 α " →ᵍ " β => Set (α × β)
 
 def id: α →ᵍ α := {p | p.1 = p.2}
 
-@[simp]
 theorem mem_id:
   (a, b) ∈ @id α ↔ a = b := Iff.rfl
 
@@ -90,20 +89,16 @@ def comp (f g: α →ᵍ α): α →ᵍ α :=
 
 infixl:90 " ○ " => SRel.comp
 
-@[simp]
 theorem mem_comp {f g: α →ᵍ α}:
   x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g := Iff.rfl
 
-@[simp]
 theorem comp_mono {α: Type} {f g h k : Set (α × α)} (h₁ : f ⊆ h) (h₂ : g ⊆ k): f ○ g ⊆ h ○ k :=
   fun _ ⟨z, h, h'⟩ => ⟨z, h₁ h, h₂ h'⟩
 
-@[simp]
 theorem comp_id_right {f: α →ᵍ α}: f ○ id = f :=
   by
     sorry
 
-@[simp]
 theorem comp_id_left {f: α →ᵍ α}:
   id ○ f = f := by
   sorry

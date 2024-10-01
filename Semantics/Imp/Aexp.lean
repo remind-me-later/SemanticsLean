@@ -4,13 +4,13 @@ namespace Aexp
 namespace Natural
 
 inductive step: Aexp → State → Int → Prop
-  | val: step (val n) _ n
-  | var: step (var x) s (s x)
-  | add (ha: step a s n) (hb: step b s m):
+  | valₙ: step (val₁ n) _ n
+  | varₙ: step (var₁ x) s (s x)
+  | addₙ (ha: step a s n) (hb: step b s m):
     step (a + b) s (n + m)
-  | sub (ha: step a s n) (hb: step b s m):
+  | subₙ (ha: step a s n) (hb: step b s m):
     step (a - b) s (n - m)
-  | mul (ha: step a s n) (hb: step b s m):
+  | mulₙ (ha: step a s n) (hb: step b s m):
     step (a * b) s (n * m)
 
 notation s " ⊢ " a " ⟹ " v => step a s v
@@ -20,29 +20,29 @@ end Natural
 @[reducible]
 def reduce (a: Aexp) (s: State): Int :=
   match a with
-  | val a => a
-  | var a => s a
-  | add a b => reduce a s + reduce b s
-  | sub a b => reduce a s - reduce b s
-  | mul a b => reduce a s * reduce b s
+  | val₁ a => a
+  | var₁ a => s a
+  | add₁ a b => reduce a s + reduce b s
+  | sub₁ a b => reduce a s - reduce b s
+  | mul₁ a b => reduce a s * reduce b s
 
 infix:100 "⇓" => reduce
 
 -- relational definition is equal to recursive
 theorem reduce.from_natural (h: s ⊢ a ⟹ n): a⇓s = n :=
   by induction h with
-  | add _ _ iha ihb => exact iha ▸ ihb ▸ rfl
-  | sub _ _ iha ihb => exact iha ▸ ihb ▸ rfl
-  | mul _ _ iha ihb => exact iha ▸ ihb ▸ rfl
+  | addₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
+  | subₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
+  | mulₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
   | _ => rfl
 
 theorem Natural.from_reduce {a: Aexp} (h: a⇓s = n): s ⊢ a ⟹ n :=
   by induction a generalizing n with
-  | val a => exact h ▸ step.val
-  | var a => exact h ▸ step.var
-  | add a b iha ihb => exact h ▸ step.add (iha rfl) (ihb rfl)
-  | sub a b iha ihb => exact h ▸ step.sub (iha rfl) (ihb rfl)
-  | mul a b iha ihb => exact h ▸ step.mul (iha rfl) (ihb rfl)
+  | val₁ a => exact h ▸ step.valₙ
+  | var₁ a => exact h ▸ step.varₙ
+  | add₁ a b iha ihb => exact h ▸ step.addₙ (iha rfl) (ihb rfl)
+  | sub₁ a b iha ihb => exact h ▸ step.subₙ (iha rfl) (ihb rfl)
+  | mul₁ a b iha ihb => exact h ▸ step.mulₙ (iha rfl) (ihb rfl)
 
 theorem step_iff_reduce: (s ⊢ a ⟹ n) ↔ a⇓s = n :=
   ⟨reduce.from_natural, Natural.from_reduce⟩

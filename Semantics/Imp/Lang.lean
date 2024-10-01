@@ -12,57 +12,57 @@ notation "σ₀" => State.nil
 example: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := TotalMap.clobber.symm
 
 inductive Aexp where
-  | val : Int → Aexp
-  | var : String → Aexp
+  | val₁ : Int → Aexp
+  | var₁ : String → Aexp
   -- arithmetic
-  | add : Aexp → Aexp → Aexp
-  | sub : Aexp → Aexp → Aexp
-  | mul : Aexp → Aexp → Aexp
+  | add₁ : Aexp → Aexp → Aexp
+  | sub₁ : Aexp → Aexp → Aexp
+  | mul₁ : Aexp → Aexp → Aexp
 
 -- x + 3
-#check Aexp.add (Aexp.var "x") (Aexp.val 3)
+#check Aexp.add₁ (Aexp.var₁ "x") (Aexp.val₁ 3)
 
 inductive Bexp where
   -- constants
-  | tt
-  | ff
+  | true₁
+  | false₁
   -- boolean
-  | not : Bexp → Bexp
-  | and : Bexp → Bexp → Bexp
-  | or  : Bexp → Bexp → Bexp
+  | not₁ : Bexp → Bexp
+  | and₁ : Bexp → Bexp → Bexp
+  | or₁  : Bexp → Bexp → Bexp
   -- comparison
-  | eq : Aexp → Aexp → Bexp
-  | le : Aexp → Aexp → Bexp
+  | eq₁ : Aexp → Aexp → Bexp
+  | le₁ : Aexp → Aexp → Bexp
 
 -- !(x <= 3)
-#check Bexp.not (Bexp.le (Aexp.var "x") (Aexp.val 3))
+#check Bexp.not₁ (Bexp.le₁ (Aexp.var₁ "x") (Aexp.val₁ 3))
 
 inductive Com where
-  | skip
-  | cat   : Com → Com → Com
-  | ass   : String → Aexp → Com
-  | cond  : Bexp → Com → Com → Com
-  | loop  : Bexp → Com → Com
+  | skip₁
+  | cat₁   : Com → Com → Com
+  | ass₁   : String → Aexp → Com
+  | if₁    : Bexp → Com → Com → Com
+  | while₁ : Bexp → Com → Com
 
 /-
 ## Syntax
 -/
 -- Meta syntax
 -- aexp
-notation:60 a:55 " * " b:56 => Aexp.mul a b
-notation:60 a:60 " + " b:61 => Aexp.add a b
-notation:60 a:60 " - " b:61 => Aexp.sub a b
+notation:60 a:55 " * " b:56 => Aexp.mul₁ a b
+notation:60 a:60 " + " b:61 => Aexp.add₁ a b
+notation:60 a:60 " - " b:61 => Aexp.sub₁ a b
 -- bexp
-notation:65 a:65 " && " b:66 => Bexp.and a b
-notation:65 a:65 " || " b:66 => Bexp.or a b
-notation:70 a:70 " == " b:71 => Bexp.eq a b
-notation:70 a:70 " <= " b:71 => Bexp.le a b
-notation:80 "!" a:81 => Bexp.not a
+notation:65 a:65 " && " b:66 => Bexp.and₁ a b
+notation:65 a:65 " || " b:66 => Bexp.or₁ a b
+notation:70 a:70 " == " b:71 => Bexp.eq₁ a b
+notation:70 a:70 " <= " b:71 => Bexp.le₁ a b
+notation:80 "!" a:81 => Bexp.not₁ a
 -- com
-notation a:40 ";;" b:41 => Com.cat a b
-notation:50 a:50 " = " b:51 => Com.ass a b
-notation "if " c " then " a " else " b "end" => Com.cond c a b
-notation "while " c " loop " a "end" => Com.loop c a
+notation a:40 ";;" b:41 => Com.cat₁ a b
+notation:50 a:50 " = " b:51 => Com.ass₁ a b
+notation "if " c " then " a " else " b "end" => Com.if₁ c a b
+notation "while " c " loop " a "end" => Com.while₁ c a
 
 declare_syntax_cat imp
 
@@ -83,40 +83,70 @@ syntax:80 "!" imp:81 : imp
 -- com
 syntax:40 imp:40 ";" imp:41 : imp
 syntax:50 imp:50 "=" imp:51 : imp
-syntax "if" imp "{" imp "}" "else" "{" imp "}" : imp
-syntax "while" imp "{" imp "}" : imp
+syntax "if" imp "then" imp "else" imp " end" : imp
+syntax "while" imp "loop" imp " end" : imp
 -- meta
 syntax "⦃" imp "⦄" : term
 
 macro_rules
   -- keywords
-  | `(⦃skip⦄) => `(Com.skip)
-  | `(⦃true⦄) => `(Bexp.tt)
-  | `(⦃false⦄) => `(Bexp.ff)
+  | `(⦃skip⦄) => `(Com.skip₁)
+  | `(⦃true⦄) => `(Bexp.true₁)
+  | `(⦃false⦄) => `(Bexp.false₁)
   -- general
   | `(⦃($x)⦄) => `(⦃$x⦄)
   -- aexp
-  | `(⦃$x:ident⦄) => `(Aexp.var $(Lean.quote (toString x.getId)))
-  | `(⦃$n:num⦄)   => `(Aexp.val $n)
-  | `(⦃$x + $y⦄)  => `(Aexp.add ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x - $y⦄)  => `(Aexp.sub ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x * $y⦄)  => `(Aexp.mul ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x:ident⦄) => `(Aexp.var₁ $(Lean.quote (toString x.getId)))
+  | `(⦃$n:num⦄)   => `(Aexp.val₁ $n)
+  | `(⦃$x + $y⦄)  => `(Aexp.add₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x - $y⦄)  => `(Aexp.sub₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x * $y⦄)  => `(Aexp.mul₁ ⦃$x⦄ ⦃$y⦄)
   -- bexp
-  | `(⦃!$x⦄)      => `(Bexp.not ⦃$x⦄)
-  | `(⦃$x && $y⦄)  => `(Bexp.and ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x || $y⦄)  => `(Bexp.or ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x == $y⦄)  => `(Bexp.eq ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x <= $y⦄)  => `(Bexp.le ⦃$x⦄ ⦃$y⦄)
+  | `(⦃!$x⦄)      => `(Bexp.not₁ ⦃$x⦄)
+  | `(⦃$x && $y⦄)  => `(Bexp.and₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x || $y⦄)  => `(Bexp.or₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x == $y⦄)  => `(Bexp.eq₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x <= $y⦄)  => `(Bexp.le₁ ⦃$x⦄ ⦃$y⦄)
   -- com
-  | `(⦃$x:ident = $y⦄) => `(Com.ass $(Lean.quote (toString x.getId)) ⦃$y⦄)
-  | `(⦃$x ; $y⦄)       => `(Com.cat ⦃$x⦄ ⦃$y⦄)
-  | `(⦃if $b {$x} else {$y}⦄) => `(Com.cond ⦃$b⦄ ⦃$x⦄ ⦃$y⦄)
-  | `(⦃while $b {$x}⦄) => `(Com.loop ⦃$b⦄ ⦃$x⦄)
+  | `(⦃$x:ident = $y⦄) => `(Com.ass₁ $(Lean.quote (toString x.getId)) ⦃$y⦄)
+  | `(⦃$x ; $y⦄)       => `(Com.cat₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃if $b then $x else $y end⦄) => `(Com.if₁ ⦃$b⦄ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃while $b loop $x end⦄) => `(Com.while₁ ⦃$b⦄ ⦃$x⦄)
 
-#check ⦃z = 4; if 3 <= 2 {y = 4 + 2} else {skip}⦄
-#check ⦃while true {skip}⦄
+#check ⦃
+  z = 4;
+  if 3 <= 2 then
+    y = 4 + 2
+  else
+    skip
+  end
+⦄
+
+#check ⦃
+  while true loop
+    skip
+  end
+⦄
+
 #check ⦃skip⦄
+
 #check ⦃x = 5⦄
+
 #check ⦃x = 5; y = 6⦄
-#check ⦃if x <= 5 {y = 6} else {z = 7}⦄
-#check ⦃x = 0; while !(x <= 5) {skip; skip; x = x + 1}⦄
+
+#check ⦃
+  if x <= 5 then
+    y = 6
+  else
+    z = 7
+  end
+⦄
+
+#check ⦃
+  x = 0;
+  while !(x <= 5) loop
+    skip;
+    skip;
+    x = x + 1
+  end
+⦄

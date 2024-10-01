@@ -5,18 +5,18 @@ namespace Natural
 
 -- Operational semantics of Bexp
 inductive step: Bexp → State → Bool → Prop
-  | tt: step tt _ true
-  | ff: step ff _ false
-  | not (h: step a s n):
+  | trueₙ: step true₁ _ true
+  | falseₙ: step false₁ _ false
+  | notₙ (h: step a s n):
     step (!a) s (!n)
-  | and (h₁: step a s n) (h₂: step b s m):
+  | andₙ (h₁: step a s n) (h₂: step b s m):
     step (a && b) s (n && m)
-  | or (h₁: step a s n) (h₂: step b s m):
+  | orₙ (h₁: step a s n) (h₂: step b s m):
     step (a || b) s (n || m)
-  | eq: step (a == b) s (a⇓s == b⇓s)
-  | le: step (a <= b) s (a⇓s <= b⇓s)
+  | eqₙ: step (a == b) s (a⇓s == b⇓s)
+  | leₙ: step (a <= b) s (a⇓s <= b⇓s)
 
-notation s " ⊢ " a " ⟹ " v => step a s v
+notation s " ⊢ " b " ⟹ " v => step b s v
 
 end Natural
 
@@ -24,32 +24,32 @@ end Natural
 @[reducible, simp]
 def reduce (b: Bexp) (s: State): Bool :=
   match b with
-  | tt      => true
-  | ff      => false
-  | not b   => !reduce b s
-  | and a b => reduce a s && reduce b s
-  | or a b  => reduce a s || reduce b s
-  | eq a b  => a.reduce s == b.reduce s
-  | le a b  => a.reduce s <= b.reduce s
+  | true₁    => true
+  | false₁   => false
+  | not₁ b   => !reduce b s
+  | and₁ a b => reduce a s && reduce b s
+  | or₁ a b  => reduce a s || reduce b s
+  | eq₁ a b  => a.reduce s == b.reduce s
+  | le₁ a b  => a.reduce s <= b.reduce s
 
 infix:100 "⇓" => reduce
 
 -- relational definition is equivalent to recursive
 theorem Natural.from_reduce {b: Bexp} (h: b⇓s = x): s ⊢ b ⟹ x :=
   by induction b generalizing x with
-  | tt => exact h ▸ step.tt
-  | ff => exact h ▸ step.ff
-  | not a ih => exact h ▸ step.not (ih rfl)
-  | and a b iha ihb => exact h ▸ step.and (iha rfl) (ihb rfl)
-  | or a b iha ihb => exact h ▸ step.or (iha rfl) (ihb rfl)
-  | eq => exact h ▸ step.eq
-  | le => exact h ▸ step.le
+  | true₁ => exact h ▸ step.trueₙ
+  | false₁ => exact h ▸ step.falseₙ
+  | not₁ a ih => exact h ▸ step.notₙ (ih rfl)
+  | and₁ a b iha ihb => exact h ▸ step.andₙ (iha rfl) (ihb rfl)
+  | or₁ a b iha ihb => exact h ▸ step.orₙ (iha rfl) (ihb rfl)
+  | eq₁ => exact h ▸ step.eqₙ
+  | le₁ => exact h ▸ step.leₙ
 
 theorem reduce.from_natural {b: Bexp} (h: s ⊢ b ⟹ x): b⇓s = x :=
   by induction h with
-  | not _ ih => exact ih ▸ rfl
-  | and _ _ iha ihb => exact iha ▸ ihb ▸ rfl
-  | or _ _ iha ihb => exact iha ▸ ihb ▸ rfl
+  | notₙ _ ih => exact ih ▸ rfl
+  | andₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
+  | orₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
   | _ => rfl
 
 theorem step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) ↔ b⇓s = x :=

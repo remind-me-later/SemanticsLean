@@ -13,11 +13,11 @@ def denote_loop (b: Bexp) (f: State →ᵍ State): (State →ᵍ State) → (Sta
   fun g => Set.ite {s | b⇓s.1} (f ○ g) SRel.id
 
 def denote: Com → (State →ᵍ State)
-  | skip                => SRel.id
-  | ass x a             => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
-  | c;;d                => c.denote ○ d.denote
+  | skip₁                  => SRel.id
+  | ass₁ x a               => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
+  | c;;d                   => c.denote ○ d.denote
   | if b then c else d end => Set.ite {s | b⇓s.1} c.denote d.denote
-  | while b loop c end   => Fix.lfp $ denote_loop b c.denote
+  | while b loop c end     => Fix.lfp $ denote_loop b c.denote
 
 theorem monotone_denote_loop: monotone (denote_loop b c) :=
   fun _ _ h => Set.ite_mono _ (SRel.comp_mono PartialOrder.le_rfl h) PartialOrder.le_rfl
@@ -33,14 +33,14 @@ namespace denote
 @[simp]
 instance equiv: Setoid Com := ⟨(⟦·⟧ = ⟦·⟧), ⟨(Eq.refl ⟦.⟧), Eq.symm, Eq.trans⟩⟩
 
-theorem skipl: (skip;;c) ≈ c :=
+theorem skipl: (skip₁;;c) ≈ c :=
   by simp [HasEquiv.Equiv, denote, SRel.comp_id_left]
 
-theorem skipr: (c;;skip) ≈ c :=
+theorem skipr: (c;;skip₁) ≈ c :=
   by simp [HasEquiv.Equiv, denote, SRel.comp_id_right]
 
-theorem loop_unfold:
-  while b loop c end ≈ if b then c;; while b loop c end else skip end :=
+theorem while_unfold:
+  while b loop c end ≈ if b then c;; while b loop c end else skip₁ end :=
   Fix.lfp_eq _ monotone_denote_loop
 
 -- /-

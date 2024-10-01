@@ -4,30 +4,30 @@ namespace Com
 namespace Natural
 
 inductive step: Com → State → State → Prop
-  | skip:
-    step skip s s
+  | skipₙ:
+    step skip₁ s s
 
-  | ass:
+  | assₙ:
     step (x = a) s (s⟪x ≔ a⇓s⟫)
 
-  | cat t
+  | catₙ t
     (hc: step c s t) (hd: step d t u):
     step (c;;d) s u
 
-  | cond_true {b: Bexp}
+  | if₁ₙ {b: Bexp}
     (hb: b⇓s = true) (hc: step c s t):
     step if b then c else d end s t
 
-  | cond_false {b: Bexp}
+  | if₀ₙ {b: Bexp}
     (hb: b⇓s = false) (hd: step d s t):
     step if b then c else d end s t
 
-  | loop_true {b: Bexp} u
+  | while₁ₙ {b: Bexp} u
     (hb: b⇓s = true) (hc: step c s u)
     (hw: step while b loop c end u t):
     step while b loop c end s t
 
-  | loop_false {b: Bexp}
+  | while₀ₙ {b: Bexp}
     (hb: b⇓s = false):
     step while b loop c end s s
 
@@ -36,72 +36,58 @@ notation:10 s " ⊢ " c " ⟹ " t => step c s t
 private def x := "x"
 private def z := "z"
 
-private example: σ₀ ⊢ ⦃x = 5⦄ ⟹ σ₀⟪x ≔ 5⟫ := step.ass
+private example: σ₀ ⊢ ⦃x = 5⦄ ⟹ σ₀⟪x ≔ 5⟫ := step.assₙ
 private example:
-  σ₀ ⊢ ⦃x = 2; if x <= 1 {y = 3} else {z = 4}⦄ ⟹ σ₀⟪x ≔ 2⟫⟪z ≔ 4⟫ :=
-    step.cat _ step.ass $ step.cond_false rfl step.ass
+  σ₀ ⊢ ⦃x = 2; if x <= 1 then y = 3 else z = 4 end⦄ ⟹ σ₀⟪x ≔ 2⟫⟪z ≔ 4⟫ :=
+    step.catₙ _ step.assₙ $ step.if₀ₙ rfl step.assₙ
 private example:
   σ₀ ⊢ ⦃x = 2; x = 3⦄ ⟹ σ₀⟪x ≔ 3⟫ := by
   have h1: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := TotalMap.clobber.symm
   rw [h1]
-  apply step.cat _ step.ass step.ass
+  exact step.catₙ _ step.assₙ step.assₙ
 
 /-
 ## Rewriting rules
 -/
 
-theorem skip_iff: (s ⊢ skip ⟹ t) = (s = t) := by
-  apply propext
-  constructor <;> intro h
-  . cases h; rfl
-  . exact h ▸ step.skip
+theorem skip_iff: (s ⊢ skip₁ ⟹ t) ↔ (s = t) :=
+  ⟨fun h => match h with | step.skipₙ => rfl,
+    fun h => h ▸ step.skipₙ⟩
 
 theorem cat_iff:
-  (s ⊢ c;;d ⟹ t) = ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ d ⟹ t) := by
-  apply propext
-  constructor <;> intro h
-  . cases h with
-    | cat t h1 h2 =>
-      exact ⟨t, ⟨h1, h2⟩⟩
-  . cases h with
-    | intro w h =>
-      exact step.cat w h.1 h.2
+  (s ⊢ c;;d ⟹ t) ↔ ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ d ⟹ t) :=
+  ⟨fun h => match h with | step.catₙ t h1 h2 => ⟨t, ⟨h1, h2⟩⟩,
+    fun h => match h with | Exists.intro w h => step.catₙ w h.1 h.2⟩
 
-theorem cond_iff:
+theorem if_iff:
   (s ⊢ if b then c else d end ⟹ t)
-    = bif b⇓s then (s ⊢ c ⟹ t) else (s ⊢ d ⟹ t) := by
-  apply propext
-  constructor <;> intro h
-  . cases h with
-    | cond_true hb hc => exact hb ▸ hc
-    | cond_false hb hc => exact hb ▸ hc
-  . cases hb: b⇓s with
-    | true => exact step.cond_true hb $ (cond_true (s ⊢ c ⟹ t) _) ▸ hb ▸ h
-    | false => exact step.cond_false hb $ (cond_false _ (s ⊢ d ⟹ t)) ▸ hb ▸ h
+    ↔ bif b⇓s then (s ⊢ c ⟹ t) else (s ⊢ d ⟹ t) :=
+  ⟨fun h => match h with
+    | step.if₁ₙ hb hc | step.if₀ₙ hb hc => hb ▸ hc,
+    fun h => match hb: b⇓s with
+    | true => step.if₁ₙ hb $ cond_true (s ⊢ c ⟹ t) _ ▸ hb ▸ h
+    | false => step.if₀ₙ hb $ cond_false _ (s ⊢ d ⟹ t) ▸ hb ▸ h⟩
 
-theorem cond_iff':
+theorem if_iff':
   (s ⊢ if b then c else d end ⟹ t)
-    = (s ⊢ bif b⇓s then c else d ⟹ t) := by
-  rw [cond_iff]
-  cases b⇓s with
-  | false => rw [cond_false, cond_false]
-  | true => rw [cond_true, cond_true]
+    ↔ (s ⊢ bif b⇓s then c else d ⟹ t) :=
+  ⟨fun h => match h with
+    | step.if₁ₙ hb hc => hb ▸ hc
+    | step.if₀ₙ hb hd => hb ▸ hd,
+    fun h => match hb: b⇓s with
+      | true => step.if₁ₙ hb $ cond_true c _ ▸ hb ▸ h
+      | false => step.if₀ₙ hb $ cond_false _ d ▸ hb ▸ h⟩
 
-theorem loop_iff: (s ⊢ while b loop c end ⟹ t) =
-  bif b⇓s then ∃w, (s ⊢ c ⟹ w) ∧ (w ⊢ while b loop c end ⟹ t) else s = t := by
-  apply propext
-  constructor <;> intro h
-  . cases h with
-    | loop_true t hb hc hw => exact hb ▸ ⟨t, ⟨hc, hw⟩⟩
-    | loop_false hb => exact hb ▸ rfl
-  . cases hb: b⇓s with
-    | true =>
-      rw [hb] at h
-      cases h with
-      | intro w h =>
-        exact step.loop_true w hb h.1 h.2
-    | false =>
-      exact (hb ▸ h) ▸ step.loop_false hb
+theorem while_iff: (s ⊢ while b loop c end ⟹ t) ↔
+  bif b⇓s then ∃w, (s ⊢ c ⟹ w) ∧ (w ⊢ while b loop c end ⟹ t) else s = t :=
+  ⟨fun h => match h with
+    | step.while₁ₙ t hb hc hw => hb ▸ ⟨t, ⟨hc, hw⟩⟩
+    | step.while₀ₙ hb => hb ▸ rfl,
+    fun h => match hb: b⇓s with
+      | true =>
+        match hb ▸ h with
+        | Exists.intro w h => step.while₁ₙ w hb h.1 h.2
+      | false => (hb ▸ h) ▸ step.while₀ₙ hb⟩
 
 /-
 ## Behavioral equivalence
@@ -115,58 +101,59 @@ instance equiv: Setoid Com where
     trans := fun h1 h2 x n => Iff.trans (h1 x n) (h2 x n)
   }
 
-theorem skipl: (skip;;c) ≈ c := by
-  intro _ _
-  constructor
-  . intro h
-    cases h with
-    | cat _ hc hd =>
-      exact skip_iff.mp hc ▸ hd
-  . exact (step.cat _ step.skip ·)
+theorem skipl: (skip₁;;c) ≈ c := fun _ _ =>
+  ⟨fun h => match h with | step.catₙ _ hc hd => skip_iff.mp hc ▸ hd,
+    fun h => step.catₙ _ step.skipₙ h⟩
 
-theorem skipr: (c;;skip) ≈ c := by
-  intro _ _
-  constructor
-  . intro h; cases h with | cat _ hc hd =>
-      exact skip_iff.mp hd ▸ hc
-  . exact (step.cat _ · step.skip)
+theorem skipr: (c;;skip₁) ≈ c := fun _ _ =>
+  ⟨fun h => match h with | step.catₙ _ hc hd => skip_iff.mp hd ▸ hc,
+    fun h => step.catₙ _ h step.skipₙ⟩
 
-theorem cond_true (h: b ≈ Bexp.tt): if b then c else d end ≈ c := by
+theorem cond_true (h: b ≈ Bexp.true₁): if b then c else d end ≈ c := by
   intro _ _
-  rw [cond_iff, h]
+  rw [if_iff, h]
   rfl
 
-theorem cond_false (h: b ≈ Bexp.ff): if b then c else d end ≈ d := by
+theorem cond_false (h: b ≈ Bexp.false₁): if b then c else d end ≈ d := by
   intro _ _
-  rw [cond_iff, h]
+  rw [if_iff, h]
   rfl
 
 theorem loop_unfold:
-  while b loop c end ≈ if b then (c;;while b loop c end) else skip end := by
+  while b loop c end ≈ if b then (c;;while b loop c end) else skip₁ end := by
   intro s t
   constructor <;> intro h
-  . rw [cond_iff]
-    cases h with
-    | loop_true w hb hc hw => exact hb ▸ step.cat w hc hw
-    | loop_false hb => exact hb ▸ step.skip
-  . rw [loop_iff]
-    rw [cond_iff] at h
-    cases hb: b⇓s <;> rw [hb] at h
-    . exact skip_iff.mp h
-    . exact cat_iff.mp h
+  . rw [if_iff]
+    match h with
+    | step.while₁ₙ w hb hc hw => exact hb ▸ step.catₙ w hc hw
+    | step.while₀ₙ hb => exact hb ▸ step.skipₙ
+  . rw [while_iff]
+    rw [if_iff] at h
+    match hb: b⇓s with
+    | false =>
+      let hh := hb ▸ h
+      exact skip_iff.mp hh
+    | true =>
+      let hh := hb ▸ h
+      exact cat_iff.mp hh
 
 /-
 ## Non termination
 -/
 
-theorem loop_tt (h: b ≈ Bexp.tt):
-  ¬(s ⊢ while b loop c end ⟹ t) := by
-  intro h1
+theorem loop_tt (h: b ≈ Bexp.true₁):
+  ¬(s ⊢ while b loop c end ⟹ t) := fun h1 => by
   generalize h2: while b loop c end = ww at h1
   induction h1 with
-  | loop_true _ _ _ _ _ ih2 => cases h2; apply ih2; rfl
-  | loop_false hb => cases h2; rw [h] at hb; contradiction
-  | _ => cases h2
+  | while₁ₙ _ _ _ _ _ ih2 =>
+    match h2 with
+    | Eq.refl _ => exact ih2 rfl
+  | while₀ₙ hb =>
+    match h2 with
+    | Eq.refl _ =>
+      rw [h] at hb
+      contradiction
+  | _ => contradiction
 
 /-
 ## Determinism
@@ -175,38 +162,39 @@ theorem loop_tt (h: b ≈ Bexp.tt):
 theorem deterministic {c: Com}
   (h1: w ⊢ c ⟹ s) (h2: w ⊢ c ⟹ t): s = t :=
   by induction h1 generalizing t with
-  | cat _ _ _ ihc ihd =>
-    cases h2 with
-    | cat _ hc hd =>
+  | skipₙ => match h2 with | step.skipₙ => rfl
+  | assₙ => match h2 with | step.assₙ => rfl
+  | catₙ _ _ _ ihc ihd =>
+    match h2 with
+    | step.catₙ _ hc hd =>
       exact ihd (ihc hc ▸ hd)
-  | cond_true hb _ ih =>
-    cases h2 with
-    | cond_true _ hd =>
+  | if₁ₙ hb _ ih =>
+    match h2 with
+    | step.if₁ₙ _ hd =>
       exact ih hd
-    | cond_false hb1 hd =>
+    | step.if₀ₙ hb1 hd =>
       rw [hb] at hb1
       contradiction
-  | cond_false hb _ ih =>
-    cases h2 with
-    | cond_true hb1 hd =>
+  | if₀ₙ hb _ ih =>
+    match h2 with
+    | step.if₁ₙ hb1 _ =>
       rw [hb] at hb1
       contradiction
-    | cond_false _ hd =>
+    | step.if₀ₙ _ hd =>
       exact ih hd
-  | loop_true _ hb _ _ ihc ihw =>
-    cases h2 with
-    | loop_true _ _ hc hw =>
+  | while₁ₙ _ hb _ _ ihc ihw =>
+    match h2 with
+    | step.while₁ₙ _ _ hc hw =>
       exact ihw (ihc hc ▸ hw)
-    | loop_false hb1 =>
+    | step.while₀ₙ hb1 =>
       rw [hb] at hb1
       contradiction
-  | loop_false hb =>
-    cases h2 with
-    | loop_true _ hb1 =>
+  | while₀ₙ hb =>
+    match h2 with
+    | step.while₁ₙ _ hb1 _ _ =>
       rw [hb] at hb1
       contradiction
-    | loop_false => rfl
-  | _ => cases h2; rfl
+    | step.while₀ₙ _ => rfl
 
 end Natural
 end Com

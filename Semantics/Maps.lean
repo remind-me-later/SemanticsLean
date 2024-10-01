@@ -15,7 +15,7 @@ def TotalMap.update (m: TotalMap A) (k: String) (v: A) :=
 
 notation m "⟪" k " ≔ " v "⟫" => TotalMap.update m k v
 
-section TotalMap
+namespace TotalMap
 
 theorem ev: (m⟪k ≔ v⟫) k = v := if_pos rfl
 

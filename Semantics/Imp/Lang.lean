@@ -9,7 +9,7 @@ notation "σ₀" => State.nil
 #eval (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫) "x"
 #eval (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫⟪"x" ≔ 7⟫) "x"
 
-example: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := clobber.symm
+example: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := TotalMap.clobber.symm
 
 inductive Aexp where
   | val : Int → Aexp

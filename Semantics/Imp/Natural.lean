@@ -42,7 +42,7 @@ private example:
     step.cat _ step.ass $ step.cond_false rfl step.ass
 private example:
   σ₀ ⊢ ⦃x = 2; x = 3⦄ ⟹ σ₀⟪x ≔ 3⟫ := by
-  have h1: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := clobber.symm
+  have h1: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := TotalMap.clobber.symm
   rw [h1]
   apply step.cat _ step.ass step.ass
 

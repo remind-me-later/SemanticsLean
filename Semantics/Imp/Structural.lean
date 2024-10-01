@@ -7,46 +7,49 @@ namespace Structural
 
 inductive step: Com × State → Com × State → Prop where
   | ass:
-    step (ass x a, s) (skip, s⟪x ≔ a⇓s⟫)
+    step (x = a, s) (skip, s⟪x ≔ a⇓s⟫)
 
-  | cat₁:
+  | cat_skip:
     step (skip;;c, s) (c, s)
 
-  | cat₂ (h: step (c, s) (e, t)):
+  | cat_step (h: step (c, s) (e, t)):
     step (c;;d, s) (e;;d, t)
 
   | cond:
-    step (cond b c d, s) (bif b⇓s then c else d, s)
+    step (if b then c else d end, s) (bif b⇓s then c else d, s)
 
   | loop:
-    step (loop b c, s) (bif b⇓s then c;;loop b c else skip, s)
+    step (while b loop c end, s) (bif b⇓s then c;;while b loop c end else skip, s)
 
 infix:110 " ⇒ " => step
 
 private example:
   (⦃x = 0; while x <= 2 {x = x + 1}⦄, σ₀) ⇒
-      (⦃skip; while x <= 2 {x = x + 1}⦄, σ₀⟪"x" ≔ 0⟫) := step.cat₂ step.ass
+      (⦃skip; while x <= 2 {x = x + 1}⦄, σ₀⟪"x" ≔ 0⟫) := step.cat_step step.ass
 
 theorem cat_iff:
-  (c₁;;c₂, s) ⇒ et ↔
-  (∃e t, (c₁, s) ⇒ (e, t) ∧ et = (e;;c₂, t))
-  ∨ (c₁ = skip ∧ et = (c₂, s)) := by
+  (c₁;;c₂, s) ⇒ et
+    ↔ (∃e t, (c₁, s) ⇒ (e, t) ∧ et = (e;;c₂, t))
+      ∨ (c₁ = skip ∧ et = (c₂, s)) := by
   constructor <;> intro h
   . cases h with
-    | cat₁ => exact Or.inr ⟨rfl, rfl⟩
-    | cat₂ h => exact Or.inl ⟨_, ⟨_, ⟨h, rfl⟩⟩⟩
+    | cat_skip => exact Or.inr ⟨rfl, rfl⟩
+    | cat_step h => exact Or.inl ⟨_, ⟨_, ⟨h, rfl⟩⟩⟩
   . cases h with
     | inl h =>
-      cases h with | intro e h =>
-        cases h with | intro t h =>
-          exact h.right ▸ step.cat₂ h.1
+      cases h with
+      | intro e h =>
+        cases h with
+        | intro t h =>
+          exact h.right ▸ step.cat_step h.1
     | inr h =>
-      cases h with | intro h₁ h₂ =>
-        exact h₁ ▸ h₂ ▸ step.cat₁
+      cases h with
+      | intro h1 h2 =>
+        exact h1 ▸ h2 ▸ step.cat_skip
 
 lemma cond_iff:
-  (cond b c d, s) ⇒ ss ↔
-  (b⇓s ∧ ss = (c, s)) ∨ (b⇓s = false ∧ ss = (d, s)) := by
+  (if b then c else d end, s) ⇒ ss
+    ↔ (b⇓s ∧ ss = (c, s)) ∨ (b⇓s = false ∧ ss = (d, s)) := by
   constructor <;> intro h
   . cases hb: b⇓s <;> cases h
     . exact Or.inr ⟨rfl, hb ▸ rfl⟩
@@ -56,7 +59,7 @@ lemma cond_iff:
     exact hss ▸ step.cond
 
 lemma cond_false {b: Bexp} (hb: b⇓s = false):
-  (cond b c d, s) ⇒ ss ↔ (ss = (d, s)) :=
+  (if b then c else d end, s) ⇒ ss ↔ (ss = (d, s)) :=
   by
     simp [cond_iff, hb]
 
@@ -65,23 +68,23 @@ infix:110 " ⇒* " => Relation.ReflTransGen step
 theorem star.demo₂:
   (⦃x = 2; while 0 <= x {x = x + 1}⦄, σ₀) ⇒*
       (⦃while 0 <= x {x = x + 1}⦄, σ₀⟪"x" ≔ 2⟫) :=
-  Relation.ReflTransGen.head (step.cat₂ step.ass) (Relation.ReflTransGen.head step.cat₁ Relation.ReflTransGen.refl)
+  Relation.ReflTransGen.head (step.cat_step step.ass) (Relation.ReflTransGen.head step.cat_skip Relation.ReflTransGen.refl)
 
 theorem star.cat_skip_cat
   (h: (c, s) ⇒* (skip, t)):
   (c;;d, s) ⇒* (skip;;d, t) :=
-  Relation.ReflTransGen.lift (fun (x: Com × State) => (x.1;;d, x.2)) (fun _ _ h => step.cat₂ h) h
+  Relation.ReflTransGen.lift (fun (x: Com × State) => (x.1;;d, x.2)) (fun _ _ h => step.cat_step h) h
 
 theorem star.cat
-  (h₁: (c₁, s) ⇒* (skip, s₁))
-  (h₂: (c₂, s₁) ⇒* (skip, s₂)):
+  (h1: (c₁, s) ⇒* (skip, s₁))
+  (h2: (c₂, s₁) ⇒* (skip, s₂)):
   (c₁;;c₂, s) ⇒* (skip, s₂) :=
-  Relation.ReflTransGen.trans (cat_skip_cat h₁) (Relation.ReflTransGen.trans (Relation.ReflTransGen.single step.cat₁) h₂)
+  Relation.ReflTransGen.trans (cat_skip_cat h1) (Relation.ReflTransGen.trans (Relation.ReflTransGen.single step.cat_skip) h2)
 
 theorem star.cat_no_influence
   (h: (c₁, s) ⇒* (skip, s₁)):
   (c₁;;c₂, s) ⇒* (c₂, s₁) :=
-  Relation.ReflTransGen.trans (cat_skip_cat h) (Relation.ReflTransGen.single step.cat₁)
+  Relation.ReflTransGen.trans (cat_skip_cat h) (Relation.ReflTransGen.single step.cat_skip)
 
 end Structural
 end Com

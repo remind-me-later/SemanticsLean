@@ -13,11 +13,11 @@ def denote_loop (b: Bexp) (f: State →ᵍ State): (State →ᵍ State) → (Sta
   fun g => Set.ite {s | b⇓s.1} (f ○ g) SRel.id
 
 def denote: Com → (State →ᵍ State)
-  | skip       => SRel.id
-  | ass x a    => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
-  | c;;d       => c.denote ○ d.denote
-  | cond b c d => Set.ite {s | b⇓s.1} c.denote d.denote
-  | loop b c   => lfp $ denote_loop b c.denote
+  | skip                => SRel.id
+  | ass x a             => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
+  | c;;d                => c.denote ○ d.denote
+  | if b then c else d end => Set.ite {s | b⇓s.1} c.denote d.denote
+  | while b loop c end   => lfp $ denote_loop b c.denote
 
 @[simp]
 theorem monotone_denote_loop: monotone (denote_loop b c) :=
@@ -39,7 +39,8 @@ theorem skipl: (skip;;c) ≈ c :=
 theorem skipr: (c;;skip) ≈ c :=
   by simp [HasEquiv.Equiv, denote]
 
-theorem loop_unfold: loop b c ≈ cond b (c;;loop b c) skip :=
+theorem loop_unfold:
+  while b loop c end ≈ if b then c;; while b loop c end else skip end :=
   lfp_eq _ monotone_denote_loop
 
 -- /-
@@ -51,13 +52,13 @@ theorem cat_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
   simp [HasEquiv.Equiv, denote]
   exact hc ▸ hd ▸ rfl
 
-theorem cond_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
-  (cond b c₁ d₁) ≈ (cond b c₂ d₂) := by
+theorem cond_congr (hc: c1 ≈ c2) (hd: d1 ≈ d2):
+  if b then c1 else d1 end ≈ if b then c2 else d2 end := by
   simp [HasEquiv.Equiv, denote]
   exact hc ▸ hd ▸ rfl
 
-theorem loop_congr (hc: c₁ ≈ c₂):
-  (loop b c₁) ≈ (loop b c₂) := by
+theorem loop_congr (hc: c1 ≈ c2):
+  while b loop c1 end ≈ while b loop c2 end := by
   simp [HasEquiv.Equiv, denote]
   exact hc ▸ rfl
 

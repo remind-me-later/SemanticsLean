@@ -52,7 +52,7 @@ theorem reduce.from_natural {b: Bexp} (h: s ⊢ b ⟹ x): b⇓s = x :=
   | _ => rfl
 
 theorem step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) = (b⇓s = x) :=
-  propext ⟨reduce.from_natural, Natural.from_reduce⟩
+  propext $ Iff.intro reduce.from_natural Natural.from_reduce
 
 theorem step_eq_reduce' {b: Bexp}: s ⊢ b ⟹ (b⇓s) :=
   Natural.from_reduce rfl
@@ -69,13 +69,23 @@ protected instance step.equiv: Setoid Bexp where
 
 instance reduce.equiv: Setoid Bexp where
   r a b:= ∀s, a⇓s = b⇓s
-  iseqv := ⟨fun _ _ => rfl, (Eq.symm $ · ·), fun h1 h2 s => (h1 s) ▸ (h2 s)⟩
+  iseqv := {
+    refl := fun _ _ => rfl
+    symm := fun h s => (h s).symm
+    trans := fun h1 h2 s => (h1 s) ▸ (h2 s)
+  }
 
 protected theorem step_eq_eq_reduce_eq:
   step.equiv.r a b ↔ reduce.equiv.r a b := by
   simp only [Setoid.r, eq_iff_iff]
-  exact ⟨fun h s => (step_eq_reduce ▸ h s (b⇓s)).mpr $ step_eq_reduce.mpr rfl,
-    fun h s _ => ⟨fun h1 => ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce',
-     fun h1 => ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'⟩⟩
+  apply Iff.intro
+  . intro h s
+    exact (step_eq_reduce ▸ h s (b⇓s)).mpr $ step_eq_reduce.mpr rfl
+  . intro h s _
+    apply Iff.intro
+    . intro h1
+      exact ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'
+    . intro h1
+      exact ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'
 
 end Bexp

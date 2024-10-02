@@ -45,43 +45,48 @@ private example:
 -/
 
 theorem skip_eq: (s ⊢ skip₁ ⟹ t) = (s = t) :=
-  propext ⟨fun h => match h with | step.skipₙ => rfl,
-    fun h => h ▸ step.skipₙ⟩
+  propext $ Iff.intro
+    (fun h => match h with | step.skipₙ => rfl)
+    (fun h => h ▸ step.skipₙ)
 
 theorem cat_eq:
   (s ⊢ c;;d ⟹ t) = ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ d ⟹ t) :=
-  propext ⟨fun h => match h with | step.catₙ t h1 h2 => ⟨t, ⟨h1, h2⟩⟩,
-    fun h => match h with | Exists.intro w h => step.catₙ w h.1 h.2⟩
+  propext $ Iff.intro
+    (fun h => match h with
+      | step.catₙ t h1 h2 => Exists.intro t (And.intro h1 h2))
+    (fun h => match h with | Exists.intro w h => step.catₙ w h.1 h.2)
 
 theorem if_eq:
   (s ⊢ if b then c else d end ⟹ t)
     = bif b⇓s then (s ⊢ c ⟹ t) else (s ⊢ d ⟹ t) :=
-  propext ⟨fun h => match h with
-    | step.if₁ₙ hb hc | step.if₀ₙ hb hc => hb ▸ hc,
-    fun h => match hb: b⇓s with
-    | true => step.if₁ₙ hb $ cond_true (s ⊢ c ⟹ t) _ ▸ hb ▸ h
-    | false => step.if₀ₙ hb $ cond_false _ (s ⊢ d ⟹ t) ▸ hb ▸ h⟩
+  propext $ Iff.intro
+    (fun h => match h with
+      | step.if₁ₙ hb hc | step.if₀ₙ hb hc => hb ▸ hc)
+    (fun h => match hb: b⇓s with
+      | true => step.if₁ₙ hb $ cond_true (s ⊢ c ⟹ t) _ ▸ hb ▸ h
+      | false => step.if₀ₙ hb $ cond_false _ (s ⊢ d ⟹ t) ▸ hb ▸ h)
 
 theorem if_eq':
   (s ⊢ if b then c else d end ⟹ t)
     = (s ⊢ bif b⇓s then c else d ⟹ t) :=
-  propext ⟨fun h => match h with
-    | step.if₁ₙ hb hc => hb ▸ hc
-    | step.if₀ₙ hb hd => hb ▸ hd,
-    fun h => match hb: b⇓s with
+  propext $ Iff.intro
+    (fun h => match h with
+      | step.if₁ₙ hb hc => hb ▸ hc
+      | step.if₀ₙ hb hd => hb ▸ hd)
+    (fun h => match hb: b⇓s with
       | true => step.if₁ₙ hb $ cond_true c _ ▸ hb ▸ h
-      | false => step.if₀ₙ hb $ cond_false _ d ▸ hb ▸ h⟩
+      | false => step.if₀ₙ hb $ cond_false _ d ▸ hb ▸ h)
 
 theorem while_eq: (s ⊢ while b loop c end ⟹ t) =
   bif b⇓s then ∃w, (s ⊢ c ⟹ w) ∧ (w ⊢ while b loop c end ⟹ t) else s = t :=
-  propext ⟨fun h => match h with
-    | step.while₁ₙ t hb hc hw => hb ▸ ⟨t, ⟨hc, hw⟩⟩
-    | step.while₀ₙ hb => hb ▸ rfl,
-    fun h => match hb: b⇓s with
-      | true =>
-        match hb ▸ h with
-        | Exists.intro w h => step.while₁ₙ w hb h.1 h.2
-      | false => (hb ▸ h) ▸ step.while₀ₙ hb⟩
+  propext $ Iff.intro
+  (fun h => match h with
+    | step.while₁ₙ t hb hc hw => hb ▸ Exists.intro t (And.intro hc hw)
+    | step.while₀ₙ hb => hb ▸ rfl)
+  (fun h => match hb: b⇓s with
+    | true => match hb ▸ h with
+      | Exists.intro w h => step.while₁ₙ w hb h.1 h.2
+    | false => (hb ▸ h) ▸ step.while₀ₙ hb)
 
 /-
 ## Behavioral equivalence
@@ -96,12 +101,14 @@ instance equiv: Setoid Com where
   }
 
 theorem skipl: (skip₁;;c) ≈ c := fun _ _ =>
-  ⟨fun h => match h with | step.catₙ _ hc hd => skip_eq.mp hc ▸ hd,
-    fun h => step.catₙ _ step.skipₙ h⟩
+  Iff.intro
+    (fun h => match h with | step.catₙ _ hc hd => skip_eq.mp hc ▸ hd)
+    (fun h => step.catₙ _ step.skipₙ h)
 
 theorem skipr: (c;;skip₁) ≈ c := fun _ _ =>
-  ⟨fun h => match h with | step.catₙ _ hc hd => skip_eq.mp hd ▸ hc,
-    fun h => step.catₙ _ h step.skipₙ⟩
+  Iff.intro
+  (fun h => match h with | step.catₙ _ hc hd => skip_eq.mp hd ▸ hc)
+  (fun h => step.catₙ _ h step.skipₙ)
 
 theorem cond_true (h: b ≈ Bexp.true₁): if b then c else d end ≈ c := by
   intro _ _

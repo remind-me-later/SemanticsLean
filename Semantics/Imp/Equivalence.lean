@@ -34,17 +34,17 @@ theorem Natural.from_structural
   | refl => exact step.skipₙ
   | head h _ ht => exact from_structural_step h ht
 
-theorem structural_iff_natural:
-  (c, s) ⇒* (skip₁, t) ↔ (s ⊢ c ⟹ t) :=
-  ⟨Natural.from_structural, Structural.from_natural⟩
+theorem structural_eq_natural:
+  (c, s) ⇒* (skip₁, t) = (s ⊢ c ⟹ t) :=
+  propext $ Iff.intro Natural.from_structural Structural.from_natural
 
 theorem denote.from_natural {c: Com}
   (h: s ⊢ c ⟹ t): (s, t) ∈ ⟦c⟧ := by
   induction h with
   | skipₙ => exact SRel.mem_id.mpr rfl
   | assₙ  => exact SRel.mem_id.mpr rfl
-  | catₙ t _ _ ih₁ ih₂ => exact ⟨t, ⟨ih₁, ih₂⟩⟩
-  | if₁ₙ hb _ ih => exact Or.inl ⟨ih, hb⟩
+  | catₙ t _ _ ih₁ ih₂ => exact Exists.intro t (And.intro ih₁ ih₂)
+  | if₁ₙ hb _ ih => exact Or.inl (And.intro ih hb)
   | if₀ₙ hb _ ih =>
       apply Or.inr
       rw [
@@ -57,7 +57,8 @@ theorem denote.from_natural {c: Com}
       ]
       exact ih
   | while₁ₙ t hb _ _ ih₁ ih₂ =>
-    exact while_unfold ▸ Or.inl ⟨⟨t, ⟨ih₁, ih₂⟩⟩, hb⟩
+    exact while_unfold ▸ Or.inl
+      (And.intro (Exists.intro t (And.intro ih₁ ih₂)) hb)
   | while₀ₙ hb =>
       rw [while_unfold]
       apply Or.inr
@@ -122,7 +123,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
           rw [SRel.mem_id] at hq
           exact hq ▸ step.while₀ₙ hb
 
-theorem natural_iff_denote: (s, t) ∈ ⟦c⟧ ↔ (s ⊢ c ⟹ t) :=
-  ⟨Natural.from_denote, denote.from_natural⟩
+theorem natural_eq_denote: ((s, t) ∈ ⟦c⟧) = (s ⊢ c ⟹ t) :=
+  propext $ Iff.intro Natural.from_denote denote.from_natural
 
 end Com

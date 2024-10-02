@@ -29,7 +29,13 @@ notation (priority := high) "⟦" c "⟧" => denote c
 
 namespace denote
 
-instance equiv: Setoid Com := ⟨(⟦·⟧ = ⟦·⟧), ⟨(Eq.refl ⟦.⟧), Eq.symm, Eq.trans⟩⟩
+instance equiv: Setoid Com where
+  r a b := ⟦a⟧ = ⟦b⟧
+  iseqv := {
+    refl := fun _ => rfl,
+    symm := Eq.symm
+    trans := Eq.trans
+  }
 
 theorem skipl: (skip₁;;c) ≈ c :=
   by simp only [HasEquiv.Equiv, equiv, denote, SRel.comp_id_left]

@@ -21,7 +21,6 @@ notation s " ⊢ " b " ⟹ " v => step b s v
 end Natural
 
 -- Denotational semantics of Bexp
-@[reducible, simp]
 def reduce (b: Bexp) (s: State): Bool :=
   match b with
   | true₁    => true
@@ -52,10 +51,13 @@ theorem reduce.from_natural {b: Bexp} (h: s ⊢ b ⟹ x): b⇓s = x :=
   | orₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
   | _ => rfl
 
-theorem step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) ↔ b⇓s = x :=
-  ⟨reduce.from_natural, Natural.from_reduce⟩
+theorem step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) = (b⇓s = x) :=
+  propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
-theorem not_true_eq_false: (!b⇓s) = (!b)⇓s := by simp
+theorem step_eq_reduce' {b: Bexp}: s ⊢ b ⟹ (b⇓s) :=
+  Natural.from_reduce rfl
+
+theorem not_true_eq_false: (!b⇓s) = (!b)⇓s := rfl
 
 protected instance step.equiv: Setoid Bexp where
   r a b := ∀ s n, Natural.step a s n = Natural.step b s n
@@ -65,20 +67,15 @@ protected instance step.equiv: Setoid Bexp where
     trans := fun h1 h2 x n => (h1 x n) ▸ (h2 x n)
   }
 
-@[reducible, simp]
 instance reduce.equiv: Setoid Bexp where
   r a b:= ∀s, a⇓s = b⇓s
   iseqv := ⟨fun _ _ => rfl, (Eq.symm $ · ·), fun h1 h2 s => (h1 s) ▸ (h2 s)⟩
 
 protected theorem step_eq_eq_reduce_eq:
   step.equiv.r a b ↔ reduce.equiv.r a b := by
-  constructor <;> intro h
-  . simp [Setoid.r] at *
-    intro s
-    specialize h s
-    simp [step_eq_reduce] at h
-    exact h.right
-  . simp [Setoid.r] at *
-    simp [step_eq_reduce, h]
+  simp only [Setoid.r, eq_iff_iff]
+  exact ⟨fun h s => (step_eq_reduce ▸ h s (b⇓s)).mpr $ step_eq_reduce.mpr rfl,
+    fun h s _ => ⟨fun h1 => ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce',
+     fun h1 => ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'⟩⟩
 
 end Bexp

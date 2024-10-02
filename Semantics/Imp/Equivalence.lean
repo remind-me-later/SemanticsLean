@@ -20,13 +20,13 @@ theorem Structural.from_natural {c: Com}
 theorem Natural.from_structural_step
   (h₁: x ⇒ y) (h₂: y.2 ⊢ y.1  ⟹ s): x.2 ⊢ x.1 ⟹ s := by
   induction h₁ generalizing s with
-  | assₛ => exact (skip_iff.mp h₂) ▸ step.assₙ
+  | assₛ => exact (skip_eq.mp h₂) ▸ step.assₙ
   | cat₀ₛ => exact step.catₙ _ step.skipₙ h₂
   | catₙₛ _ ih =>
     match h₂ with
     | step.catₙ w hc hd => exact step.catₙ w (ih hc) hd
-  | ifₛ => rw [if_iff']; exact h₂
-  | whileₛ => rw [loop_unfold, if_iff']; exact h₂
+  | ifₛ => exact if_eq' ▸ h₂
+  | whileₛ => rw [loop_unfold]; exact if_eq' ▸ h₂
 
 theorem Natural.from_structural
   (h: x ⇒* (skip₁, t)): x.2 ⊢ x.1 ⟹ t := by
@@ -81,7 +81,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
   | ass₁ =>
     intro h
     rw [denote.eq_def, Set.mem_comprehend] at h
-    simp at h
+    simp only at h
     exact h ▸ step.assₙ
   | cat₁ _ _ ih₁ ih₂ =>
     intro h
@@ -98,7 +98,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
     | Or.inr h =>
       match h with
       | And.intro h hb =>
-        simp [Set.mem_comprehend] at hb
+        simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
         exact step.if₀ₙ hb (ih₂ h)
   | while₁ b c ih =>
     suffices
@@ -118,7 +118,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
       | Or.inr h =>
         match h with
         | And.intro hq hb =>
-          simp [Set.mem_comprehend] at hb
+          simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
           rw [SRel.mem_id] at hq
           exact hq ▸ step.while₀ₙ hb
 

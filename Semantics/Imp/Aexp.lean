@@ -17,7 +17,6 @@ notation s " ⊢ " a " ⟹ " v => step a s v
 
 end Natural
 
-@[reducible]
 def reduce (a: Aexp) (s: State): Int :=
   match a with
   | val₁ a => a
@@ -44,14 +43,14 @@ theorem Natural.from_reduce {a: Aexp} (h: a⇓s = n): s ⊢ a ⟹ n :=
   | sub₁ a b iha ihb => exact h ▸ step.subₙ (iha rfl) (ihb rfl)
   | mul₁ a b iha ihb => exact h ▸ step.mulₙ (iha rfl) (ihb rfl)
 
-theorem step_iff_reduce: (s ⊢ a ⟹ n) ↔ a⇓s = n :=
-  ⟨reduce.from_natural, Natural.from_reduce⟩
+theorem step_eq_reduce: (s ⊢ a ⟹ n) = (a⇓s = n) :=
+  propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
-theorem step_iff_reduce': s ⊢ a ⟹ (a⇓s) :=
+theorem step_eq_reduce': s ⊢ a ⟹ (a⇓s) :=
   Natural.from_reduce rfl
 
 protected instance step.equiv: Setoid Aexp where
-  r a b := ∀ s n, (s ⊢ a ⟹ n) = (s ⊢ b ⟹ n)
+  r a b := ∀s n, (s ⊢ a ⟹ n) = (s ⊢ b ⟹ n)
   iseqv := {
     refl := fun _ _ _ => rfl
     symm := fun h s n => (h s n).symm
@@ -60,17 +59,14 @@ protected instance step.equiv: Setoid Aexp where
 
 instance reduce.equiv: Setoid Aexp where
   r a b := ∀s, a⇓s = b⇓s
-  iseqv := ⟨fun _ _ => rfl, (Eq.symm $ · ·), fun h1 h2 s => (h1 s) ▸ (h2 s)⟩
+  iseqv := ⟨fun _ _ => rfl, fun x y => Eq.symm $ x y, fun h1 h2 s => (h1 s) ▸ (h2 s)⟩
 
 protected theorem step_eq_eq_reduce_eq:
   step.equiv.r a b ↔ reduce.equiv.r a b := by
-  constructor <;> intro h
-  . simp [Setoid.r] at *
-    intro s
-    specialize h s (b⇓s)
-    rw [step_iff_reduce] at h
-    exact h.mpr $ step_iff_reduce.mpr rfl
-  . simp [Setoid.r] at *
-    simp [step_iff_reduce, h]
+  simp only [Setoid.r, eq_iff_iff]
+  exact ⟨
+    fun h s => (step_eq_reduce ▸ h s (b⇓s)).mpr $ step_eq_reduce.mpr rfl,
+    fun h s _ => ⟨fun h1 => ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce',
+     fun h1 => ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'⟩⟩
 
 end Aexp

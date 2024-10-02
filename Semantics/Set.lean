@@ -4,11 +4,9 @@ import Mathlib.Data.Set.Defs
   # Set theorems
 -/
 
-set_option trace.Meta.Tactic.simp true
-
 theorem Set.mem_empty {α : Type} (a : α) :
   a ∈ (∅ : Set α) ↔ False := by
-  simp [Membership.mem, Set.Mem, EmptyCollection.emptyCollection]
+  simp only [Membership.mem, Set.Mem, EmptyCollection.emptyCollection]
 
 theorem Set.empty_of_false_prop {α : Type} :
   {a | False} = (∅ : Set α) := rfl
@@ -27,11 +25,11 @@ theorem Set.mem_comprehend {α : Type} (a : α) (P : α → Prop) :
 
 theorem Set.empty_union {α : Type} (A : Set α) :
   ∅ ∪ A = A := by
-  simp [Set.mem_empty, Set.mem_self, Union.union, Set.union]
+  simp only [Set.mem_empty, Set.mem_self, Union.union, Set.union, false_or]
 
 theorem Set.union_empty {α : Type} (A : Set α) :
   A ∪ ∅ = A :=
-  by simp [Set.mem_empty,  Set.mem_self, Union.union, Set.union]
+  by simp only [Set.mem_empty, Set.mem_self, Union.union, Set.union, or_false]
 
 theorem Set.mem_union {α : Type} (a : α) (A B : Set α) :
   a ∈ A ∪ B ↔ a ∈ A ∨ a ∈ B := Iff.rfl

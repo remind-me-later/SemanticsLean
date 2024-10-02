@@ -36,46 +36,45 @@ private example:
   σ₀ ⊢ ⦃x = 2; if x <= 1 then y = 3 else z = 4 end⦄ ⟹ σ₀⟪x ≔ 2⟫⟪z ≔ 4⟫ :=
     step.catₙ _ step.assₙ $ step.if₀ₙ rfl step.assₙ
 private example:
-  σ₀ ⊢ ⦃x = 2; x = 3⦄ ⟹ σ₀⟪x ≔ 3⟫ := by
-  have h1: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := TotalMap.clobber.symm
-  rw [h1]
-  exact step.catₙ _ step.assₙ step.assₙ
+  σ₀ ⊢ ⦃x = 2; x = 3⦄ ⟹ σ₀⟪x ≔ 3⟫ :=
+  let h1: σ₀⟪x ≔ 3⟫ = σ₀⟪x ≔ 2⟫⟪x ≔ 3⟫ := TotalMap.clobber.symm
+  h1 ▸ step.catₙ _ step.assₙ step.assₙ
 
 /-
 ## Rewriting rules
 -/
 
-theorem skip_iff: (s ⊢ skip₁ ⟹ t) ↔ (s = t) :=
-  ⟨fun h => match h with | step.skipₙ => rfl,
+theorem skip_eq: (s ⊢ skip₁ ⟹ t) = (s = t) :=
+  propext ⟨fun h => match h with | step.skipₙ => rfl,
     fun h => h ▸ step.skipₙ⟩
 
-theorem cat_iff:
-  (s ⊢ c;;d ⟹ t) ↔ ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ d ⟹ t) :=
-  ⟨fun h => match h with | step.catₙ t h1 h2 => ⟨t, ⟨h1, h2⟩⟩,
+theorem cat_eq:
+  (s ⊢ c;;d ⟹ t) = ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ d ⟹ t) :=
+  propext ⟨fun h => match h with | step.catₙ t h1 h2 => ⟨t, ⟨h1, h2⟩⟩,
     fun h => match h with | Exists.intro w h => step.catₙ w h.1 h.2⟩
 
-theorem if_iff:
+theorem if_eq:
   (s ⊢ if b then c else d end ⟹ t)
-    ↔ bif b⇓s then (s ⊢ c ⟹ t) else (s ⊢ d ⟹ t) :=
-  ⟨fun h => match h with
+    = bif b⇓s then (s ⊢ c ⟹ t) else (s ⊢ d ⟹ t) :=
+  propext ⟨fun h => match h with
     | step.if₁ₙ hb hc | step.if₀ₙ hb hc => hb ▸ hc,
     fun h => match hb: b⇓s with
     | true => step.if₁ₙ hb $ cond_true (s ⊢ c ⟹ t) _ ▸ hb ▸ h
     | false => step.if₀ₙ hb $ cond_false _ (s ⊢ d ⟹ t) ▸ hb ▸ h⟩
 
-theorem if_iff':
+theorem if_eq':
   (s ⊢ if b then c else d end ⟹ t)
-    ↔ (s ⊢ bif b⇓s then c else d ⟹ t) :=
-  ⟨fun h => match h with
+    = (s ⊢ bif b⇓s then c else d ⟹ t) :=
+  propext ⟨fun h => match h with
     | step.if₁ₙ hb hc => hb ▸ hc
     | step.if₀ₙ hb hd => hb ▸ hd,
     fun h => match hb: b⇓s with
       | true => step.if₁ₙ hb $ cond_true c _ ▸ hb ▸ h
       | false => step.if₀ₙ hb $ cond_false _ d ▸ hb ▸ h⟩
 
-theorem while_iff: (s ⊢ while b loop c end ⟹ t) ↔
+theorem while_eq: (s ⊢ while b loop c end ⟹ t) =
   bif b⇓s then ∃w, (s ⊢ c ⟹ w) ∧ (w ⊢ while b loop c end ⟹ t) else s = t :=
-  ⟨fun h => match h with
+  propext ⟨fun h => match h with
     | step.while₁ₙ t hb hc hw => hb ▸ ⟨t, ⟨hc, hw⟩⟩
     | step.while₀ₙ hb => hb ▸ rfl,
     fun h => match hb: b⇓s with
@@ -89,7 +88,7 @@ theorem while_iff: (s ⊢ while b loop c end ⟹ t) ↔
 -/
 
 instance equiv: Setoid Com where
-  r c d := ∀ s t, (s ⊢ c ⟹ t) ↔ (s ⊢ d ⟹ t)
+  r c d := ∀s t, (s ⊢ c ⟹ t) ↔ (s ⊢ d ⟹ t)
   iseqv := {
     refl := fun _ _ _ => Iff.rfl
     symm := (Iff.symm $ · · ·)
@@ -97,40 +96,38 @@ instance equiv: Setoid Com where
   }
 
 theorem skipl: (skip₁;;c) ≈ c := fun _ _ =>
-  ⟨fun h => match h with | step.catₙ _ hc hd => skip_iff.mp hc ▸ hd,
+  ⟨fun h => match h with | step.catₙ _ hc hd => skip_eq.mp hc ▸ hd,
     fun h => step.catₙ _ step.skipₙ h⟩
 
 theorem skipr: (c;;skip₁) ≈ c := fun _ _ =>
-  ⟨fun h => match h with | step.catₙ _ hc hd => skip_iff.mp hd ▸ hc,
+  ⟨fun h => match h with | step.catₙ _ hc hd => skip_eq.mp hd ▸ hc,
     fun h => step.catₙ _ h step.skipₙ⟩
 
 theorem cond_true (h: b ≈ Bexp.true₁): if b then c else d end ≈ c := by
   intro _ _
-  rw [if_iff, h]
+  rw [if_eq, h]
   rfl
 
 theorem cond_false (h: b ≈ Bexp.false₁): if b then c else d end ≈ d := by
   intro _ _
-  rw [if_iff, h]
+  rw [if_eq, h]
   rfl
 
 theorem loop_unfold:
   while b loop c end ≈ if b then (c;;while b loop c end) else skip₁ end := by
   intro s t
   constructor <;> intro h
-  . rw [if_iff]
-    match h with
-    | step.while₁ₙ w hb hc hw => exact hb ▸ step.catₙ w hc hw
-    | step.while₀ₙ hb => exact hb ▸ step.skipₙ
-  . rw [while_iff]
-    rw [if_iff] at h
+  . match h with
+    | step.while₁ₙ w hb hc hw => exact if_eq ▸ hb ▸ step.catₙ w hc hw
+    | step.while₀ₙ hb => exact if_eq ▸ hb ▸ step.skipₙ
+  . rw [while_eq]
     match hb: b⇓s with
     | false =>
-      let hh := hb ▸ h
-      exact skip_iff.mp hh
+      let hh := hb ▸ (if_eq ▸ h)
+      exact skip_eq.mp hh
     | true =>
-      let hh := hb ▸ h
-      exact cat_iff.mp hh
+      let hh := hb ▸ (if_eq ▸ h)
+      exact cat_eq.mp hh
 
 /-
 ## Non termination

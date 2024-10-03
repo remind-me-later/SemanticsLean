@@ -41,8 +41,8 @@ theorem structural_eq_natural:
 theorem denote.from_natural {c: Com}
   (h: s ⊢ c ⟹ t): (s, t) ∈ ⟦c⟧ := by
   induction h with
-  | skipₙ => exact SRel.mem_id.mpr rfl
-  | assₙ  => exact SRel.mem_id.mpr rfl
+  | skipₙ => exact SFun.mem_id.mpr rfl
+  | assₙ  => exact SFun.mem_id.mpr rfl
   | catₙ t _ _ ih₁ ih₂ => exact Exists.intro t (And.intro ih₁ ih₂)
   | if₁ₙ hb _ ih => exact Or.inl (And.intro ih hb)
   | if₀ₙ hb _ ih =>
@@ -77,7 +77,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
   induction c generalizing s t with
   | skip₁ =>
     intro h
-    rw [denote, SRel.mem_id] at h
+    rw [denote, SFun.mem_id] at h
     exact h ▸ step.skipₙ
   | ass₁ =>
     intro h
@@ -120,7 +120,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
         match h with
         | And.intro hq hb =>
           simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
-          rw [SRel.mem_id] at hq
+          rw [SFun.mem_id] at hq
           exact hq ▸ step.while₀ₙ hb
 
 theorem natural_eq_denote: ((s, t) ∈ ⟦c⟧) = (s ⊢ c ⟹ t) :=

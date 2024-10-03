@@ -9,18 +9,18 @@ From Concrete semantics with Isabelle
 
 namespace Com
 
-def denote_loop (b: Bexp) (f: State →ᵍ State): (State →ᵍ State) → (State →ᵍ State) :=
-  fun g => Set.ite {s | b⇓s.1} (f ○ g) SRel.id
+def denote_loop (b: Bexp) (f: State →ˢ State): (State →ˢ State) → (State →ˢ State) :=
+  fun g => Set.ite {s | b⇓s.1} (f ○ g) SFun.id
 
-def denote: Com → (State →ᵍ State)
-  | skip₁                  => SRel.id
+def denote: Com → (State →ˢ State)
+  | skip₁                  => SFun.id
   | ass₁ x a               => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
   | c;;d                   => c.denote ○ d.denote
   | if b then c else d end => Set.ite {s | b⇓s.1} c.denote d.denote
   | while b loop c end     => Fix.lfp $ denote_loop b c.denote
 
 theorem monotone_denote_loop: monotone (denote_loop b c) :=
-  fun _ _ h => Set.ite_mono _ (SRel.comp_mono PartialOrder.le_rfl h) PartialOrder.le_rfl
+  fun _ _ h => Set.ite_mono _ (SFun.comp_mono PartialOrder.le_rfl h) PartialOrder.le_rfl
 
 notation (priority := high) "⟦" c "⟧" => denote c
 
@@ -38,10 +38,10 @@ instance equiv: Setoid Com where
   }
 
 theorem skipl: (skip₁;;c) ≈ c :=
-  by simp only [HasEquiv.Equiv, equiv, denote, SRel.comp_id_left]
+  by simp only [HasEquiv.Equiv, equiv, denote, SFun.id_comp]
 
 theorem skipr: (c;;skip₁) ≈ c :=
-  by simp only [HasEquiv.Equiv, equiv, denote, SRel.comp_id_right]
+  by simp only [HasEquiv.Equiv, equiv, denote, SFun.comp_id]
 
 theorem while_unfold:
   while b loop c end ≈ if b then c;; while b loop c end else skip₁ end :=

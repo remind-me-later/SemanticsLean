@@ -28,17 +28,17 @@ instance Set.partialOrder: PartialOrder (Set α) :=
     le := fun A B => A ⊆ B,
     lt := fun A B => A ⊆ B ∧ A ≠ B,
     le_refl := fun _ _ ha => ha,
-    le_antisymm := fun _ _ h1 h2 => subset_antisymm h1 h2,
+    le_antisymm := fun _ _ h1 h2 => Subset.antisymm h1 h2,
     le_iff_le_not_le := by {
       intro a b
       apply Iff.intro
       . intro h
-        exact ⟨h.1, fun h' => h.2 (subset_antisymm h.1 h')⟩
+        exact ⟨h.1, fun h' => h.2 (Subset.antisymm h.1 h')⟩
       . intro h
         cases h with
         | intro h1 h2 =>
           rw [lt_def, le_def] at *
-          exact And.intro h1 (fun h3 => h2 $ subset_from_eq h3.symm)
+          exact And.intro h1 (fun h3 => h2 $ Subset.from_eq h3.symm)
     }
     le_trans := fun _ _ _ h1 h2 _ ha => h2 (h1 ha)
   }

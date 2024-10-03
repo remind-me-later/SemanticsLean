@@ -5,37 +5,10 @@ import Mathlib.Data.Set.Defs
   # Set theorems
 -/
 
-theorem Set.mem_empty {α : Type} (a : α) :
-  a ∈ (∅ : Set α) ↔ False := by
-  simp only [Membership.mem, Set.Mem, EmptyCollection.emptyCollection]
-
-theorem Set.empty_of_false_prop {α : Type}:
-  {a | False} = (∅ : Set α) := rfl
-
-theorem Set.subseteq_def {α : Type} (A B : Set α) :
-  A ⊆ B ↔ ∀a, a ∈ A → a ∈ B := Iff.rfl
-
-theorem Set.mem_singleton {α : Type} (a b : α) :
-  a ∈ ({b} : Set α) ↔ a = b := Iff.rfl
-
-theorem Set.mem_self {α : Type} (A : Set α) :
-  {a | a ∈ A} = A := rfl
-
 theorem Set.mem_comprehend {α : Type} (a : α) (P : α → Prop) :
   a ∈ ({a | P a} : Set α) ↔ P a := Iff.rfl
 
-theorem Set.empty_union {α : Type} (A : Set α) :
-  ∅ ∪ A = A := by
-  simp only [Set.mem_empty, Set.mem_self, Union.union, Set.union, false_or]
-
-theorem Set.union_empty {α : Type} (A : Set α) :
-  A ∪ ∅ = A :=
-  by simp only [Set.mem_empty, Set.mem_self, Union.union, Set.union, or_false]
-
-theorem Set.mem_union {α : Type} (a : α) (A B : Set α) :
-  a ∈ A ∪ B ↔ a ∈ A ∨ a ∈ B := Iff.rfl
-
-theorem Set.mem_diff.{u} {α : Type u} {s t : Set α} (x : α) :
+theorem Set.mem_diff {α : Type u} {s t : Set α} (x : α) :
   x ∈ s \ t ↔ x ∈ s ∧ x ∉ t := Iff.rfl
 
 /-

@@ -91,38 +91,38 @@ theorem mem_comp {f g: α →ᵍ α}:
 theorem comp_mono {α: Type} {f g h k : Set (α × α)} (h₁ : f ⊆ h) (h₂ : g ⊆ k): f ○ g ⊆ h ○ k :=
   fun _ ⟨z, h, h'⟩ => ⟨z, h₁ h, h₂ h'⟩
 
-theorem comp_id_right {f: α →ᵍ α}: f ○ id = f :=
-  by
-    funext x
-    simp only [eq_iff_iff]
-    apply Iff.intro
-    . intro h
-      simp? [mem_id, comp, Membership.mem, Set.Mem] at h
+theorem comp_id_right {f: α →ᵍ α}:
+  f ○ id = f := by
+  funext x
+  simp only [eq_iff_iff]
+  apply Iff.intro
+  . intro h
+    simp only [comp, Membership.mem, Set.Mem] at h
+    cases h with
+    | intro z h =>
       cases h with
-      | intro z h =>
-        cases h with
-        | intro hl hr =>
-          cases hr with
-          | refl => exact hl
-    . intro h
-      simp? [mem_id, comp, Membership.mem, Set.Mem]
-      exact ⟨x.2, ⟨h, rfl⟩⟩
+      | intro hl hr =>
+        cases hr with
+        | refl => exact hl
+  . intro h
+    simp only [comp, Membership.mem, Set.Mem]
+    exact ⟨x.2, ⟨h, rfl⟩⟩
 
 theorem comp_id_left {f: α →ᵍ α}:
   id ○ f = f := by
-    funext x
-    simp only [eq_iff_iff]
-    apply Iff.intro
-    . intro h
-      simp? [mem_id, comp, Membership.mem, Set.Mem] at h
+  funext x
+  simp only [eq_iff_iff]
+  apply Iff.intro
+  . intro h
+    simp only [comp, Membership.mem, Set.Mem] at h
+    cases h with
+    | intro z h =>
       cases h with
-      | intro z h =>
-        cases h with
-        | intro hl hr =>
-          cases hl with
-          | refl => exact hr
-    . intro h
-      simp? [mem_id, comp, Membership.mem, Set.Mem]
-      exact ⟨x.1, ⟨rfl, h⟩⟩
+      | intro hl hr =>
+        cases hl with
+        | refl => exact hr
+  . intro h
+    simp only [comp, Membership.mem, Set.Mem]
+    exact ⟨x.1, ⟨rfl, h⟩⟩
 
 end SRel

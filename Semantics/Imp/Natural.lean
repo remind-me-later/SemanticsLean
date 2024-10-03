@@ -45,48 +45,50 @@ private example:
 -/
 
 theorem skip_eq: (s ⊢ skip₁ ⟹ t) = (s = t) :=
-  propext $ Iff.intro
-    (fun h => match h with | step.skipₙ => rfl)
-    (fun h => h ▸ step.skipₙ)
+  propext {
+    mp := λ (step.skipₙ) => rfl,
+    mpr := (· ▸ step.skipₙ)
+  }
 
 theorem cat_eq:
   (s ⊢ c;;d ⟹ t) = ∃ w, (s ⊢ c ⟹ w) ∧ (w ⊢ d ⟹ t) :=
-  propext $ Iff.intro
-    (fun h => match h with
-      | step.catₙ t h1 h2 => Exists.intro t (And.intro h1 h2))
-    (fun h => match h with | Exists.intro w h => step.catₙ w h.1 h.2)
+  propext {
+    mp := λ (step.catₙ t h1 h2) => ⟨t, h1, h2⟩,
+    mpr := λ ⟨w, h1, h2⟩ => step.catₙ w h1 h2
+  }
 
 theorem if_eq:
   (s ⊢ if b then c else d end ⟹ t)
     = bif b⇓s then (s ⊢ c ⟹ t) else (s ⊢ d ⟹ t) :=
-  propext $ Iff.intro
-    (fun h => match h with
-      | step.if₁ₙ hb hc | step.if₀ₙ hb hc => hb ▸ hc)
-    (fun h => match hb: b⇓s with
-      | true => step.if₁ₙ hb $ cond_true (s ⊢ c ⟹ t) _ ▸ hb ▸ h
-      | false => step.if₀ₙ hb $ cond_false _ (s ⊢ d ⟹ t) ▸ hb ▸ h)
+  propext {
+    mp := λ h => match h with
+      | step.if₁ₙ hb h | step.if₀ₙ hb h => hb ▸ h,
+    mpr := match hb: b⇓s with
+      | true => λ h => step.if₁ₙ hb h
+      | false => λ h => step.if₀ₙ hb h
+  }
 
 theorem if_eq':
   (s ⊢ if b then c else d end ⟹ t)
     = (s ⊢ bif b⇓s then c else d ⟹ t) :=
-  propext $ Iff.intro
-    (fun h => match h with
-      | step.if₁ₙ hb hc => hb ▸ hc
-      | step.if₀ₙ hb hd => hb ▸ hd)
-    (fun h => match hb: b⇓s with
-      | true => step.if₁ₙ hb $ cond_true c _ ▸ hb ▸ h
-      | false => step.if₀ₙ hb $ cond_false _ d ▸ hb ▸ h)
+  propext $ {
+    mp := λ h => match h with
+      | step.if₁ₙ hb h | step.if₀ₙ hb h => hb ▸ h,
+    mpr := match hb: b⇓s with
+      | true => λ h => step.if₁ₙ hb h
+      | false => λ h => step.if₀ₙ hb h
+  }
 
 theorem while_eq: (s ⊢ while b loop c end ⟹ t) =
   bif b⇓s then ∃w, (s ⊢ c ⟹ w) ∧ (w ⊢ while b loop c end ⟹ t) else s = t :=
-  propext $ Iff.intro
-  (fun h => match h with
-    | step.while₁ₙ t hb hc hw => hb ▸ Exists.intro t (And.intro hc hw)
-    | step.while₀ₙ hb => hb ▸ rfl)
-  (fun h => match hb: b⇓s with
-    | true => match hb ▸ h with
-      | Exists.intro w h => step.while₁ₙ w hb h.1 h.2
-    | false => (hb ▸ h) ▸ step.while₀ₙ hb)
+  propext {
+    mp := λ h => match h with
+      | step.while₁ₙ t hb hc hw => hb ▸ ⟨t, hc, hw⟩
+      | step.while₀ₙ hb => hb ▸ rfl,
+    mpr := match hb: b⇓s with
+      | true => λ ⟨w, h1, h2⟩ => step.while₁ₙ w hb h1 h2
+      | false => λ h => h ▸ step.while₀ₙ hb
+  }
 
 /-
 ## Behavioral equivalence
@@ -95,53 +97,59 @@ theorem while_eq: (s ⊢ while b loop c end ⟹ t) =
 instance equiv: Setoid Com where
   r c d := ∀s t, (s ⊢ c ⟹ t) ↔ (s ⊢ d ⟹ t)
   iseqv := {
-    refl := fun _ _ _ => Iff.rfl
+    refl := λ _ _ _ => Iff.rfl
     symm := (Iff.symm $ · · ·)
-    trans := fun h1 h2 x n => Iff.trans (h1 x n) (h2 x n)
+    trans := λ h1 h2 x n => Iff.trans (h1 x n) (h2 x n)
   }
 
-theorem skipl: (skip₁;;c) ≈ c := fun _ _ =>
-  Iff.intro
-    (fun h => match h with | step.catₙ _ hc hd => skip_eq.mp hc ▸ hd)
-    (fun h => step.catₙ _ step.skipₙ h)
+theorem skipl: (skip₁;;c) ≈ c := λ _ _ =>
+  {
+    mp := λ (step.catₙ _ hc hd) => skip_eq.mp hc ▸ hd,
+    mpr := λ h => step.catₙ _ step.skipₙ h
+  }
 
-theorem skipr: (c;;skip₁) ≈ c := fun _ _ =>
-  Iff.intro
-  (fun h => match h with | step.catₙ _ hc hd => skip_eq.mp hd ▸ hc)
-  (fun h => step.catₙ _ h step.skipₙ)
+theorem skipr: (c;;skip₁) ≈ c := λ _ _ =>
+  {
+    mp := λ (step.catₙ _ hc hd) => skip_eq.mp hd ▸ hc,
+    mpr := λ h => step.catₙ _ h step.skipₙ
+  }
 
-theorem cond_true (h: b ≈ Bexp.true₁): if b then c else d end ≈ c := by
+theorem cond_true (h: b ≈ Bexp.true₁):
+  if b then c else d end ≈ c := by
   intro _ _
   rw [if_eq, h]
   rfl
 
-theorem cond_false (h: b ≈ Bexp.false₁): if b then c else d end ≈ d := by
+theorem cond_false (h: b ≈ Bexp.false₁):
+  if b then c else d end ≈ d := by
   intro _ _
   rw [if_eq, h]
   rfl
 
 theorem loop_unfold:
-  while b loop c end ≈ if b then (c;;while b loop c end) else skip₁ end := by
+  while b loop c end ≈
+    if b then (c;;while b loop c end) else skip₁ end := by
   intro s t
-  constructor <;> intro h
-  . match h with
-    | step.while₁ₙ w hb hc hw => exact if_eq ▸ hb ▸ step.catₙ w hc hw
-    | step.while₀ₙ hb => exact if_eq ▸ hb ▸ step.skipₙ
-  . rw [while_eq]
-    match hb: b⇓s with
+  rw [if_eq']
+  constructor
+  . intro h
+    match h with
+    | step.while₁ₙ w hb hc hw => exact hb ▸ step.catₙ w hc hw
+    | step.while₀ₙ hb => exact hb ▸ step.skipₙ
+  . match hb: b⇓s with
     | false =>
-      let hh := hb ▸ (if_eq ▸ h)
-      exact skip_eq.mp hh
+      intro (step.skipₙ)
+      exact step.while₀ₙ hb
     | true =>
-      let hh := hb ▸ (if_eq ▸ h)
-      exact cat_eq.mp hh
+      intro (step.catₙ w hc hw)
+      exact step.while₁ₙ w hb hc hw
 
 /-
 ## Non termination
 -/
 
 theorem loop_tt (h: b ≈ Bexp.true₁):
-  ¬(s ⊢ while b loop c end ⟹ t) := fun h1 => by
+  ¬(s ⊢ while b loop c end ⟹ t) := λ h1 => by
   generalize h2: while b loop c end = ww at h1
   induction h1 with
   | while₁ₙ _ _ _ _ _ ih2 =>

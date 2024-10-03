@@ -31,38 +31,37 @@ theorem cat_eq:
   (c₁;;c₂, s) ⇒ et
     = ((∃e t, (c₁, s) ⇒ (e, t) ∧ et = (e;;c₂, t))
       ∨ (c₁ = skip₁ ∧ et = (c₂, s))) :=
-  propext $ Iff.intro
-  (fun h => match h with
-    | step.cat₀ₛ => Or.inr (And.intro rfl rfl)
-    | step.catₙₛ h =>
-      Or.inl (Exists.intro _ (Exists.intro _ (And.intro h rfl))))
-  (fun h => match h with
-    | Or.inl h => match h with
-      | Exists.intro _ h => match h with
-        | Exists.intro _ h => h.2 ▸ step.catₙₛ h.1
-    | Or.inr h => match h with
-      | And.intro h1 h2 => h1 ▸ h2 ▸ step.cat₀ₛ)
+  propext {
+    mp := λ h => match h with
+      | step.cat₀ₛ => Or.inr ⟨rfl, rfl⟩
+      | step.catₙₛ h => Or.inl ⟨_, _, h, rfl⟩,
+    mpr := λ h => match h with
+      | Or.inl ⟨_, _, h1, h2⟩ => h2 ▸ step.catₙₛ h1
+      | Or.inr ⟨h1, h2⟩ => h1 ▸ h2 ▸ step.cat₀ₛ
+  }
 
 theorem cond_eq:
   (if b then c else d end, s) ⇒ ss
     = (b⇓s ∧ ss = (c, s) ∨ b⇓s = false ∧ ss = (d, s)) :=
-  propext $ Iff.intro
-  (fun h => match hb: b⇓s with
-    | false => match h with | step.ifₛ => Or.inr (And.intro rfl (hb ▸ rfl))
-    | true => match h with | step.ifₛ => Or.inl (And.intro rfl (hb ▸ rfl)))
-  (fun h =>
-    let hss: ss = (bif b⇓s then c else d, s) :=
-      match hb: b⇓s with
-      | true => match hb ▸ h with | Or.inl h => h.2
-      | false => match hb ▸ h with | Or.inr h => h.2
-    hss ▸ step.ifₛ)
+  propext {
+    mp := λ h => match hb: b⇓s with
+      | false => match h with | step.ifₛ => Or.inr ⟨rfl, hb ▸ rfl⟩
+      | true => match h with | step.ifₛ => Or.inl ⟨rfl, hb ▸ rfl⟩,
+    mpr := λ h =>
+      let hss: ss = (bif b⇓s then c else d, s) :=
+        match hb: b⇓s with
+        | true => match hb ▸ h with | Or.inl h => h.2
+        | false => match hb ▸ h with | Or.inr h => h.2
+      hss ▸ step.ifₛ
+  }
 
 theorem cond_false {b: Bexp} (hb: b⇓s = false):
   (if b then c else d end, s) ⇒ ss = (ss = (d, s)) :=
-  propext $ Iff.intro
-  (fun h => match hb ▸ cond_eq ▸ h with
-    | Or.inr h => match h with | And.intro _ h2 => h2)
-  (fun h => cond_eq ▸ Or.inr (And.intro hb h))
+  propext {
+    mp := λ h => match hb ▸ cond_eq ▸ h with
+      | Or.inr ⟨_, h2⟩ => h2,
+    mpr := λ h => cond_eq ▸ Or.inr ⟨hb, h⟩
+  }
 
 infix:110 " ⇒* " => RTL step
 
@@ -74,7 +73,7 @@ theorem star.demo₂:
 theorem star.cat_skip_cat
   (h: (c, s) ⇒* (skip, t)):
   (c;;d, s) ⇒* (skip;;d, t) :=
-  RTL.lift (fun (x: Com × State) => (x.1;;d, x.2)) (fun _ _ h => step.catₙₛ h) h
+  RTL.lift (λ (x: Com × State) => (x.1;;d, x.2)) (λ _ _ h => step.catₙₛ h) h
 
 theorem star.cat
   (h1: (c₁, s) ⇒* (skip₁, s₁))

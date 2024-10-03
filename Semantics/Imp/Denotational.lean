@@ -10,7 +10,7 @@ From Concrete semantics with Isabelle
 namespace Com
 
 def denote_loop (b: Bexp) (f: State →ˢ State): (State →ˢ State) → (State →ˢ State) :=
-  fun g => Set.ite {s | b⇓s.1} (f ○ g) SFun.id
+  λ g => Set.ite {s | b⇓s.1} (f ○ g) SFun.id
 
 def denote: Com → (State →ˢ State)
   | skip₁                  => SFun.id
@@ -20,7 +20,7 @@ def denote: Com → (State →ˢ State)
   | while b loop c end     => Fix.lfp $ denote_loop b c.denote
 
 theorem monotone_denote_loop: monotone (denote_loop b c) :=
-  fun _ _ h => Set.ite_mono _ (SFun.comp_mono PartialOrder.le_rfl h) PartialOrder.le_rfl
+  λ _ _ h => Set.ite_mono _ (SFun.comp_mono PartialOrder.le_rfl h) PartialOrder.le_rfl
 
 notation (priority := high) "⟦" c "⟧" => denote c
 
@@ -32,7 +32,7 @@ namespace denote
 instance equiv: Setoid Com where
   r a b := ⟦a⟧ = ⟦b⟧
   iseqv := {
-    refl := fun _ => rfl,
+    refl := λ _ => rfl,
     symm := Eq.symm
     trans := Eq.trans
   }

@@ -52,7 +52,7 @@ theorem reduce.from_natural {b: Bexp} (h: s ⊢ b ⟹ x): b⇓s = x :=
   | _ => rfl
 
 theorem step_eq_reduce {b: Bexp}: (s ⊢ b ⟹ x) = (b⇓s = x) :=
-  propext $ Iff.intro reduce.from_natural Natural.from_reduce
+  propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
 theorem step_eq_reduce' {b: Bexp}: s ⊢ b ⟹ (b⇓s) :=
   Natural.from_reduce rfl
@@ -62,27 +62,27 @@ theorem not_true_eq_false: (!b⇓s) = (!b)⇓s := rfl
 protected instance step.equiv: Setoid Bexp where
   r a b := ∀ s n, Natural.step a s n = Natural.step b s n
   iseqv := {
-    refl := fun _ _ _ => rfl
-    symm := fun h s n => (h s n).symm
-    trans := fun h1 h2 x n => (h1 x n) ▸ (h2 x n)
+    refl := λ _ _ _ => rfl
+    symm := λ h s n => (h s n).symm
+    trans := λ h1 h2 x n => (h1 x n) ▸ (h2 x n)
   }
 
 instance reduce.equiv: Setoid Bexp where
   r a b:= ∀s, a⇓s = b⇓s
   iseqv := {
-    refl := fun _ _ => rfl
-    symm := fun h s => (h s).symm
-    trans := fun h1 h2 s => (h1 s) ▸ (h2 s)
+    refl := λ _ _ => rfl
+    symm := λ h s => (h s).symm
+    trans := λ h1 h2 s => (h1 s) ▸ (h2 s)
   }
 
 protected theorem step_eq_eq_reduce_eq:
   step.equiv.r a b ↔ reduce.equiv.r a b := by
   simp only [Setoid.r, eq_iff_iff]
-  apply Iff.intro
+  constructor
   . intro h s
     exact (step_eq_reduce ▸ h s (b⇓s)).mpr $ step_eq_reduce.mpr rfl
   . intro h s _
-    apply Iff.intro
+    constructor
     . intro h1
       exact ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'
     . intro h1

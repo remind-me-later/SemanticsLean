@@ -26,7 +26,7 @@ theorem head_induction_on {P : ∀ a : α, RTL r a b → Prop} {a : α} (h : RTL
   | tail _ hbc ih =>
     apply ih
     · exact head hbc _ refl
-    · exact fun h1 h2 => head h1 (h2.tail hbc)
+    · exact λ h1 h2 => head h1 (h2.tail hbc)
 
 theorem lift {r: α → α → Prop} {p : β → β → Prop} {a b : α} (f : α → β)
     (h : ∀ a b, r a b → p (f a) (f b)) (hab : RTL r a b) : RTL p (f a) (f b) := by

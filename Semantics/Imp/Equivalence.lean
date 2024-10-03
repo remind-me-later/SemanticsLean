@@ -36,15 +36,15 @@ theorem Natural.from_structural
 
 theorem structural_eq_natural:
   (c, s) ⇒* (skip₁, t) = (s ⊢ c ⟹ t) :=
-  propext $ Iff.intro Natural.from_structural Structural.from_natural
+  propext ⟨Natural.from_structural, Structural.from_natural⟩
 
 theorem denote.from_natural {c: Com}
   (h: s ⊢ c ⟹ t): (s, t) ∈ ⟦c⟧ := by
   induction h with
   | skipₙ => exact SFun.mem_id.mpr rfl
   | assₙ  => exact SFun.mem_id.mpr rfl
-  | catₙ t _ _ ih₁ ih₂ => exact Exists.intro t (And.intro ih₁ ih₂)
-  | if₁ₙ hb _ ih => exact Or.inl (And.intro ih hb)
+  | catₙ t _ _ ih₁ ih₂ => exact ⟨t, ih₁, ih₂⟩
+  | if₁ₙ hb _ ih => exact Or.inl ⟨ih, hb⟩
   | if₀ₙ hb _ ih =>
       apply Or.inr
       rw [
@@ -57,8 +57,7 @@ theorem denote.from_natural {c: Com}
       ]
       exact ih
   | while₁ₙ t hb _ _ ih₁ ih₂ =>
-    exact while_unfold ▸ Or.inl
-      (And.intro (Exists.intro t (And.intro ih₁ ih₂)) hb)
+    exact while_unfold ▸ Or.inl ⟨⟨t, ih₁, ih₂⟩, hb⟩
   | while₀ₙ hb =>
       rw [while_unfold]
       apply Or.inr
@@ -85,45 +84,32 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
     simp only at h
     exact h ▸ step.assₙ
   | cat₁ _ _ ih₁ ih₂ =>
-    intro h
-    match h with
-    | Exists.intro w h =>
-      exact step.catₙ w (ih₁ h.left) (ih₂ h.right)
+    intro ⟨w, h1, h2⟩
+    exact step.catₙ w (ih₁ h1) (ih₂ h2)
   | if₁ _ _ _ ih₁ ih₂ =>
     intro h
     match h with
-    | Or.inl h =>
-      match h with
-      | And.intro h hb =>
-        exact step.if₁ₙ hb (ih₁ h)
-    | Or.inr h =>
-      match h with
-      | And.intro h hb =>
-        simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
-        exact step.if₀ₙ hb (ih₂ h)
+    | Or.inl ⟨h, hb⟩ =>
+      exact step.if₁ₙ hb (ih₁ h)
+    | Or.inr ⟨h, hb⟩ =>
+      simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
+      exact step.if₀ₙ hb (ih₂ h)
   | while₁ b c ih =>
     suffices
       ⟦while b loop c end⟧ ⊆ {s | s.1 ⊢ while b loop c end ⟹ s.2} by
       apply this
+
     apply Fix.lfp_le
-    intro ss h
-    match ss with
-    | Prod.mk _ _ =>
-      match h with
-      | Or.inl h =>
-        match h with
-        | And.intro h hb =>
-          match h with
-          | Exists.intro w h =>
-            exact step.while₁ₙ w hb (ih h.left) h.right
-      | Or.inr h =>
-        match h with
-        | And.intro hq hb =>
-          simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
-          rw [SFun.mem_id] at hq
-          exact hq ▸ step.while₀ₙ hb
+    intro ⟨_, _⟩ h
+    match h with
+    | Or.inl ⟨⟨w, h1, h2⟩, hb⟩ =>
+      exact step.while₁ₙ w hb (ih h1) h2
+    | Or.inr ⟨hq, hb⟩ =>
+      simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
+      rw [SFun.mem_id] at hq
+      exact hq ▸ step.while₀ₙ hb
 
 theorem natural_eq_denote: ((s, t) ∈ ⟦c⟧) = (s ⊢ c ⟹ t) :=
-  propext $ Iff.intro Natural.from_denote denote.from_natural
+  propext ⟨Natural.from_denote, denote.from_natural⟩
 
 end Com

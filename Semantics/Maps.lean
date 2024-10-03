@@ -8,10 +8,10 @@
 
 def TotalMap A := String → A
 
-def TotalMap.default (v: A): TotalMap A := fun _ => v
+def TotalMap.default (v: A): TotalMap A := λ _ => v
 
 def TotalMap.update (m: TotalMap A) (k: String) (v: A) :=
-  fun k' => bif k == k' then v else m k'
+  λ k' => bif k == k' then v else m k'
 
 notation m "⟪" k " ≔ " v "⟫" => TotalMap.update m k v
 
@@ -66,7 +66,7 @@ theorem ev_id: m⟪k ≔ m k⟫ = m := by
     unfold TotalMap.update
     rw [h, cond_false]
 
-theorem ev_same: (fun _ => v)⟪k ≔ v⟫ = fun _ => v := by
+theorem ev_same: (λ _ => v)⟪k ≔ v⟫ = λ _ => v := by
   funext k'
   match h: k == k' with
   | true =>

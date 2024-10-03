@@ -44,7 +44,7 @@ theorem Natural.from_reduce {a: Aexp} (h: a⇓s = n): s ⊢ a ⟹ n :=
   | mul₁ a b iha ihb => exact h ▸ step.mulₙ (iha rfl) (ihb rfl)
 
 theorem step_eq_reduce: (s ⊢ a ⟹ n) = (a⇓s = n) :=
-  propext $ Iff.intro reduce.from_natural Natural.from_reduce
+  propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
 theorem step_eq_reduce': s ⊢ a ⟹ (a⇓s) :=
   Natural.from_reduce rfl
@@ -52,30 +52,30 @@ theorem step_eq_reduce': s ⊢ a ⟹ (a⇓s) :=
 protected instance step.equiv: Setoid Aexp where
   r a b := ∀s n, (s ⊢ a ⟹ n) = (s ⊢ b ⟹ n)
   iseqv := {
-    refl := fun _ _ _ => rfl
-    symm := fun h s n => (h s n).symm
-    trans := fun h1 h2 s n => (h1 s n) ▸ (h2 s n)
+    refl := λ _ _ _ => rfl
+    symm := λ h s n => (h s n).symm
+    trans := λ h1 h2 s n => (h1 s n) ▸ (h2 s n)
   }
 
 instance reduce.equiv: Setoid Aexp where
   r a b := ∀s, a⇓s = b⇓s
   iseqv := {
-    refl := fun _ _ => rfl
-    symm := fun h s => (h s).symm
-    trans := fun h1 h2 s => (h1 s) ▸ (h2 s)
+    refl := λ _ _ => rfl
+    symm := λ h s => (h s).symm
+    trans := λ h1 h2 s => (h1 s) ▸ (h2 s)
   }
 
 protected theorem step_eq_eq_reduce_eq:
   step.equiv.r a b ↔ reduce.equiv.r a b := by
   simp only [Setoid.r, eq_iff_iff]
-  apply Iff.intro
+  constructor
   . intro h s
-    exact (step_eq_reduce ▸ h s (b⇓s)).mpr $ step_eq_reduce.mpr rfl
+    specialize h s (b⇓s)
+    rw [step_eq_reduce, step_eq_reduce, eq_self, iff_true] at h
+    exact h
   . intro h s _
-    apply Iff.intro
-    . intro h1
-      exact ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'
-    . intro h1
-      exact ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'
+    rw [step_eq_reduce, step_eq_reduce]
+    specialize h s
+    rw [h]
 
 end Aexp

@@ -1,3 +1,4 @@
+-- Our only dependency on mathlib
 import Mathlib.Data.Set.Defs
 
 /-
@@ -8,7 +9,7 @@ theorem Set.mem_empty {α : Type} (a : α) :
   a ∈ (∅ : Set α) ↔ False := by
   simp only [Membership.mem, Set.Mem, EmptyCollection.emptyCollection]
 
-theorem Set.empty_of_false_prop {α : Type} :
+theorem Set.empty_of_false_prop {α : Type}:
   {a | False} = (∅ : Set α) := rfl
 
 theorem Set.subseteq_def {α : Type} (A B : Set α) :
@@ -88,41 +89,44 @@ infixl:90 " ○ " => SRel.comp
 theorem mem_comp {f g: α →ᵍ α}:
   x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g := Iff.rfl
 
-theorem comp_mono {α: Type} {f g h k : Set (α × α)} (h₁ : f ⊆ h) (h₂ : g ⊆ k): f ○ g ⊆ h ○ k :=
+theorem comp_mono {α: Type} {f g h k : Set (α × α)}
+  (h₁ : f ⊆ h) (h₂ : g ⊆ k): f ○ g ⊆ h ○ k :=
   fun _ ⟨z, h, h'⟩ => ⟨z, h₁ h, h₂ h'⟩
 
 theorem comp_id_right {f: α →ᵍ α}:
   f ○ id = f := by
   funext x
-  simp only [eq_iff_iff]
+  apply eq_iff_iff.mpr
   apply Iff.intro
   . intro h
-    simp only [comp, Membership.mem, Set.Mem] at h
-    cases h with
-    | intro z h =>
-      cases h with
-      | intro hl hr =>
-        cases hr with
-        | refl => exact hl
+    unfold comp at h
+    match h with
+    | Exists.intro z h =>
+      match h with
+      | And.intro hl hr =>
+        rw [mem_id] at hr
+        rw [hr] at hl
+        exact hl
   . intro h
-    simp only [comp, Membership.mem, Set.Mem]
-    exact ⟨x.2, ⟨h, rfl⟩⟩
+    unfold comp
+    exact Exists.intro x.2 (And.intro h rfl)
 
 theorem comp_id_left {f: α →ᵍ α}:
   id ○ f = f := by
   funext x
-  simp only [eq_iff_iff]
+  apply eq_iff_iff.mpr
   apply Iff.intro
   . intro h
-    simp only [comp, Membership.mem, Set.Mem] at h
-    cases h with
-    | intro z h =>
-      cases h with
-      | intro hl hr =>
-        cases hl with
-        | refl => exact hr
+    unfold comp at h
+    match h with
+    | Exists.intro z h =>
+      match h with
+      | And.intro hl hr =>
+        rw [mem_id] at hl
+        rw [hl.symm] at hr
+        exact hr
   . intro h
-    simp only [comp, Membership.mem, Set.Mem]
-    exact ⟨x.1, ⟨rfl, h⟩⟩
+    unfold comp
+    exact Exists.intro x.1 (And.intro rfl h)
 
 end SRel

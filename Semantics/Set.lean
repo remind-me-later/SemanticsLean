@@ -93,10 +93,36 @@ theorem comp_mono {α: Type} {f g h k : Set (α × α)} (h₁ : f ⊆ h) (h₂ :
 
 theorem comp_id_right {f: α →ᵍ α}: f ○ id = f :=
   by
-    sorry
+    funext x
+    simp only [eq_iff_iff]
+    apply Iff.intro
+    . intro h
+      simp? [mem_id, comp, Membership.mem, Set.Mem] at h
+      cases h with
+      | intro z h =>
+        cases h with
+        | intro hl hr =>
+          cases hr with
+          | refl => exact hl
+    . intro h
+      simp? [mem_id, comp, Membership.mem, Set.Mem]
+      exact ⟨x.2, ⟨h, rfl⟩⟩
 
 theorem comp_id_left {f: α →ᵍ α}:
   id ○ f = f := by
-  sorry
+    funext x
+    simp only [eq_iff_iff]
+    apply Iff.intro
+    . intro h
+      simp? [mem_id, comp, Membership.mem, Set.Mem] at h
+      cases h with
+      | intro z h =>
+        cases h with
+        | intro hl hr =>
+          cases hl with
+          | refl => exact hr
+    . intro h
+      simp? [mem_id, comp, Membership.mem, Set.Mem]
+      exact ⟨x.1, ⟨rfl, h⟩⟩
 
 end SRel

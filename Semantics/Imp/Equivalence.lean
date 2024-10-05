@@ -47,28 +47,18 @@ theorem denote.from_natural
   | if₁ₙ hb _ ih => exact Or.inl ⟨ih, hb⟩
   | if₀ₙ hb _ ih =>
       apply Or.inr
-      rw [
-        Set.mem_diff,
-        Set.mem_comprehend,
-        hb,
-        Bool.false_eq_true,
-        not_false_eq_true,
-        and_true
-      ]
+      simp only [Set.mem_diff, Set.mem_comprehend, hb,
+                  Bool.false_eq_true, not_false_eq_true,
+                  and_true]
       exact ih
   | while₁ₙ t hb _ _ ih₁ ih₂ =>
     exact while_unfold ▸ Or.inl ⟨⟨t, ih₁, ih₂⟩, hb⟩
   | while₀ₙ hb =>
       rw [while_unfold]
       apply Or.inr
-      rw [
-        Set.mem_diff,
-        Set.mem_comprehend,
-        hb,
-        Bool.false_eq_true,
-        not_false_eq_true,
-        and_true
-      ]
+      simp only [Set.mem_diff, Set.mem_comprehend, hb,
+                  Bool.false_eq_true, not_false_eq_true,
+                  and_true]
       rfl
 
 theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by

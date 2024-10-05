@@ -13,7 +13,7 @@ private inductive step: Aexp × State → Int → Prop
   | mulₙ (ha: step (a, s) n) (hb: step (b, s) m):
     step (a * b, s) (n * m)
 
-infixl:10 " ⟹ₐ " => step
+infix:10 " ⟹ₐ " => step
 
 private instance step.equiv: Setoid Aexp where
   r a b := ∀s n, ((a, s) ⟹ₐ n) = ((b, s) ⟹ₐ n)
@@ -47,14 +47,16 @@ instance reduce.equiv: Setoid Aexp where
 section Equivalence
 
 -- relational definition is equal to recursive
-private theorem reduce.from_natural (h: p ⟹ₐ n): p.1 p.2 = n :=
+private theorem reduce.from_natural
+  (h: p ⟹ₐ n): p.1 p.2 = n :=
   by induction h with
   | addₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
   | subₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
   | mulₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
   | _ => rfl
 
-private theorem Natural.from_reduce {a: Aexp} (h: a s = n): (a, s) ⟹ₐ n :=
+private theorem Natural.from_reduce {a: Aexp}
+  (h: a s = n): (a, s) ⟹ₐ n :=
   by induction a generalizing n with
   | val₁ a => exact h ▸ step.valₙ
   | var₁ a => exact h ▸ step.varₙ
@@ -62,10 +64,12 @@ private theorem Natural.from_reduce {a: Aexp} (h: a s = n): (a, s) ⟹ₐ n :=
   | sub₁ a b iha ihb => exact h ▸ step.subₙ (iha rfl) (ihb rfl)
   | mul₁ a b iha ihb => exact h ▸ step.mulₙ (iha rfl) (ihb rfl)
 
-private theorem step_eq_reduce: ((a, s) ⟹ₐ n) = (a s = n) :=
+private theorem step_eq_reduce:
+  ((a, s) ⟹ₐ n) = (a s = n) :=
   propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
-private theorem step_eq_reduce': (a, s) ⟹ₐ a s :=
+private theorem step_eq_reduce':
+  (a, s) ⟹ₐ a s :=
   Natural.from_reduce rfl
 
 private theorem step_eq_eq_reduce_eq:

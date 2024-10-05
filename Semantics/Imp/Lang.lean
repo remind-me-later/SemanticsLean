@@ -7,7 +7,7 @@ def s₀: State := TotalMap.default 0
 #eval (s₀["x" ← 3]["x" ← 4]) "x"
 #eval (s₀["x" ← 3]["x" ← 4]["x" ← 7]) "x"
 
-example: s₀["x" ← 3] = s₀["x" ← 4]["x" ← 3] := TotalMap.clobber.symm
+example: s₀["x" ← 3] = s₀["x" ← 4]["x" ← 3] := TotalMap.eval_last.symm
 
 inductive Aexp where
   | val₁ : Int → Aexp
@@ -18,7 +18,6 @@ inductive Aexp where
   | mul₁ : Aexp → Aexp → Aexp
 
 instance: OfNat Aexp n := ⟨Aexp.val₁ n⟩
-instance: Coe String Aexp := ⟨Aexp.var₁⟩
 instance: Add Aexp := ⟨Aexp.add₁⟩
 instance: Sub Aexp := ⟨Aexp.sub₁⟩
 instance: Neg Aexp := ⟨λ a => Aexp.sub₁ 0 a⟩
@@ -47,7 +46,7 @@ instance: AndOp Bexp := ⟨Bexp.and₁⟩
 instance: OrOp Bexp := ⟨Bexp.or₁⟩
 
 -- !(x <= 3)
-#check ~~~(Bexp.le₁ "x" 3)
+#check ~~~(Bexp.le₁ (Aexp.var₁ "x") 3)
 
 inductive Com where
   | skip₁

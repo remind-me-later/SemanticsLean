@@ -16,7 +16,7 @@ private inductive step: Bexp × State → Bool → Prop
   | eqₙ: step (eq₁ a b, s) (a s == b s)
   | leₙ: step (le₁ a b, s) (a s <= b s)
 
-infixl:10 " ⟹ₗ " => step
+infix:10 " ⟹ₗ " => step
 
 private instance step.equiv: Setoid Bexp where
   r a b := ∀s n, ((a, s) ⟹ₗ n) = ((b, s) ⟹ₗ n)
@@ -72,13 +72,16 @@ private theorem Natural.from_reduce {b: Bexp}
   | eq₁ => exact h ▸ step.eqₙ
   | le₁ => exact h ▸ step.leₙ
 
-private theorem step_eq_reduce {b: Bexp}: ((b, s) ⟹ₗ x) = (b s = x) :=
+private theorem step_eq_reduce {b: Bexp}:
+  ((b, s) ⟹ₗ x) = (b s = x) :=
   propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
 private theorem step_eq_reduce' {b: Bexp}: (b, s) ⟹ₗ b s :=
   Natural.from_reduce rfl
 
-private theorem not_true_eq_false: (!(reduce b s)) = (~~~b) s := rfl
+private theorem not_true_eq_false:
+  (!(reduce b s)) = (~~~b) s :=
+  rfl
 
 private theorem step_eq_eq_reduce_eq:
   Natural.step.equiv.r a b ↔ reduce.equiv.r a b := by

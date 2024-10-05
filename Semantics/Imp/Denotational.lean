@@ -10,13 +10,13 @@ From Concrete semantics with Isabelle
 namespace Com
 
 def denote_loop (b: Bexp) (f: State →ˢ State): (State →ˢ State) → (State →ˢ State) :=
-  λ g => Set.ite {s | b⇓s.1} (f ○ g) SFun.id
+  λ g => Set.ite {s | b s.1} (f ○ g) SFun.id
 
 def denote: Com → (State →ˢ State)
   | skip₁                  => SFun.id
-  | ass₁ x a               => {s | s.2 = s.1⟪x ≔ a⇓s.1⟫}
-  | c;;d                   => c.denote ○ d.denote
-  | if b then c else d end => Set.ite {s | b⇓s.1} c.denote d.denote
+  | ass₁ x a               => {s | s.2 = s.1[x ← a s.1]}
+  | cat₁ c d               => c.denote ○ d.denote
+  | if b then c else d end => Set.ite {s | b s.1} c.denote d.denote
   | while b loop c end     => Fix.lfp $ denote_loop b c.denote
 
 theorem monotone_denote_loop: monotone (denote_loop b c) :=
@@ -24,8 +24,8 @@ theorem monotone_denote_loop: monotone (denote_loop b c) :=
 
 notation (priority := high) "⟦" c "⟧" => denote c
 
-#check (σ₀, σ₀⟪"x"≔5⟫⟪"x"≔1⟫) ∈ ⟦⦃x = 5; if x <= 1 then skip else x = 1 end⦄⟧
-#check (σ₀, σ₀⟪"x"≔5⟫) ∈ ⟦⦃x = 5; while x <= 1 loop x = 1 end⦄⟧
+#check (s₀, s₀["x"←5]["x"←1]) ∈ ⟦⦃x = 5; if x <= 1 then skip else x = 1 end⦄⟧
+#check (s₀, s₀["x"←5]) ∈ ⟦⦃x = 5; while x <= 1 loop x = 1 end⦄⟧
 
 namespace denote
 
@@ -37,22 +37,23 @@ instance equiv: Setoid Com where
     trans := Eq.trans
   }
 
-theorem skipl: (skip₁;;c) ≈ c :=
+theorem skipl: (skip₁++c) ≈ c :=
   by simp only [HasEquiv.Equiv, equiv, denote, SFun.id_comp]
 
-theorem skipr: (c;;skip₁) ≈ c :=
+theorem skipr: (c++skip₁) ≈ c :=
   by simp only [HasEquiv.Equiv, equiv, denote, SFun.comp_id]
 
 theorem while_unfold:
-  while b loop c end ≈ if b then c;; while b loop c end else skip₁ end :=
+  while b loop c end ≈ if b then c++ while b loop c end else skip₁ end :=
   Fix.lfp_eq _ monotone_denote_loop
 
 /-
 ## Congruence
 -/
 
-theorem cat_congr (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
-  (c₁;;d₁) ≈ (c₂;;d₂) := by
+theorem cat_congr {c₁ c₂ d₁ d₂: Com}
+  (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
+  (c₁++d₁) ≈ (c₂++d₂) := by
   simp only [HasEquiv.Equiv, equiv, denote]
   exact hc ▸ hd ▸ rfl
 

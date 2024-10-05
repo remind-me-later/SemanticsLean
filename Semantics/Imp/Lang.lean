@@ -1,15 +1,13 @@
 import Semantics.Maps
 
 def State := TotalMap Int
-def State.nil: State := TotalMap.default 0
+def s₀: State := TotalMap.default 0
 
-notation "σ₀" => State.nil
+#eval s₀ "x"
+#eval (s₀["x" ← 3]["x" ← 4]) "x"
+#eval (s₀["x" ← 3]["x" ← 4]["x" ← 7]) "x"
 
-#eval σ₀ "x"
-#eval (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫) "x"
-#eval (σ₀⟪"x" ≔ 3⟫⟪"x" ≔ 4⟫⟪"x" ≔ 7⟫) "x"
-
-example: σ₀⟪"x" ≔ 3⟫ = σ₀⟪"x" ≔ 4⟫⟪"x" ≔ 3⟫ := TotalMap.clobber.symm
+example: s₀["x" ← 3] = s₀["x" ← 4]["x" ← 3] := TotalMap.clobber.symm
 
 inductive Aexp where
   | val₁ : Int → Aexp
@@ -19,8 +17,18 @@ inductive Aexp where
   | sub₁ : Aexp → Aexp → Aexp
   | mul₁ : Aexp → Aexp → Aexp
 
+instance: OfNat Aexp n := ⟨Aexp.val₁ n⟩
+instance: Coe String Aexp := ⟨Aexp.var₁⟩
+instance: Add Aexp := ⟨Aexp.add₁⟩
+instance: Sub Aexp := ⟨Aexp.sub₁⟩
+instance: Neg Aexp := ⟨λ a => Aexp.sub₁ 0 a⟩
+instance: Mul Aexp := ⟨Aexp.mul₁⟩
+
 -- x + 3
-#check Aexp.add₁ (Aexp.var₁ "x") (Aexp.val₁ 3)
+#check Aexp.var₁ "x" + 3
+
+-- x * -3
+#check Aexp.var₁ "x" * -3
 
 inductive Bexp where
   -- constants
@@ -34,8 +42,12 @@ inductive Bexp where
   | eq₁ : Aexp → Aexp → Bexp
   | le₁ : Aexp → Aexp → Bexp
 
+instance: Complement Bexp := ⟨Bexp.not₁⟩
+instance: AndOp Bexp := ⟨Bexp.and₁⟩
+instance: OrOp Bexp := ⟨Bexp.or₁⟩
+
 -- !(x <= 3)
-#check Bexp.not₁ (Bexp.le₁ (Aexp.var₁ "x") (Aexp.val₁ 3))
+#check ~~~(Bexp.le₁ "x" 3)
 
 inductive Com where
   | skip₁
@@ -44,23 +56,12 @@ inductive Com where
   | if₁    : Bexp → Com → Com → Com
   | while₁ : Bexp → Com → Com
 
+instance: Append Com := ⟨Com.cat₁⟩
+
 /-
 ## Syntax
 -/
 -- Meta syntax
--- aexp
-notation:60 a:55 " * " b:56 => Aexp.mul₁ a b
-notation:60 a:60 " + " b:61 => Aexp.add₁ a b
-notation:60 a:60 " - " b:61 => Aexp.sub₁ a b
--- bexp
-notation:65 a:65 " && " b:66 => Bexp.and₁ a b
-notation:65 a:65 " || " b:66 => Bexp.or₁ a b
-notation:70 a:70 " == " b:71 => Bexp.eq₁ a b
-notation:70 a:70 " <= " b:71 => Bexp.le₁ a b
-notation:80 "!" a:81 => Bexp.not₁ a
--- com
-notation a:40 ";;" b:41 => Com.cat₁ a b
-notation:50 a:50 " = " b:51 => Com.ass₁ a b
 notation "if " c " then " a " else " b "end" => Com.if₁ c a b
 notation "while " c " loop " a "end" => Com.while₁ c a
 
@@ -97,16 +98,16 @@ macro_rules
   | `(⦃($x)⦄) => `(⦃$x⦄)
   -- aexp
   | `(⦃$x:ident⦄) => `(Aexp.var₁ $(Lean.quote (toString x.getId)))
-  | `(⦃$n:num⦄)   => `(Aexp.val₁ $n)
-  | `(⦃$x + $y⦄)  => `(Aexp.add₁ ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x - $y⦄)  => `(Aexp.sub₁ ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x * $y⦄)  => `(Aexp.mul₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$n:num⦄)   => `($n)
+  | `(⦃$x + $y⦄)  => `(⦃$x⦄ + ⦃$y⦄)
+  | `(⦃$x - $y⦄)  => `(⦃$x⦄ - ⦃$y⦄)
+  | `(⦃$x * $y⦄)  => `(⦃$x⦄ * ⦃$y⦄)
   -- bexp
-  | `(⦃!$x⦄)      => `(Bexp.not₁ ⦃$x⦄)
-  | `(⦃$x && $y⦄)  => `(Bexp.and₁ ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x || $y⦄)  => `(Bexp.or₁ ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x == $y⦄)  => `(Bexp.eq₁ ⦃$x⦄ ⦃$y⦄)
-  | `(⦃$x <= $y⦄)  => `(Bexp.le₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃!$x⦄)      => `(~~~⦃$x⦄)
+  | `(⦃$x && $y⦄) => `(⦃$x⦄ &&& ⦃$y⦄)
+  | `(⦃$x || $y⦄) => `(⦃$x⦄ ||| ⦃$y⦄)
+  | `(⦃$x == $y⦄) => `(Bexp.eq₁ ⦃$x⦄ ⦃$y⦄)
+  | `(⦃$x <= $y⦄) => `(Bexp.le₁ ⦃$x⦄ ⦃$y⦄)
   -- com
   | `(⦃$x:ident = $y⦄) => `(Com.ass₁ $(Lean.quote (toString x.getId)) ⦃$y⦄)
   | `(⦃$x ; $y⦄)       => `(Com.cat₁ ⦃$x⦄ ⦃$y⦄)

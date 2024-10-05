@@ -4,8 +4,8 @@ import Semantics.Imp.Denotational
 
 namespace Com
 
-theorem Structural.from_natural {c: Com}
-  (h: w ⊢ c ⟹ s): (c, w) ⇒* (skip₁, s) := by
+theorem Structural.from_natural
+  (h: p ⟹ s): p ⇒* (skip₁, s) := by
   induction h with
   | skipₙ => exact RTL.refl
   | assₙ => exact RTL.single step.assₛ
@@ -18,7 +18,7 @@ theorem Structural.from_natural {c: Com}
     exact RTL.head step.whileₛ $ hb ▸ RTL.refl
 
 theorem Natural.from_structural_step
-  (h₁: x ⇒ y) (h₂: y.2 ⊢ y.1  ⟹ s): x.2 ⊢ x.1 ⟹ s := by
+  (h₁: x ⇒ y) (h₂: y ⟹ s): x ⟹ s := by
   induction h₁ generalizing s with
   | assₛ => exact (skip_eq.mp h₂) ▸ step.assₙ
   | cat₀ₛ => exact step.catₙ _ step.skipₙ h₂
@@ -29,17 +29,17 @@ theorem Natural.from_structural_step
   | whileₛ => rw [loop_unfold]; exact if_eq' ▸ h₂
 
 theorem Natural.from_structural
-  (h: x ⇒* (skip₁, t)): x.2 ⊢ x.1 ⟹ t := by
+  (h: x ⇒* (skip₁, t)): x ⟹ t := by
   induction h using RTL.head_induction_on with
   | refl => exact step.skipₙ
   | head h _ ht => exact from_structural_step h ht
 
 theorem structural_eq_natural:
-  (c, s) ⇒* (skip₁, t) = (s ⊢ c ⟹ t) :=
+  ((c, s) ⇒* (skip₁, t)) = ((c, s) ⟹ t) :=
   propext ⟨Natural.from_structural, Structural.from_natural⟩
 
-theorem denote.from_natural {c: Com}
-  (h: s ⊢ c ⟹ t): (s, t) ∈ ⟦c⟧ := by
+theorem denote.from_natural
+  (h: p ⟹ t): (p.2, t) ∈ ⟦p.1⟧ := by
   induction h with
   | skipₙ => exact SFun.mem_id.mpr rfl
   | assₙ  => exact SFun.mem_id.mpr rfl
@@ -71,7 +71,7 @@ theorem denote.from_natural {c: Com}
       ]
       rfl
 
-theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
+theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): (c, s) ⟹ t := by
   revert h
   induction c generalizing s t with
   | skip₁ =>
@@ -96,7 +96,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
       exact step.if₀ₙ hb (ih₂ h)
   | while₁ b c ih =>
     suffices
-      ⟦while b loop c end⟧ ⊆ {s | s.1 ⊢ while b loop c end ⟹ s.2} by
+      ⟦while b loop c end⟧ ⊆ {s | (while b loop c end, s.1) ⟹ s.2} by
       apply this
 
     apply Fix.lfp_le
@@ -109,7 +109,7 @@ theorem Natural.from_denote (h: (s, t) ∈ ⟦c⟧): s ⊢ c ⟹ t := by
       rw [SFun.mem_id] at hq
       exact hq ▸ step.while₀ₙ hb
 
-theorem natural_eq_denote: ((s, t) ∈ ⟦c⟧) = (s ⊢ c ⟹ t) :=
+theorem natural_eq_denote: ((s, t) ∈ ⟦c⟧) = ((c, s) ⟹ t) :=
   propext ⟨Natural.from_denote, denote.from_natural⟩
 
 end Com

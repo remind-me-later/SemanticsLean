@@ -13,23 +13,23 @@ def TotalMap.default (v: A): TotalMap A := λ _ => v
 def TotalMap.update (m: TotalMap A) (k: String) (v: A) :=
   λ k' => bif k == k' then v else m k'
 
-notation m "⟪" k " ≔ " v "⟫" => TotalMap.update m k v
+notation m "[" k " ← " v "]" => TotalMap.update m k v
 
 namespace TotalMap
 
-theorem ev: (m⟪k ≔ v⟫) k = v := by
+theorem ev: (m[k ← v]) k = v := by
   unfold TotalMap.update
   rw [beq_self_eq_true, cond_true]
 
 theorem ev_neq (hneq: k != k'):
-    (m⟪k ≔ v⟫) k' = m k' := by
+    (m[k ← v]) k' = m k' := by
   unfold TotalMap.update
   rw [bne_iff_ne] at hneq
   rw [Bool.cond_neg]
   rw [beq_eq_false_iff_ne k k']
   exact hneq
 
-theorem clobber: m⟪k ≔ v₂⟫⟪k ≔ v₁⟫ = m⟪k ≔ v₁⟫ := by
+theorem clobber: m[k ← v₂][k ← v₁] = m[k ← v₁] := by
   funext k'
   match h: k == k' with
   | true =>
@@ -40,7 +40,7 @@ theorem clobber: m⟪k ≔ v₂⟫⟪k ≔ v₁⟫ = m⟪k ≔ v₁⟫ := by
     rw [h, cond_false, cond_false, cond_false]
 
 theorem ev_swap (hneq : k₁ != k₂):
-  m⟪k₂ ≔ v₂⟫⟪k₁ ≔ v₁⟫ = m⟪k₁ ≔ v₁⟫⟪k₂ ≔ v₂⟫ := by
+  m[k₂ ← v₂][k₁ ← v₁] = m[k₁ ← v₁][k₂ ← v₂] := by
   funext k'
   match h: k₁ == k' with
   | true =>
@@ -56,7 +56,7 @@ theorem ev_swap (hneq : k₁ != k₂):
     unfold TotalMap.update
     rw [h, cond_false, cond_false]
 
-theorem ev_id: m⟪k ≔ m k⟫ = m := by
+theorem ev_id: m[k ← m k] = m := by
   funext k'
   match h: k == k' with
   | true =>
@@ -66,7 +66,7 @@ theorem ev_id: m⟪k ≔ m k⟫ = m := by
     unfold TotalMap.update
     rw [h, cond_false]
 
-theorem ev_same: (λ _ => v)⟪k ≔ v⟫ = λ _ => v := by
+theorem ev_same: (λ _ => v)[k ← v] = λ _ => v := by
   funext k'
   match h: k == k' with
   | true =>
@@ -77,15 +77,15 @@ theorem ev_same: (λ _ => v)⟪k ≔ v⟫ = λ _ => v := by
     rw [h, cond_false]
 
 example (m: TotalMap Nat):
-  m⟪"a" ≔ 0⟫⟪"a" ≔ 2⟫ = m⟪"a" ≔ 2⟫ := clobber
+  m["a" ← 0]["a" ← 2] = m["a" ← 2] := clobber
 
 example (m: TotalMap Nat):
-  m⟪"a" ≔ 0⟫⟪"b" ≔ 2⟫ = m⟪"b" ≔ 2⟫⟪"a" ≔ 0⟫ := by
+  m["a" ← 0]["b" ← 2] = m["b" ← 2]["a" ← 0] := by
   apply ev_swap
   simp only [String.reduceBNe]
 
 example (m: TotalMap Nat):
-  m⟪"a" ≔ m "a"⟫⟪"b" ≔ 0⟫ = m⟪"b" ≔ 0⟫ := ev_id ▸ rfl
+  m["a" ← m "a"]["b" ← 0] = m["b" ← 0] := ev_id ▸ rfl
 
 end TotalMap
 

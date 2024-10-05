@@ -1,7 +1,7 @@
 -- Reflexive transitive relations
 inductive RTL (r : α → α → Prop) (a : α) : α → Prop
   | refl : RTL r a a
-  | tail {b c} : RTL r a b → r b c → RTL r a c
+  | tail : RTL r a b → r b c → RTL r a c
 
 namespace RTL
 

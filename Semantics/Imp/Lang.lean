@@ -61,8 +61,8 @@ instance: Append Com := ⟨Com.cat₁⟩
 ## Syntax
 -/
 -- Meta syntax
-notation "if " c " then " a " else " b "end" => Com.if₁ c a b
-notation "while " c " loop " a "end" => Com.while₁ c a
+notation "if " c " then " a " else " b " end" => Com.if₁ c a b
+notation "while " c " loop " a " end" => Com.while₁ c a
 
 declare_syntax_cat imp
 
@@ -83,8 +83,8 @@ syntax:80 "!" imp:81 : imp
 -- com
 syntax:40 imp:40 ";" imp:41 : imp
 syntax:50 imp:50 "=" imp:51 : imp
-syntax "if" imp "then" imp "else" imp " end" : imp
-syntax "while" imp "loop" imp " end" : imp
+syntax "if" imp "then" imp "else" imp "end" : imp
+syntax "while" imp "loop" imp "end" : imp
 -- meta
 syntax "⦃" imp "⦄" : term
 
@@ -150,3 +150,5 @@ macro_rules
     x = x + 1
   end
 ⦄
+
+def Config := Com × State

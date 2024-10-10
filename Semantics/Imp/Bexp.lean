@@ -7,23 +7,23 @@ namespace Natural
 private inductive step: Bexp × State → Bool → Prop
   | trueₙ: step (true₁, _) true
   | falseₙ: step (false₁, _) false
-  | notₙ (h: step (a, s) n):
-    step (~~~a, s) (!n)
-  | andₙ (h₁: step (a, s) n) (h₂: step (b, s) m):
-    step (a &&& b, s) (n && m)
-  | orₙ (h₁: step (a, s) n) (h₂: step (b, s) m):
-    step (a ||| b, s) (n || m)
-  | eqₙ: step (eq₁ a b, s) (a s == b s)
-  | leₙ: step (le₁ a b, s) (a s <= b s)
+  | notₙ (h: step (b, s) n):
+    step (~~~b, s) (!n)
+  | andₙ (h₁: step (b₁, s) n₁) (h₂: step (b₂, s) n₂):
+    step (b₁ &&& b₂, s) (n₁ && n₂)
+  | orₙ (h₁: step (b₁, s) n₁) (h₂: step (b₂, s) n₂):
+    step (b₁ ||| b₂, s) (n₁ || n₂)
+  | eqₙ: step (eq₁ a₁ a₂, s) (a₁ s == a₂ s)
+  | leₙ: step (le₁ a₁ a₂, s) (a₁ s <= a₂ s)
 
 infix:10 " ⟹ₗ " => step
 
 private instance step.equiv: Setoid Bexp where
-  r a b := ∀s n, ((a, s) ⟹ₗ n) = ((b, s) ⟹ₗ n)
+  r b₁ b₂ := ∀s n, ((b₁, s) ⟹ₗ n) = ((b₂, s) ⟹ₗ n)
   iseqv := {
     refl := λ _ _ _ => rfl
     symm := λ h s n => (h s n).symm
-    trans := λ h1 h2 s n => (h1 s n) ▸ (h2 s n)
+    trans := λ h₁ h₂ s n => (h₁ s n) ▸ (h₂ s n)
   }
 
 end Natural
@@ -31,52 +31,54 @@ end Natural
 -- Denotational semantics of Bexp
 def reduce (b: Bexp) (s: State): Bool :=
   match b with
-  | true₁    => true
-  | false₁   => false
-  | not₁ b   => !reduce b s
-  | and₁ a b => reduce a s && reduce b s
-  | or₁ a b  => reduce a s || reduce b s
-  | eq₁ a b  => a.reduce s == b.reduce s
-  | le₁ a b  => a.reduce s <= b.reduce s
+  | true₁  => true
+  | false₁ => false
+  | not₁ b => !b.reduce s
+  | and₁ b₁ b₂ => b₁.reduce s && b₂.reduce s
+  | or₁ b₁ b₂  => b₁.reduce s || b₂.reduce s
+  | eq₁ a₁ a₂  => a₁ s == a₂ s
+  | le₁ a₁ a₂  => a₁ s <= a₂ s
 
-instance: CoeFun Bexp (λ _ => State → Bool) where
-  coe b := reduce b
+instance: CoeFun Bexp (λ _ => State → Bool) := ⟨reduce⟩
 
 instance reduce.equiv: Setoid Bexp where
-  r a b:= ∀s, a s = b s
+  r b₁ b₂:= ∀s, b₁ s = b₂ s
   iseqv := {
     refl := λ _ _ => rfl
     symm := λ h s => (h s).symm
-    trans := λ h1 h2 s => (h1 s) ▸ (h2 s)
+    trans := λ h₁ h₂ s => (h₁ s) ▸ (h₂ s)
   }
 
 section Equivalence
 
 -- relational definition is equivalent to recursive
-private theorem reduce.from_natural {p: Bexp × State}
-  (h: p ⟹ₗ x): p.1 p.2 = x :=
-  by induction h with
+private theorem reduce.from_natural
+  (hstep: conf ⟹ₗ x): conf.1 conf.2 = x :=
+  by induction hstep with
   | notₙ _ ih => exact ih ▸ rfl
-  | andₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
-  | orₙ _ _ iha ihb => exact iha ▸ ihb ▸ rfl
+  | andₙ _ _ ihb₁ ihb₂ | orₙ _ _ ihb₁ ihb₂ =>
+    exact ihb₁ ▸ ihb₂ ▸ rfl
   | _ => rfl
 
-private theorem Natural.from_reduce {b: Bexp}
-  (h: b s = x): (b, s) ⟹ₗ x :=
+private theorem Natural.from_reduce
+  (hred: b s = x): (b, s) ⟹ₗ x :=
   by induction b generalizing x with
-  | true₁ => exact h ▸ step.trueₙ
-  | false₁ => exact h ▸ step.falseₙ
-  | not₁ a ih => exact h ▸ step.notₙ (ih rfl)
-  | and₁ a b iha ihb => exact h ▸ step.andₙ (iha rfl) (ihb rfl)
-  | or₁ a b iha ihb => exact h ▸ step.orₙ (iha rfl) (ihb rfl)
-  | eq₁ => exact h ▸ step.eqₙ
-  | le₁ => exact h ▸ step.leₙ
+  | true₁ => exact hred ▸ step.trueₙ
+  | false₁ => exact hred ▸ step.falseₙ
+  | not₁ _ ih => exact hred ▸ step.notₙ (ih rfl)
+  | and₁ _ _ ihb₁ ihb₂ =>
+    exact hred ▸ step.andₙ (ihb₁ rfl) (ihb₂ rfl)
+  | or₁ _ _ ihb₁ ihb₂ =>
+    exact hred ▸ step.orₙ (ihb₁ rfl) (ihb₂ rfl)
+  | eq₁ => exact hred ▸ step.eqₙ
+  | le₁ => exact hred ▸ step.leₙ
 
-private theorem step_eq_reduce {b: Bexp}:
+private theorem step_eq_reduce:
   ((b, s) ⟹ₗ x) = (b s = x) :=
   propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
-private theorem step_eq_reduce' {b: Bexp}: (b, s) ⟹ₗ b s :=
+private theorem step_eq_reduce':
+  (b, s) ⟹ₗ b s :=
   Natural.from_reduce rfl
 
 private theorem not_true_eq_false:
@@ -84,11 +86,11 @@ private theorem not_true_eq_false:
   rfl
 
 private theorem step_eq_eq_reduce_eq:
-  Natural.step.equiv.r a b ↔ reduce.equiv.r a b := by
+  Natural.step.equiv.r b₁ b₂ ↔ reduce.equiv.r b₁ b₂ := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
   . intro h s
-    exact (step_eq_reduce ▸ h s (b s)).mpr $ step_eq_reduce.mpr rfl
+    exact (step_eq_reduce ▸ h s (b₂ s)).mpr $ step_eq_reduce.mpr rfl
   . intro h s _
     constructor
     . intro h1

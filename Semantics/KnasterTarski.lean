@@ -31,16 +31,16 @@ instance Set.partialOrder: PartialOrder (Set α) :=
     le := λ a b => a ⊆ b,
     lt := λ a b => a ⊆ b ∧ a ≠ b,
     le_refl := λ _ _ ha => ha,
-    le_antisymm := λ _ _ h1 h2 => Subset.antisymm h1 h2,
+    le_antisymm := λ _ _ h₁ h₂ => Subset.antisymm h₁ h₂,
     le_iff_le_not_le := by {
       intro _ _
       constructor
-      . intro ⟨h1, h2⟩
-        exact ⟨h1, λ h' => h2 $ Subset.antisymm h1 h'⟩
-      . intro ⟨h1, h2⟩
-        exact ⟨h1, λ h' => h2 $ Subset.from_eq h'.symm⟩
+      . intro ⟨h₁, h₂⟩
+        exact ⟨h₁, λ h' => h₂ $ Subset.antisymm h₁ h'⟩
+      . intro ⟨h₁, h₂⟩
+        exact ⟨h₁, λ h' => h₂ $ Subset.from_eq h'.symm⟩
     }
-    le_trans := λ _ _ _ h1 h2 _ ha => h2 (h1 ha)
+    le_trans := λ _ _ _ h₁ h₂ _ ha => h₂ (h₁ ha)
   }
 
 class CompleteLattice (α: Type) extends PartialOrder α where

@@ -9,19 +9,22 @@ From Concrete semantics with Isabelle
 
 namespace Com
 
-def denote_loop (b: Bexp) (f: State →ˢ State): (State →ˢ State) → (State →ˢ State) :=
+def denote_while (b: Bexp) (f: State →ˢ State):
+  (State →ˢ State) → (State →ˢ State) :=
   λ g => Set.ite {(s, _) | b s} (f ○ g) SFun.id
 
 def denote: Com → (State →ˢ State)
-  | skip₁                  => SFun.id
-  | ass₁ x a               => {(s, t) | t = s[x ← a s]}
-  | cat₁ c d               => c.denote ○ d.denote
-  | if b then c else d end => Set.ite {(s, _) | b s} c.denote d.denote
-  | while b loop c end     => Fix.lfp $ denote_loop b c.denote
+  | skip₁      => SFun.id
+  | ass₁ v a   => {(s, t) | t = s[v ← a s]}
+  | cat₁ c₁ c₂ => c₁.denote ○ c₂.denote
+  | if b then c₁ else c₂ end =>
+      Set.ite {(s, _) | b s} c₁.denote c₂.denote
+  | while b loop c end =>
+      Fix.lfp $ denote_while b c.denote
 
-theorem monotone_denote_loop: monotone (denote_loop b c) :=
-  λ _ _ h =>
-  Set.ite_mono _ (SFun.comp_mono PartialOrder.le_rfl h) PartialOrder.le_rfl
+theorem monotone_denote_loop: monotone (denote_while b c) :=
+  λ _ _ hmp =>
+  Set.ite_mono _ (SFun.comp_mono PartialOrder.le_rfl hmp) PartialOrder.le_rfl
 
 notation (priority := high) "⟦" c "⟧" => denote c
 

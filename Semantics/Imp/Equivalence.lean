@@ -103,4 +103,8 @@ theorem Natural.from_denote
 theorem natural_eq_denote: ((s₁, s₂) ∈ ⟦c⟧) = ((c, s₁) ⟹ s₂) :=
   propext ⟨Natural.from_denote, denote.from_natural⟩
 
+theorem structural_eq_denote:
+  ((c, s₁) ⇒* (skip₁, s₂)) = ((s₁, s₂) ∈ ⟦c⟧) :=
+  by rw [structural_eq_natural, natural_eq_denote]
+
 end Com

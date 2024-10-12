@@ -28,8 +28,8 @@ theorem monotone_denote_loop: monotone (denote_while b c) :=
 
 notation (priority := high) "⟦" c "⟧" => denote c
 
-#check (s₀, s₀["x"←5]["x"←1]) ∈ ⟦⦃x = 5; if x <= 1 then skip else x = 1 end⦄⟧
-#check (s₀, s₀["x"←5]) ∈ ⟦⦃x = 5; while x <= 1 loop x = 1 end⦄⟧
+#check (s₀, s₀["x"←5]["x"←1]) ∈ ⟦```imp x = 5; if x <= 1 then skip else x = 1 end```⟧
+#check (s₀, s₀["x"←5]) ∈ ⟦```imp x = 5; while x <= 1 loop x = 1 end```⟧
 
 namespace denote
 

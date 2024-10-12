@@ -29,15 +29,22 @@ inductive step: Config → State → Prop
 
 infix:10 " ⟹ " => step
 
-private example: (⦃x = 5⦄, s₀) ⟹ s₀["x" ← 5] := step.assₙ
+private example:  (```imp x = 5```, s₀) ⟹ s₀["x" ← 5] := step.assₙ
 
 private example:
-   (⦃x = 2; if x <= 1 then y = 3 else z = 4 end⦄, s₀)
+   (```imp
+      x = 2;
+      if x <= 1 then
+        y = 3
+      else
+        z = 4
+      end
+    ```, s₀)
     ⟹ s₀["x" ← 2]["z" ← 4] :=
     step.catₙ _ step.assₙ $ step.if₀ₙ rfl step.assₙ
 
 private example:
-  (⦃x = 2; x = 3⦄, s₀) ⟹ s₀["x" ← 3] :=
+  (```imp x = 2; x = 3```, s₀) ⟹ s₀["x" ← 3] :=
   let h1: s₀["x" ← 3] = s₀["x" ← 2]["x" ← 3] :=
     TotalMap.eval_last.symm
   h1 ▸ step.catₙ _ step.assₙ step.assₙ

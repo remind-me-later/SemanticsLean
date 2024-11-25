@@ -24,8 +24,8 @@ inductive step: Config → Config → Prop where
 infixl:10 " ⇒ " => step
 
 private example:
-  (```imp x = 0; while x <= 2 loop x = x + 1 end```, s₀) ⇒
-      (```imp skip; while x <= 2 loop x = x + 1 end```, s₀["x" ← 0]) :=
+  ([|x = 0; while x <= 2 loop x = x + 1 end|], s₀) ⇒
+      ([|skip; while x <= 2 loop x = x + 1 end|], s₀["x" ← 0]) :=
   step.catₙₛ step.assₛ
 
 theorem cat_eq:
@@ -67,8 +67,8 @@ theorem cond_false (hb: b s₁ = false):
 infixl:10 " ⇒* " => RTL step
 
 theorem star.demo₂:
-  (```imp x = 2; while 0 <= x loop x = x + 1 end```, s₀) ⇒*
-      (```imp while 0 <= x loop x = x + 1 end```, s₀["x" ← 2]) :=
+  ([| x = 2; while 0 <= x loop x = x + 1 end|], s₀) ⇒*
+      ([| while 0 <= x loop x = x + 1 end|], s₀["x" ← 2]) :=
   RTL.head (step.catₙₛ step.assₛ) (RTL.head step.cat₀ₛ RTL.refl)
 
 theorem star.cat_skip_cat

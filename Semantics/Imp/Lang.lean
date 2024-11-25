@@ -86,41 +86,41 @@ syntax:50 imp:50 "=" imp:51 : imp
 syntax "if" imp "then" imp "else" imp "end" : imp
 syntax "while" imp "loop" imp "end" : imp
 -- meta
-syntax "```imp" imp "```" : term
+syntax "[|" imp "|]" : term
 
 macro_rules
   -- keywords
-  | `(```imp skip```) => `(Com.skip₁)
-  | `(```imp true```) => `(Bexp.true₁)
-  | `(```imp false```) => `(Bexp.false₁)
+  | `([|skip|]) => `(Com.skip₁)
+  | `([|true|]) => `(Bexp.true₁)
+  | `([|false|]) => `(Bexp.false₁)
   -- general
-  | `(```imp ($x)```) => `(```imp $x```)
+  | `([|($x)|]) => `([|$x|])
   -- aexp
-  | `(```imp $x:ident```) => `(Aexp.var₁ $(Lean.quote (toString x.getId)))
-  | `(```imp $n:num```)   => `($n)
-  | `(```imp $x + $y```)  => `(```imp $x``` + ```imp $y```)
-  | `(```imp $x - $y```)  => `(```imp $x``` - ```imp $y```)
-  | `(```imp $x * $y```)  => `(```imp $x``` * ```imp $y```)
+  | `([|$x:ident|]) => `(Aexp.var₁ $(Lean.quote (toString x.getId)))
+  | `([|$n:num|])   => `($n)
+  | `([|$x + $y|])  => `([|$x|] + [|$y|])
+  | `([|$x - $y|])  => `([|$x|] - [|$y|])
+  | `([|$x * $y|])  => `([|$x|] * [|$y|])
   -- bexp
-  | `(```imp !$x```)      => `(~~~```imp $x```)
-  | `(```imp $x && $y```) => `(```imp $x``` &&& ```imp $y```)
-  | `(```imp $x || $y```) => `(```imp $x``` ||| ```imp $y```)
-  | `(```imp $x == $y```) => `(Bexp.eq₁ ```imp $x``` ```imp $y```)
-  | `(```imp $x <= $y```) => `(Bexp.le₁ ```imp $x``` ```imp $y```)
+  | `([|!$x|])      => `(~~~[|$x|])
+  | `([|$x && $y|]) => `([|$x|] &&& [|$y|])
+  | `([|$x || $y|]) => `([|$x|] ||| [|$y|])
+  | `([|$x == $y|]) => `(Bexp.eq₁ [|$x|] [|$y|])
+  | `([|$x <= $y|]) => `(Bexp.le₁ [|$x|] [|$y|])
   -- com
-  | `(```imp $x:ident = $y```) => `(Com.ass₁ $(Lean.quote (toString x.getId)) ```imp $y```)
-  | `(```imp $x ; $y```)       => `(Com.cat₁ ```imp $x``` ```imp $y```)
-  | `(```imp if $b then $x else $y end```) => `(Com.if₁ ```imp $b``` ```imp $x``` ```imp $y```)
-  | `(```imp while $b loop $x end```) => `(Com.while₁ ```imp $b``` ```imp $x```)
+  | `([|$x:ident = $y|]) => `(Com.ass₁ $(Lean.quote (toString x.getId)) [|$y|])
+  | `([|$x ; $y|])       => `(Com.cat₁ [|$x|] [|$y|])
+  | `([|if $b then $x else $y end|]) => `(Com.if₁ [|$b|] [|$x|] [|$y|])
+  | `([|while $b loop $x end|]) => `(Com.while₁ [|$b|] [|$x|])
 
 #check
-```imp
+[|
 n = 5; i = 2; res = 1;
 
 while i <= n loop
     res = res * i;
     i = i + 1
 end
-```
+|]
 
 def Config := Com × State

@@ -27,7 +27,7 @@ theorem eval_neq (hneq: k != k'):
   unfold TotalMap.update
   rw [bne_iff_ne] at hneq
   rw [Bool.cond_neg]
-  rw [beq_eq_false_iff_ne k k']
+  rw [beq_eq_false_iff_ne, ne_eq]
   exact hneq
 
 theorem eval_last:

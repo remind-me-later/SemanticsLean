@@ -71,18 +71,18 @@ syntax "(" imp ")" : imp
 -- aexp
 syntax num: imp
 syntax ident: imp
-syntax:55 imp:55 "*" imp:56 : imp
+syntax:55 imp:55 "×" imp:56 : imp
 syntax:60 imp:60 "+" imp:61 : imp
 syntax:60 imp:60 "-" imp:61 : imp
 -- bexp
-syntax:65 imp:65 "&&" imp:66 : imp
-syntax:65 imp:65 "||" imp:66 : imp
-syntax:70 imp:70 "==" imp:71 : imp
-syntax:70 imp:70 "<=" imp:71 : imp
-syntax:80 "!" imp:81 : imp
+syntax:65 imp:65 "∧" imp:66 : imp
+syntax:65 imp:65 "∨" imp:66 : imp
+syntax:70 imp:70 "=" imp:71 : imp
+syntax:70 imp:70 "≤" imp:71 : imp
+syntax:80 "¬" imp:81 : imp
 -- com
 syntax:40 imp:40 ";" imp:41 : imp
-syntax:50 imp:50 "=" imp:51 : imp
+syntax:50 imp:50 ":=" imp:51 : imp
 syntax "if" imp "then" imp "else" imp "end" : imp
 syntax "while" imp "loop" imp "end" : imp
 -- meta
@@ -100,26 +100,26 @@ macro_rules
   | `([|$n:num|])   => `($n)
   | `([|$x + $y|])  => `([|$x|] + [|$y|])
   | `([|$x - $y|])  => `([|$x|] - [|$y|])
-  | `([|$x * $y|])  => `([|$x|] * [|$y|])
+  | `([|$x × $y|])  => `([|$x|] * [|$y|])
   -- bexp
-  | `([|!$x|])      => `(~~~[|$x|])
-  | `([|$x && $y|]) => `([|$x|] &&& [|$y|])
-  | `([|$x || $y|]) => `([|$x|] ||| [|$y|])
-  | `([|$x == $y|]) => `(Bexp.eq₁ [|$x|] [|$y|])
-  | `([|$x <= $y|]) => `(Bexp.le₁ [|$x|] [|$y|])
+  | `([|¬$x|])      => `(~~~[|$x|])
+  | `([|$x ∧ $y|]) => `([|$x|] &&& [|$y|])
+  | `([|$x ∨ $y|]) => `([|$x|] ||| [|$y|])
+  | `([|$x = $y|]) => `(Bexp.eq₁ [|$x|] [|$y|])
+  | `([|$x ≤ $y|]) => `(Bexp.le₁ [|$x|] [|$y|])
   -- com
-  | `([|$x:ident = $y|]) => `(Com.ass₁ $(Lean.quote (toString x.getId)) [|$y|])
+  | `([|$x:ident := $y|]) => `(Com.ass₁ $(Lean.quote (toString x.getId)) [|$y|])
   | `([|$x ; $y|])       => `(Com.cat₁ [|$x|] [|$y|])
   | `([|if $b then $x else $y end|]) => `(Com.if₁ [|$b|] [|$x|] [|$y|])
   | `([|while $b loop $x end|]) => `(Com.while₁ [|$b|] [|$x|])
 
 #check
 [|
-n = 5; i = 2; res = 1;
+n := 5; i := 2; res := 1;
 
-while i <= n loop
-    res = res * i;
-    i = i + 1
+while i ≤ n loop
+    res := res × i;
+    i := i + 1
 end
 |]
 

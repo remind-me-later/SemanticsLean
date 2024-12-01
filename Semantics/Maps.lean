@@ -6,11 +6,11 @@
 ## Total maps
 -/
 
-def TotalMap A := String → A
+def Map A := String → A
 
-def TotalMap.default (v: A): TotalMap A := λ _ => v
+def TotalMap.default (v: A): Map A := λ _ => v
 
-def TotalMap.update (m: TotalMap A) (k: String) (v: A) :=
+def TotalMap.update (m: Map A) (k: String) (v: A) :=
   λ k' => bif k == k' then v else m k'
 
 notation m "[" k " ← " v "]" => TotalMap.update m k v
@@ -80,15 +80,15 @@ theorem eval_same:
     unfold TotalMap.update
     rw [h, cond_false]
 
-example (m: TotalMap Nat):
+example (m: Map Nat):
   m["a" ← 0]["a" ← 2] = m["a" ← 2] := eval_last
 
-example (m: TotalMap Nat):
+example (m: Map Nat):
   m["a" ← 0]["b" ← 2] = m["b" ← 2]["a" ← 0] := by
   apply eval_swap
   simp only [String.reduceBNe]
 
-example (m: TotalMap Nat):
+example (m: Map Nat):
   m["a" ← m "a"]["b" ← 0] = m["b" ← 0] := eval_id ▸ rfl
 
 end TotalMap
@@ -97,6 +97,6 @@ end TotalMap
 ## Partial maps
 -/
 
-def PartialMap A := TotalMap (Option A)
+def PartialMap A := Map (Option A)
 
 def PartialMap.default: PartialMap A := TotalMap.default none

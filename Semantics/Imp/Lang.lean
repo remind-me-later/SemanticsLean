@@ -1,6 +1,6 @@
 import Semantics.Maps
 
-def State := TotalMap Int
+def State := Map Int
 def s₀: State := TotalMap.default 0
 
 #eval s₀ "x"

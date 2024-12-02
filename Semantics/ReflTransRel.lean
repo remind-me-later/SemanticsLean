@@ -20,7 +20,7 @@ theorem head (hab : r a b) (hbc : RTL r b c) : RTL r a c := by
 
 theorem head_induction_on {P : ∀ a : α, RTL r a b → Prop} {a : α} (h : RTL r a b)
     (refl : P b refl)
-    (head : ∀ {a c} (h' : r a c) (h : RTL r c b), P c h → P a (h.head h')) : P a h := by
+    (head : ∀{a c} (h' : r a c) (h : RTL r c b), P c h → P a (h.head h')) : P a h := by
   induction h with
   | refl => exact refl
   | tail _ hbc ih =>
@@ -29,9 +29,9 @@ theorem head_induction_on {P : ∀ a : α, RTL r a b → Prop} {a : α} (h : RTL
     · exact λ h1 h2 ↦ head h1 (h2.tail hbc)
 
 theorem lift {r: α → α → Prop} {p : β → β → Prop} {a b : α} (f : α → β)
-    (h : ∀ a b, r a b → p (f a) (f b)) (hab : RTL r a b) : RTL p (f a) (f b) := by
+    (h : ∀{a b}, r a b → p (f a) (f b)) (hab : RTL r a b) : RTL p (f a) (f b) := by
   induction hab with
   | refl => exact refl
-  | tail _ hbc ih => exact ih.tail (h _ _ hbc)
+  | tail _ hbc ih => exact ih.tail (h hbc)
 
 end RTL

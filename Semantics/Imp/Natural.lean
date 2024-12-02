@@ -46,7 +46,7 @@ private example:
 private example:
   ([| x := 2; x := 3|], s₀) ⟹ s₀["x" ← 3] :=
   let h1: s₀["x" ← 3] = s₀["x" ← 2]["x" ← 3] :=
-    TotalMap.eval_last.symm
+    Map.eval_last.symm
   h1 ▸ step.catₙ _ step.assₙ step.assₙ
 
 /-

@@ -6,25 +6,25 @@
 ## Total maps
 -/
 
-def Map A := String → A
+def Map (α: Type) := String → α
 
-def TotalMap.default (v: A): Map A := λ _ => v
+namespace Map
 
-def TotalMap.update (m: Map A) (k: String) (v: A) :=
-  λ k' => bif k == k' then v else m k'
+def default (v: α): Map α := λ _ ↦ v
 
-notation m "[" k " ← " v "]" => TotalMap.update m k v
+def update (m: Map α) (k: String) (v: α) :=
+  λ k' ↦ bif k == k' then v else m k'
 
-namespace TotalMap
+notation m "[" k " ← " v "]" => Map.update m k v
 
 theorem eval:
   (m[k ← v]) k = v := by
-  unfold TotalMap.update
+  unfold Map.update
   rw [beq_self_eq_true, cond_true]
 
 theorem eval_neq (hneq: k != k'):
   (m[k ← v]) k' = m k' := by
-  unfold TotalMap.update
+  unfold Map.update
   rw [bne_iff_ne] at hneq
   rw [Bool.cond_neg]
   rw [beq_eq_false_iff_ne, ne_eq]
@@ -35,10 +35,10 @@ theorem eval_last:
   funext k'
   match h: k == k' with
   | true =>
-    unfold TotalMap.update
+    unfold Map.update
     rw [h, cond_true, cond_true]
   | false =>
-    unfold TotalMap.update
+    unfold Map.update
     rw [h, cond_false, cond_false, cond_false]
 
 theorem eval_swap (hneq : k₁ != k₂):
@@ -46,7 +46,7 @@ theorem eval_swap (hneq : k₁ != k₂):
   funext k'
   match h: k₁ == k' with
   | true =>
-    unfold TotalMap.update
+    unfold Map.update
     rw [h, cond_true]
     match h': k₂ == k' with
     | true =>
@@ -55,7 +55,7 @@ theorem eval_swap (hneq : k₁ != k₂):
     | false =>
       rw [cond_false, cond_true]
   | false =>
-    unfold TotalMap.update
+    unfold Map.update
     rw [h, cond_false, cond_false]
 
 theorem eval_id:
@@ -63,21 +63,21 @@ theorem eval_id:
   funext k'
   match h: k == k' with
   | true =>
-    unfold TotalMap.update
+    unfold Map.update
     rw [h, cond_true, eq_of_beq h]
   | false =>
-    unfold TotalMap.update
+    unfold Map.update
     rw [h, cond_false]
 
 theorem eval_same:
-  (λ _ => v)[k ← v] = λ _ => v := by
+  (λ _ ↦ v)[k ← v] = λ _ ↦ v := by
   funext k'
   match h: k == k' with
   | true =>
-    unfold TotalMap.update
+    unfold Map.update
     rw [h, cond_true]
   | false =>
-    unfold TotalMap.update
+    unfold Map.update
     rw [h, cond_false]
 
 example (m: Map Nat):
@@ -91,12 +91,16 @@ example (m: Map Nat):
 example (m: Map Nat):
   m["a" ← m "a"]["b" ← 0] = m["b" ← 0] := eval_id ▸ rfl
 
-end TotalMap
+end Map
 
 /-
 ## Partial maps
 -/
 
-def PartialMap A := Map (Option A)
+def PMap (α: Type) := Map (Option α)
 
-def PartialMap.default: PartialMap A := TotalMap.default none
+namespace PMap
+
+def default: PMap α := Map.default none
+
+end PMap

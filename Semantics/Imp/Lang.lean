@@ -1,13 +1,13 @@
 import Semantics.Maps
 
 def State := Map Int
-def s₀: State := TotalMap.default 0
+def s₀: State := Map.default 0
 
 #eval s₀ "x"
 #eval (s₀["x" ← 3]["x" ← 4]) "x"
 #eval (s₀["x" ← 3]["x" ← 4]["x" ← 7]) "x"
 
-example: s₀["x" ← 3] = s₀["x" ← 4]["x" ← 3] := TotalMap.eval_last.symm
+example: s₀["x" ← 3] = s₀["x" ← 4]["x" ← 3] := Map.eval_last.symm
 
 inductive Aexp where
   | val₁ : Int → Aexp
@@ -113,8 +113,7 @@ macro_rules
   | `([|if $b then $x else $y end|]) => `(Com.if₁ [|$b|] [|$x|] [|$y|])
   | `([|while $b loop $x end|]) => `(Com.while₁ [|$b|] [|$x|])
 
-#check
-[|
+#check [|
 n := 5; i := 2; res := 1;
 
 while i ≤ n loop

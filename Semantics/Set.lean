@@ -1,6 +1,6 @@
 -- # Sets
 
-def Set (α: Type u) := α → Prop
+def Set (α: Type) := α → Prop
 
 def setOf (p: α → Prop): Set α :=
   p
@@ -29,7 +29,7 @@ instance: HasSubset (Set α) :=
 instance: EmptyCollection (Set α) :=
   ⟨λ _ ↦ False⟩
 
-notation (priority := high) "{" x " | " p "}" => setOf (λ x => p)
+notation (priority := high) "{" x " | " p "}" => setOf (λ x ↦ p)
 
 def univ: Set α := {_a | True}
 
@@ -77,19 +77,19 @@ theorem Set.mem_diff {s t: Set α}
 
 theorem Subset.refl
   (x: Set α): x ⊆ x :=
-  λ _ => id
+  λ _ ↦ id
 
 theorem Subset.trans {x y z: Set α}
   (h₁: x ⊆ y) (h₂: y ⊆ z): x ⊆ z :=
-  λ _ h => h₂ (h₁ h)
+  λ _ h ↦ h₂ (h₁ h)
 
 theorem Subset.antisymm {x y: Set α}
   (hsub₁: x ⊆ y) (hsub₂: y ⊆ x): x = y :=
-  funext λ _ => propext ⟨(hsub₁ ·), (hsub₂ ·)⟩
+  funext λ _ ↦ propext ⟨(hsub₁ ·), (hsub₂ ·)⟩
 
 theorem Subset.from_eq {x y: Set α}
   (heq: x = y): x ⊆ y :=
-  λ _ h₁ => heq ▸ h₁
+  λ _ h₁ ↦ heq ▸ h₁
 
 /-
   ### Set if then else
@@ -100,7 +100,7 @@ def Set.ite (t s s': Set α): Set α :=
 
 theorem Set.ite_mono (t: Set α) {s₁ s₁' s₂ s₂': Set α}
   (h: s₁ ⊆ s₂) (h': s₁' ⊆ s₂'):
-  t.ite s₁ s₁' ⊆ t.ite s₂ s₂' := λ _ h2 =>
+  t.ite s₁ s₁' ⊆ t.ite s₂ s₂' := λ _ h2 ↦
   match h2 with
   | Or.inl ⟨hl, hr⟩ => Or.inl ⟨h hl, hr⟩
   | Or.inr ⟨hl, hr⟩ => Or.inr ⟨h' hl, hr⟩
@@ -131,7 +131,7 @@ theorem mem_comp {f g: α →ˢ α}:
 
 theorem comp_mono {α: Type} {f g h k: Set (α × α)}
   (hfh: f ⊆ h) (hgk: g ⊆ k): f ○ g ⊆ h ○ k :=
-  λ _ ⟨z, h₁, h₂⟩ => ⟨z, hfh h₁, hgk h₂⟩
+  λ _ ⟨z, h₁, h₂⟩ ↦ ⟨z, hfh h₁, hgk h₂⟩
 
 theorem comp_id {f: α →ˢ α}: f ○ id = f := by
   funext (_s₁, s₂)

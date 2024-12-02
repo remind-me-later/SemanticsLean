@@ -19,7 +19,7 @@ theorem Set.le_def (a b : Set α) :
 
 instance Set.LT (α: Type): LT (Set α) :=
   {
-    lt := λ a b => a ⊆ b ∧ a ≠ b
+    lt := λ a b ↦ a ⊆ b ∧ a ≠ b
   }
 
 theorem Set.lt_def (a b : Set α):
@@ -28,19 +28,15 @@ theorem Set.lt_def (a b : Set α):
 
 instance Set.partialOrder: PartialOrder (Set α) :=
   {
-    le := λ a b => a ⊆ b,
-    lt := λ a b => a ⊆ b ∧ a ≠ b,
-    le_refl := λ _ _ ha => ha,
-    le_antisymm := λ _ _ h₁ h₂ => Subset.antisymm h₁ h₂,
-    le_iff_le_not_le := by {
-      intro _ _
-      constructor
-      . intro ⟨h₁, h₂⟩
-        exact ⟨h₁, λ h' => h₂ $ Subset.antisymm h₁ h'⟩
-      . intro ⟨h₁, h₂⟩
-        exact ⟨h₁, λ h' => h₂ $ Subset.from_eq h'.symm⟩
-    }
-    le_trans := λ _ _ _ h₁ h₂ _ ha => h₂ (h₁ ha)
+    le := λ a b ↦ a ⊆ b,
+    lt := λ a b ↦ a ⊆ b ∧ a ≠ b,
+    le_refl := λ _ _ ha ↦ ha,
+    le_antisymm := λ _ _ h₁ h₂ ↦ Subset.antisymm h₁ h₂,
+    le_iff_le_not_le := λ _ _ ↦ {
+        mp := λ ⟨h₁, h₂⟩ ↦ ⟨h₁, λ h' ↦ h₂ $ Subset.antisymm h₁ h'⟩
+        mpr := λ ⟨h₁, h₂⟩ ↦ ⟨h₁, λ h' ↦ h₂ $ Subset.from_eq h'.symm⟩
+      }
+    le_trans := λ _ _ _ h₁ h₂ _ ha ↦ h₂ (h₁ ha)
   }
 
 class CompleteLattice (α: Type) extends PartialOrder α where
@@ -58,9 +54,9 @@ theorem inf_unique [CompleteLattice α]
 
 instance Set.completeLattice: CompleteLattice (Set α) :=
   {
-    Inf := λ s => {x | ∀ A ∈ s, x ∈ A},
-    Inf_le := λ _ x hx _ ha => ha x hx,
-    le_Inf := λ _ _ h _ hb _ hd => h _ hd hb
+    Inf := λ s ↦ {x | ∀ A ∈ s, x ∈ A},
+    Inf_le := λ _ x hx _ ha ↦ ha x hx,
+    le_Inf := λ _ _ h _ hb _ hd ↦ h _ hd hb
   }
 
 /-
@@ -94,19 +90,19 @@ def monotone [PartialOrder α] [PartialOrder β]
   ∀a b, a ≤ b → f a ≤ f b
 
 theorem monotone_id [PartialOrder α]:
-  monotone (λ a: α => a) := λ _ _ h => h
+  monotone (@id α) := λ _ _ ↦ id
 
 theorem monotone_const [PartialOrder α] [PartialOrder β]
   (b: β):
-  monotone (λ _: α => b) := λ _ _ _ => PartialOrder.le_refl b
+  monotone (λ _: α ↦ b) := λ _ _ _ ↦ PartialOrder.le_refl b
 
 theorem monotone_union [PartialOrder α]
   (f g: α → Set β) (hf: monotone f) (hg: monotone g):
-  monotone (λ a => f a ∪ g a) := by
-  intro a a' ha b hb
-  match hb with
-  | Or.inl h => exact Or.inl (hf a a' ha h)
-  | Or.inr h => exact Or.inr (hg a a' ha h)
+  monotone (λ a ↦ f a ∪ g a) :=
+  λ a a' ha _b hb ↦
+    match hb with
+    | Or.inl h => Or.inl (hf a a' ha h)
+    | Or.inr h => Or.inr (hg a a' ha h)
 
 /-
 ## The Knaster-Tarski Fixpoint Theorem
@@ -117,7 +113,7 @@ namespace Fix
 theorem lfp_eq [CompleteLattice α] (f: α → α)
     (hf: monotone f): lfp f = f (lfp f) :=
   let h: f (lfp f) ≤ lfp f :=
-    le_lfp (λ a h => PartialOrder.le_trans _ _ _ (hf _ a $ lfp_le h) h)
+    le_lfp (λ a h ↦ PartialOrder.le_trans _ _ _ (hf _ a $ lfp_le h) h)
   PartialOrder.le_antisymm _ _ (lfp_le $ hf _ _ h) h
 
 end Fix

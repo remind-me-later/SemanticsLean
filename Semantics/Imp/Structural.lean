@@ -33,10 +33,10 @@ theorem cat_eq:
     = ((∃c₂ s₂, ((c₁, s₁) ⇒ (c₂, s₂)) ∧ conf = (c₂++c₃, s₂))
       ∨ (c₁ = skip₁ ∧ conf = (c₃, s₁))) :=
   propext {
-    mp := λ hmp => match hmp with
+    mp := λ hmp ↦ match hmp with
       | step.cat₀ₛ => Or.inr ⟨rfl, rfl⟩
       | step.catₙₛ h => Or.inl ⟨_, _, h, rfl⟩,
-    mpr := λ hmpr => match hmpr with
+    mpr := λ hmpr ↦ match hmpr with
       | Or.inl ⟨_c₂, _s₂, h₁, h₂⟩ => h₂ ▸ step.catₙₛ h₁
       | Or.inr ⟨h₁, h₂⟩ => h₁ ▸ h₂ ▸ step.cat₀ₛ
   }
@@ -45,10 +45,10 @@ theorem cond_eq:
   ((if b then c₁ else c₂ end, s) ⇒ conf)
     = (b s ∧ conf = (c₁, s) ∨ b s = false ∧ conf = (c₂, s)) :=
   propext {
-    mp := λ hmp => match hb: b s with
+    mp := λ hmp ↦ match hb: b s with
       | false => match hmp with | step.ifₛ => Or.inr ⟨rfl, hb ▸ rfl⟩
       | true => match hmp with | step.ifₛ => Or.inl ⟨rfl, hb ▸ rfl⟩,
-    mpr := λ hmpr =>
+    mpr := λ hmpr ↦
       let hss: conf = (bif b s then c₁ else c₂, s) :=
         match hb: b s with
         | true => match hb ▸ hmpr with | Or.inl ⟨_, h₂⟩ => h₂
@@ -59,9 +59,9 @@ theorem cond_eq:
 theorem cond_false (hb: b s₁ = false):
   ((if b then c₁ else c₂ end, s₁) ⇒ conf) = (conf = (c₂, s₁)) :=
   propext {
-    mp := λ hmp => match hb ▸ cond_eq ▸ hmp with
+    mp := λ hmp ↦ match hb ▸ cond_eq ▸ hmp with
       | Or.inr ⟨_, h₂⟩ => h₂,
-    mpr := λ hmpr => cond_eq ▸ Or.inr ⟨hb, hmpr⟩
+    mpr := λ hmpr ↦ cond_eq ▸ Or.inr ⟨hb, hmpr⟩
   }
 
 infixl:10 " ⇒* " => RTL step
@@ -74,7 +74,7 @@ theorem star.demo₂:
 theorem star.cat_skip_cat
   (hc₁: (c₁, s₁) ⇒* (skip₁, s₂)):
   (c₁++c₂, s₁) ⇒* (skip₁++c₂, s₂) :=
-  RTL.lift (λ (c₁, s) => (c₁++c₂, s)) (λ _ _ h => step.catₙₛ h) hc₁
+  RTL.lift (λ (c₁, s) ↦ (c₁++c₂, s)) (λ h ↦ step.catₙₛ h) hc₁
 
 theorem star.cat
   (hc₁: (c₁, s₁) ⇒* (skip₁, s₂))

@@ -19,11 +19,11 @@ private inductive step: Bexp × State → Bool → Prop
 infix:10 " ⟹ₗ " => step
 
 private instance step.equiv: Setoid Bexp where
-  r b₁ b₂ := ∀s n, ((b₁, s) ⟹ₗ n) = ((b₂, s) ⟹ₗ n)
+  r b₁ b₂ := ∀{s n}, ((b₁, s) ⟹ₗ n) = ((b₂, s) ⟹ₗ n)
   iseqv := {
-    refl := λ _ _ _ => rfl
-    symm := λ h s n => (h s n).symm
-    trans := λ h₁ h₂ s n => (h₁ s n) ▸ (h₂ s n)
+    refl := λ _ => rfl
+    symm := λ h => h.symm
+    trans := λ h₁ h₂ => h₁ ▸ h₂
   }
 
 end Natural
@@ -42,11 +42,11 @@ def reduce (b: Bexp) (s: State): Bool :=
 instance: CoeFun Bexp (λ _ => State → Bool) := ⟨reduce⟩
 
 instance reduce.equiv: Setoid Bexp where
-  r b₁ b₂:= ∀s, b₁ s = b₂ s
+  r b₁ b₂:= ∀{s}, b₁ s = b₂ s
   iseqv := {
-    refl := λ _ _ => rfl
-    symm := λ h s => (h s).symm
-    trans := λ h₁ h₂ s => (h₁ s) ▸ (h₂ s)
+    refl := λ _ => rfl
+    symm := λ h => h.symm
+    trans := λ h₁ h₂ => h₁ ▸ h₂
   }
 
 section Equivalence
@@ -89,14 +89,12 @@ private theorem step_eq_eq_reduce_eq:
   Natural.step.equiv.r b₁ b₂ ↔ reduce.equiv.r b₁ b₂ := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
-  . intro h s
-    exact (step_eq_reduce ▸ h s (b₂ s)).mpr $ step_eq_reduce.mpr rfl
-  . intro h s _
-    constructor
-    . intro h1
-      exact ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'
-    . intro h1
-      exact ((h s) ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'
+  . exact λ h ↦ (step_eq_reduce ▸ h).mpr $ step_eq_reduce.mpr rfl
+  . exact λ h ↦
+    {
+      mp := λ h1 ↦ (h ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce',
+      mpr := λ h1 ↦ (h ▸ (step_eq_reduce ▸ h1)) ▸ step_eq_reduce'
+    }
 
 end Equivalence
 

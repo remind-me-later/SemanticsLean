@@ -16,11 +16,11 @@ private inductive step: Aexp × State → Int → Prop
 infix:10 " ⟹ₐ " => step
 
 private instance step.equiv: Setoid Aexp where
-  r a₁ a₂ := ∀s n, ((a₁, s) ⟹ₐ n) = ((a₂, s) ⟹ₐ n)
+  r a₁ a₂ := ∀{s n}, ((a₁, s) ⟹ₐ n) = ((a₂, s) ⟹ₐ n)
   iseqv := {
-    refl := λ _ _ _ => rfl
-    symm := λ h s n => (h s n).symm
-    trans := λ h₁ h₂ s n => (h₁ s n) ▸ (h₂ s n)
+    refl := λ _ ↦ rfl
+    symm := λ h ↦ h.symm
+    trans := λ h₁ h₂ ↦ h₁ ▸ h₂
   }
 
 end Natural
@@ -33,14 +33,14 @@ def reduce (a: Aexp) (s: State): Int :=
   | sub₁ a₁ a₂ => a₁.reduce s - a₂.reduce s
   | mul₁ a₁ a₂ => a₁.reduce s * a₂.reduce s
 
-instance: CoeFun Aexp (λ _ => State → Int) := ⟨reduce⟩
+instance: CoeFun Aexp (λ _ ↦ State → Int) := ⟨reduce⟩
 
 instance reduce.equiv: Setoid Aexp where
-  r a₁ a₂ := ∀s, a₁ s = a₂ s
+  r a₁ a₂ := ∀{s}, a₁ s = a₂ s
   iseqv := {
-    refl := λ _ _ => rfl
-    symm := λ h s => (h s).symm
-    trans := λ h₁ h₂ s => (h₁ s) ▸ (h₂ s)
+    refl := λ _ => rfl
+    symm := λ h => h.symm
+    trans := λ h₁ h₂ => h₁ ▸ h₂
   }
 
 section Equivalence
@@ -79,12 +79,12 @@ private theorem step_eq_eq_reduce_eq:
   simp only [Setoid.r, eq_iff_iff]
   constructor
   . intro h s
-    specialize h s (a₂ s)
+    specialize @h s (a₂ s)
     rw [step_eq_reduce, step_eq_reduce, eq_self, iff_true] at h
     exact h
   . intro h s _
     rw [step_eq_reduce, step_eq_reduce]
-    specialize h s
+    specialize @h s
     rw [h]
 
 end Equivalence

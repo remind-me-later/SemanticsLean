@@ -56,37 +56,37 @@ private example:
 theorem skip_eq:
   ((skip₁, s₁) ⟹ s₂) = (s₁ = s₂) :=
   propext {
-    mp := λ (step.skipₙ) => rfl,
+    mp := λ (step.skipₙ) ↦ rfl,
     mpr := (· ▸ step.skipₙ)
   }
 
 theorem cat_eq:
   ((c₁++c₂, s₁) ⟹ s₃) = ∃s₂, ((c₁, s₁) ⟹ s₂) ∧ ((c₂, s₂) ⟹ s₃) :=
   propext {
-    mp := λ (step.catₙ s₂ h₁ h₂) => ⟨s₂, h₁, h₂⟩,
-    mpr := λ ⟨s₂, h₁, h₂⟩ => step.catₙ s₂ h₁ h₂
+    mp := λ (step.catₙ s₂ h₁ h₂) ↦ ⟨s₂, h₁, h₂⟩,
+    mpr := λ ⟨s₂, h₁, h₂⟩ ↦ step.catₙ s₂ h₁ h₂
   }
 
 theorem if_eq:
   ((if b then c₁ else c₂ end, s₁) ⟹ s₂)
     = bif b s₁ then (c₁, s₁) ⟹ s₂ else (c₂, s₁) ⟹ s₂ :=
   propext {
-    mp := λ hmp => match hmp with
+    mp := λ hmp ↦ match hmp with
       | step.if₁ₙ hb h | step.if₀ₙ hb h => hb ▸ h,
     mpr := match hb: b s₁ with
-      | true => λ hmp => step.if₁ₙ hb hmp
-      | false => λ hmp => step.if₀ₙ hb hmp
+      | true => λ hmp ↦ step.if₁ₙ hb hmp
+      | false => λ hmp ↦ step.if₀ₙ hb hmp
   }
 
 theorem if_eq':
   ((if b then c₁ else c₂ end, s₁) ⟹ s₂)
     = ((bif b s₁ then c₁ else c₂, s₁) ⟹ s₂) :=
   propext {
-    mp := λ hmp => match hmp with
+    mp := λ hmp ↦ match hmp with
       | step.if₁ₙ hb h | step.if₀ₙ hb h => hb ▸ h,
     mpr := match hb: b s₁ with
-      | true => λ hmp => step.if₁ₙ hb hmp
-      | false => λ hmp => step.if₀ₙ hb hmp
+      | true => λ hmp ↦ step.if₁ₙ hb hmp
+      | false => λ hmp ↦ step.if₀ₙ hb hmp
   }
 
 theorem while_eq:
@@ -96,12 +96,12 @@ theorem while_eq:
     else
       s₁ = s₃ :=
   propext {
-    mp := λ hmp => match hmp with
+    mp := λ hmp ↦ match hmp with
       | step.while₁ₙ s₂ hb hc hw => hb ▸ ⟨s₂, hc, hw⟩
       | step.while₀ₙ hb => hb ▸ rfl,
     mpr := match hb: b s₁ with
-      | true => λ ⟨s₂, h₁, h₂⟩ => step.while₁ₙ s₂ hb h₁ h₂
-      | false => λ hmp => hmp ▸ step.while₀ₙ hb
+      | true => λ ⟨s₂, h₁, h₂⟩ ↦ step.while₁ₙ s₂ hb h₁ h₂
+      | false => λ hmp ↦ hmp ▸ step.while₀ₙ hb
   }
 
 /-
@@ -109,25 +109,25 @@ theorem while_eq:
 -/
 
 instance equiv: Setoid Com where
-  r c₁ c₂ := ∀s₁ s₂, ((c₁, s₁) ⟹ s₂) ↔ ((c₂, s₁) ⟹ s₂)
+  r c₁ c₂ := ∀{s₁ s₂: State}, ((c₁, s₁) ⟹ s₂) ↔ ((c₂, s₁) ⟹ s₂)
   iseqv := {
-    refl := λ _ _ _ => Iff.rfl
-    symm := (Iff.symm $ · · ·)
-    trans := λ h1 h2 x n => Iff.trans (h1 x n) (h2 x n)
+    refl := λ _ _ _ ↦ Iff.rfl
+    symm := λ h ↦ Iff.symm h
+    trans := λ h1 h2 ↦ Iff.trans h1 h2
   }
 
 theorem skipl:
   (skip₁++c) ≈ c :=
-  λ _ _ => {
-    mp := λ (step.catₙ _ hc hd) => skip_eq.mp hc ▸ hd,
-    mpr := λ h => step.catₙ _ step.skipₙ h
+  {
+    mp := λ (step.catₙ _ hc hd) ↦ skip_eq.mp hc ▸ hd,
+    mpr := λ h ↦ step.catₙ _ step.skipₙ h
   }
 
 theorem skipr:
   (c++skip₁) ≈ c :=
-  λ _ _ => {
-    mp := λ (step.catₙ _ hc hd) => skip_eq.mp hd ▸ hc,
-    mpr := λ h => step.catₙ _ h step.skipₙ
+  {
+    mp := λ (step.catₙ _ hc hd) ↦ skip_eq.mp hd ▸ hc,
+    mpr := λ h ↦ step.catₙ _ h step.skipₙ
   }
 
 theorem cond_true (hb: b ≈ Bexp.true₁):

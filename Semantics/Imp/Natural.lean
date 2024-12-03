@@ -3,33 +3,33 @@ import Semantics.Imp.Bexp
 namespace Com
 namespace Natural
 
-inductive step: Config → State → Prop
+inductive big_step: Config → State → Prop
   | skipₙ:
-    step (skip₁, s) s
+    big_step (skip₁, s) s
 
   | assₙ:
-    step (ass₁ v a, s) (s[v ← a s])
+    big_step (ass₁ v a, s) (s[v ← a s])
 
-  | catₙ (s₂: State) (hc₁: step (c₁, s₁) s₂) (hc₂: step (c₂, s₂) s₃):
-    step (c₁++c₂, s₁) s₃
+  | catₙ (s₂: State) (hc₁: big_step (c₁, s₁) s₂) (hc₂: big_step (c₂, s₂) s₃):
+    big_step (c₁++c₂, s₁) s₃
 
-  | if₀ₙ (hb: b s₁ = false) (hc₂: step (c₂, s₁) s₂):
-    step (if b then c₁ else c₂ end, s₁) s₂
+  | if₀ₙ (hb: b s₁ = false) (hc₂: big_step (c₂, s₁) s₂):
+    big_step (if b then c₁ else c₂ end, s₁) s₂
 
-  | if₁ₙ (hb: b s₁ = true) (hc₁: step (c₁, s₁) s₂):
-    step (if b then c₁ else c₂ end, s₁) s₂
+  | if₁ₙ (hb: b s₁ = true) (hc₁: big_step (c₁, s₁) s₂):
+    big_step (if b then c₁ else c₂ end, s₁) s₂
 
   | while₀ₙ (hb: b s₁ = false):
-    step (while b loop c end, s₁) s₁
+    big_step (while b loop c end, s₁) s₁
 
   | while₁ₙ
-    (s₂: State) (hb: b s₁ = true) (hc: step (c, s₁) s₂)
-    (hw: step (while b loop c end, s₂) s₃):
-    step (while b loop c end, s₁) s₃
+    (s₂: State) (hb: b s₁ = true) (hc: big_step (c, s₁) s₂)
+    (hw: big_step (while b loop c end, s₂) s₃):
+    big_step (while b loop c end, s₁) s₃
 
-infix:10 " ==>ₙ " => step
+infix:10 " ==>ₙ " => big_step
 
-private example:  ([|x := 5|], s₀) ==>ₙ s₀["x" ← 5] := step.assₙ
+private example:  ([|x := 5|], s₀) ==>ₙ s₀["x" ← 5] := big_step.assₙ
 
 private example:
    ([|
@@ -41,13 +41,13 @@ private example:
       end
     |], s₀)
     ==>ₙ s₀["x" ← 2]["z" ← 4] :=
-    step.catₙ _ step.assₙ $ step.if₀ₙ rfl step.assₙ
+    big_step.catₙ _ big_step.assₙ $ big_step.if₀ₙ rfl big_step.assₙ
 
 private example:
   ([| x := 2; x := 3|], s₀) ==>ₙ s₀["x" ← 3] :=
   let h1: s₀["x" ← 3] = s₀["x" ← 2]["x" ← 3] :=
     Map.eval_last.symm
-  h1 ▸ step.catₙ _ step.assₙ step.assₙ
+  h1 ▸ big_step.catₙ _ big_step.assₙ big_step.assₙ
 
 /-
 ## Rewriting rules
@@ -56,15 +56,15 @@ private example:
 theorem skip_eq:
   ((skip₁, s₁) ==>ₙ s₂) = (s₁ = s₂) :=
   propext {
-    mp := λ (step.skipₙ) ↦ rfl,
-    mpr := (· ▸ step.skipₙ)
+    mp := λ (big_step.skipₙ) ↦ rfl,
+    mpr := (· ▸ big_step.skipₙ)
   }
 
 theorem cat_eq:
   ((c₁++c₂, s₁) ==>ₙ s₃) = ∃s₂, ((c₁, s₁) ==>ₙ s₂) ∧ ((c₂, s₂) ==>ₙ s₃) :=
   propext {
-    mp := λ (step.catₙ s₂ h₁ h₂) ↦ ⟨s₂, h₁, h₂⟩,
-    mpr := λ ⟨s₂, h₁, h₂⟩ ↦ step.catₙ s₂ h₁ h₂
+    mp := λ (big_step.catₙ s₂ h₁ h₂) ↦ ⟨s₂, h₁, h₂⟩,
+    mpr := λ ⟨s₂, h₁, h₂⟩ ↦ big_step.catₙ s₂ h₁ h₂
   }
 
 theorem if_eq:
@@ -72,10 +72,10 @@ theorem if_eq:
     = bif b s₁ then (c₁, s₁) ==>ₙ s₂ else (c₂, s₁) ==>ₙ s₂ :=
   propext {
     mp := λ hmp ↦ match hmp with
-      | step.if₁ₙ hb h | step.if₀ₙ hb h => hb ▸ h,
+      | big_step.if₁ₙ hb h | big_step.if₀ₙ hb h => hb ▸ h,
     mpr := match hb: b s₁ with
-      | true => λ hmp ↦ step.if₁ₙ hb hmp
-      | false => λ hmp ↦ step.if₀ₙ hb hmp
+      | true => λ hmp ↦ big_step.if₁ₙ hb hmp
+      | false => λ hmp ↦ big_step.if₀ₙ hb hmp
   }
 
 theorem if_eq':
@@ -83,10 +83,10 @@ theorem if_eq':
     = ((bif b s₁ then c₁ else c₂, s₁) ==>ₙ s₂) :=
   propext {
     mp := λ hmp ↦ match hmp with
-      | step.if₁ₙ hb h | step.if₀ₙ hb h => hb ▸ h,
+      | big_step.if₁ₙ hb h | big_step.if₀ₙ hb h => hb ▸ h,
     mpr := match hb: b s₁ with
-      | true => λ hmp ↦ step.if₁ₙ hb hmp
-      | false => λ hmp ↦ step.if₀ₙ hb hmp
+      | true => λ hmp ↦ big_step.if₁ₙ hb hmp
+      | false => λ hmp ↦ big_step.if₀ₙ hb hmp
   }
 
 theorem while_eq:
@@ -97,11 +97,11 @@ theorem while_eq:
       s₁ = s₃ :=
   propext {
     mp := λ hmp ↦ match hmp with
-      | step.while₁ₙ s₂ hb hc hw => hb ▸ ⟨s₂, hc, hw⟩
-      | step.while₀ₙ hb => hb ▸ rfl,
+      | big_step.while₁ₙ s₂ hb hc hw => hb ▸ ⟨s₂, hc, hw⟩
+      | big_step.while₀ₙ hb => hb ▸ rfl,
     mpr := match hb: b s₁ with
-      | true => λ ⟨s₂, h₁, h₂⟩ ↦ step.while₁ₙ s₂ hb h₁ h₂
-      | false => λ hmp ↦ hmp ▸ step.while₀ₙ hb
+      | true => λ ⟨s₂, h₁, h₂⟩ ↦ big_step.while₁ₙ s₂ hb h₁ h₂
+      | false => λ hmp ↦ hmp ▸ big_step.while₀ₙ hb
   }
 
 /-
@@ -119,15 +119,15 @@ instance equiv: Setoid Com where
 theorem skipl:
   (skip₁++c) ≈ c :=
   {
-    mp := λ (step.catₙ _ hc hd) ↦ skip_eq.mp hc ▸ hd,
-    mpr := λ h ↦ step.catₙ _ step.skipₙ h
+    mp := λ (big_step.catₙ _ hc hd) ↦ skip_eq.mp hc ▸ hd,
+    mpr := λ h ↦ big_step.catₙ _ big_step.skipₙ h
   }
 
 theorem skipr:
   (c++skip₁) ≈ c :=
   {
-    mp := λ (step.catₙ _ hc hd) ↦ skip_eq.mp hd ▸ hc,
-    mpr := λ h ↦ step.catₙ _ h step.skipₙ
+    mp := λ (big_step.catₙ _ hc hd) ↦ skip_eq.mp hd ▸ hc,
+    mpr := λ h ↦ big_step.catₙ _ h big_step.skipₙ
   }
 
 theorem cond_true (hb: b ≈ Bexp.true₁):
@@ -150,15 +150,15 @@ theorem loop_unfold:
   constructor
   . intro hmp
     match hmp with
-    | step.while₁ₙ s₂ hb hc hw => exact hb ▸ step.catₙ s₂ hc hw
-    | step.while₀ₙ hb => exact hb ▸ step.skipₙ
+    | big_step.while₁ₙ s₂ hb hc hw => exact hb ▸ big_step.catₙ s₂ hc hw
+    | big_step.while₀ₙ hb => exact hb ▸ big_step.skipₙ
   . match hb: b s₁ with
     | false =>
-      intro (step.skipₙ)
-      exact step.while₀ₙ hb
+      intro (big_step.skipₙ)
+      exact big_step.while₀ₙ hb
     | true =>
-      intro (step.catₙ s₂ hc hw)
-      exact step.while₁ₙ s₂ hb hc hw
+      intro (big_step.catₙ s₂ hc hw)
+      exact big_step.while₁ₙ s₂ hb hc hw
 
 /-
 ## Non termination
@@ -188,39 +188,39 @@ theorem loop_tt (htrue: b ≈ Bexp.true₁):
 theorem deterministic
   (hps₁: conf ==>ₙ s₁) (hps₂: conf ==>ₙ s₂): s₁ = s₂ :=
   by induction hps₁ generalizing s₂ with
-  | skipₙ => match hps₂ with | step.skipₙ => rfl
-  | assₙ => match hps₂ with | step.assₙ => rfl
+  | skipₙ => match hps₂ with | big_step.skipₙ => rfl
+  | assₙ => match hps₂ with | big_step.assₙ => rfl
   | catₙ _ _ _ ihc₁ ihc₂ =>
     match hps₂ with
-    | step.catₙ _ hc₁ hc₂ =>
+    | big_step.catₙ _ hc₁ hc₂ =>
       exact ihc₂ (ihc₁ hc₁ ▸ hc₂)
   | if₁ₙ hb _ ihc₁ =>
     match hps₂ with
-    | step.if₁ₙ _ hc₁ =>
+    | big_step.if₁ₙ _ hc₁ =>
       exact ihc₁ hc₁
-    | step.if₀ₙ hb₁ _ =>
+    | big_step.if₀ₙ hb₁ _ =>
       rw [hb] at hb₁
       contradiction
   | if₀ₙ hb _ ihc₂ =>
     match hps₂ with
-    | step.if₁ₙ hb₁ _ =>
+    | big_step.if₁ₙ hb₁ _ =>
       rw [hb] at hb₁
       contradiction
-    | step.if₀ₙ _ hd =>
+    | big_step.if₀ₙ _ hd =>
       exact ihc₂ hd
   | while₁ₙ _ hb _ _ ihc ihw =>
     match hps₂ with
-    | step.while₁ₙ _ _ hc hw =>
+    | big_step.while₁ₙ _ _ hc hw =>
       exact ihw (ihc hc ▸ hw)
-    | step.while₀ₙ hb₁ =>
+    | big_step.while₀ₙ hb₁ =>
       rw [hb] at hb₁
       contradiction
   | while₀ₙ hb =>
     match hps₂ with
-    | step.while₁ₙ _ hb₁ _ _ =>
+    | big_step.while₁ₙ _ hb₁ _ _ =>
       rw [hb] at hb₁
       contradiction
-    | step.while₀ₙ _ => rfl
+    | big_step.while₀ₙ _ => rfl
 
 end Natural
 end Com

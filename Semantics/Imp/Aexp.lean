@@ -3,19 +3,19 @@ import Semantics.Imp.Lang
 namespace Aexp
 namespace Natural
 
-private inductive step: Aexp × State → Int → Prop
-  | valₙ: step (val₁ n, _) n
-  | varₙ: step (var₁ v, s) (s v)
-  | addₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
-    step (a₁ + a₂, s) (n₁ + n₂)
-  | subₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
-    step (a₁ - a₂, s) (n₁ - n₂)
-  | mulₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
-    step (a₁ * a₂, s) (n₁ * n₂)
+private inductive big_step: Aexp × State → Int → Prop
+  | valₙ: big_step (val₁ n, _) n
+  | varₙ: big_step (var₁ v, s) (s v)
+  | addₙ (ha₁: big_step (a₁, s) n₁) (ha₂: big_step (a₂, s) n₂):
+    big_step (a₁ + a₂, s) (n₁ + n₂)
+  | subₙ (ha₁: big_step (a₁, s) n₁) (ha₂: big_step (a₂, s) n₂):
+    big_step (a₁ - a₂, s) (n₁ - n₂)
+  | mulₙ (ha₁: big_step (a₁, s) n₁) (ha₂: big_step (a₂, s) n₂):
+    big_step (a₁ * a₂, s) (n₁ * n₂)
 
-infix:10 " ==>ₐ " => step
+infix:10 " ==>ₐ " => big_step
 
-private instance step.equiv: Setoid Aexp where
+private instance big_step.equiv: Setoid Aexp where
   r a₁ a₂ := ∀{s n}, ((a₁, s) ==>ₐ n) = ((a₂, s) ==>ₐ n)
   iseqv := {
     refl := λ _ ↦ rfl
@@ -47,8 +47,8 @@ section Equivalence
 
 -- relational definition is equal to recursive
 private theorem reduce.from_natural
-  (hstep: conf ==>ₐ n): conf.1 conf.2 = n :=
-  by induction hstep with
+  (hbig_step: conf ==>ₐ n): conf.1 conf.2 = n :=
+  by induction hbig_step with
   | addₙ _ _ iha₁ iha₂ => exact iha₁ ▸ iha₂ ▸ rfl
   | subₙ _ _ iha₁ iha₂ => exact iha₁ ▸ iha₂ ▸ rfl
   | mulₙ _ _ iha₁ iha₂ => exact iha₁ ▸ iha₂ ▸ rfl
@@ -57,33 +57,33 @@ private theorem reduce.from_natural
 private theorem Natural.from_reduce
   (hred: a s = n): (a, s) ==>ₐ n :=
   by induction a generalizing n with
-  | val₁ a => exact hred ▸ step.valₙ
-  | var₁ a => exact hred ▸ step.varₙ
+  | val₁ a => exact hred ▸ big_step.valₙ
+  | var₁ a => exact hred ▸ big_step.varₙ
   | add₁ a₁ a₂ iha₁ iha₂ =>
-    exact hred ▸ step.addₙ (iha₁ rfl) (iha₂ rfl)
+    exact hred ▸ big_step.addₙ (iha₁ rfl) (iha₂ rfl)
   | sub₁ a₁ a₂ iha₁ iha₂ =>
-    exact hred ▸ step.subₙ (iha₁ rfl) (iha₂ rfl)
+    exact hred ▸ big_step.subₙ (iha₁ rfl) (iha₂ rfl)
   | mul₁ a₁ a₂ iha₁ iha₂ =>
-    exact hred ▸ step.mulₙ (iha₁ rfl) (iha₂ rfl)
+    exact hred ▸ big_step.mulₙ (iha₁ rfl) (iha₂ rfl)
 
-private theorem step_eq_reduce:
+private theorem big_step_eq_reduce:
   ((a, s) ==>ₐ n) = (a s = n) :=
   propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
-private theorem step_eq_reduce':
+private theorem big_step_eq_reduce':
   (a, s) ==>ₐ a s :=
   Natural.from_reduce rfl
 
-private theorem step_eq_eq_reduce_eq:
-  Natural.step.equiv.r a₁ a₂ ↔ reduce.equiv.r a₁ a₂ := by
+private theorem big_step_eq_eq_reduce_eq:
+  Natural.big_step.equiv.r a₁ a₂ ↔ reduce.equiv.r a₁ a₂ := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
   . intro h s
     specialize @h s (a₂ s)
-    rw [step_eq_reduce, step_eq_reduce, eq_self, iff_true] at h
+    rw [big_step_eq_reduce, big_step_eq_reduce, eq_self, iff_true] at h
     exact h
   . intro h s _
-    rw [step_eq_reduce, step_eq_reduce]
+    rw [big_step_eq_reduce, big_step_eq_reduce]
     specialize @h s
     rw [h]
 

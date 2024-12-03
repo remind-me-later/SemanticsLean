@@ -74,8 +74,8 @@ theorem if_eq:
     mp := λ hmp ↦ match hmp with
       | big_step.if₁ₙ hb h | big_step.if₀ₙ hb h => hb ▸ h,
     mpr := match hb: b s₁ with
-      | true => λ hmp ↦ big_step.if₁ₙ hb hmp
-      | false => λ hmp ↦ big_step.if₀ₙ hb hmp
+      | true => (big_step.if₁ₙ hb ·)
+      | false => (big_step.if₀ₙ hb ·)
   }
 
 theorem if_eq':
@@ -85,8 +85,8 @@ theorem if_eq':
     mp := λ hmp ↦ match hmp with
       | big_step.if₁ₙ hb h | big_step.if₀ₙ hb h => hb ▸ h,
     mpr := match hb: b s₁ with
-      | true => λ hmp ↦ big_step.if₁ₙ hb hmp
-      | false => λ hmp ↦ big_step.if₀ₙ hb hmp
+      | true => (big_step.if₁ₙ hb ·)
+      | false => (big_step.if₀ₙ hb ·)
   }
 
 theorem while_eq:
@@ -101,7 +101,7 @@ theorem while_eq:
       | big_step.while₀ₙ hb => hb ▸ rfl,
     mpr := match hb: b s₁ with
       | true => λ ⟨s₂, h₁, h₂⟩ ↦ big_step.while₁ₙ s₂ hb h₁ h₂
-      | false => λ hmp ↦ hmp ▸ big_step.while₀ₙ hb
+      | false => (· ▸ big_step.while₀ₙ hb)
   }
 
 /-
@@ -111,23 +111,23 @@ theorem while_eq:
 instance equiv: Setoid Com where
   r c₁ c₂ := ∀{s₁ s₂: State}, ((c₁, s₁) ==>ₙ s₂) ↔ ((c₂, s₁) ==>ₙ s₂)
   iseqv := {
-    refl := λ _ _ _ ↦ Iff.rfl
-    symm := λ h ↦ Iff.symm h
-    trans := λ h1 h2 ↦ Iff.trans h1 h2
+    refl := λ _ ↦ Iff.rfl
+    symm := (·.symm)
+    trans := λ h1 h2 ↦ h1.trans h2
   }
 
 theorem skipl:
   (skip₁++c) ≈ c :=
   {
     mp := λ (big_step.catₙ _ hc hd) ↦ skip_eq.mp hc ▸ hd,
-    mpr := λ h ↦ big_step.catₙ _ big_step.skipₙ h
+    mpr := (big_step.catₙ _ big_step.skipₙ ·)
   }
 
 theorem skipr:
   (c++skip₁) ≈ c :=
   {
     mp := λ (big_step.catₙ _ hc hd) ↦ skip_eq.mp hd ▸ hc,
-    mpr := λ h ↦ big_step.catₙ _ h big_step.skipₙ
+    mpr := (big_step.catₙ _ · big_step.skipₙ)
   }
 
 theorem cond_true (hb: b ≈ Bexp.true₁):

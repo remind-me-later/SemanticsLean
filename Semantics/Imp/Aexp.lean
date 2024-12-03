@@ -19,8 +19,8 @@ private instance big_step.equiv: Setoid Aexp where
   r a₁ a₂ := ∀{s n}, ((a₁, s) ==>ₐ n) = ((a₂, s) ==>ₐ n)
   iseqv := {
     refl := λ _ ↦ rfl
-    symm := λ h ↦ h.symm
-    trans := λ h₁ h₂ ↦ h₁ ▸ h₂
+    symm := (·.symm)
+    trans := (· ▸ ·)
   }
 
 end Natural

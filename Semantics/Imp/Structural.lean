@@ -61,7 +61,7 @@ theorem cond_false (hb: b s₁ = false):
   propext {
     mp := λ hmp ↦ match hb ▸ cond_eq ▸ hmp with
       | Or.inr ⟨_, h₂⟩ => h₂,
-    mpr := λ hmpr ↦ cond_eq ▸ Or.inr ⟨hb, hmpr⟩
+    mpr := (cond_eq ▸ Or.inr ⟨hb, ·⟩)
   }
 
 infixl:10 " =>ₛ* " => RTL small_step

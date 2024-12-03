@@ -20,7 +20,7 @@ inductive Aexp where
 instance: OfNat Aexp n := ⟨Aexp.val₁ n⟩
 instance: Add Aexp := ⟨Aexp.add₁⟩
 instance: Sub Aexp := ⟨Aexp.sub₁⟩
-instance: Neg Aexp := ⟨λ a => Aexp.sub₁ 0 a⟩
+instance: Neg Aexp := ⟨(Aexp.sub₁ 0 ·)⟩
 instance: Mul Aexp := ⟨Aexp.mul₁⟩
 
 -- x + 3

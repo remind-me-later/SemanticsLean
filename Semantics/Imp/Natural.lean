@@ -27,9 +27,9 @@ inductive step: Config → State → Prop
     (hw: step (while b loop c end, s₂) s₃):
     step (while b loop c end, s₁) s₃
 
-infix:10 " ⟹ " => step
+infix:10 " ==>ₙ " => step
 
-private example:  ([|x := 5|], s₀) ⟹ s₀["x" ← 5] := step.assₙ
+private example:  ([|x := 5|], s₀) ==>ₙ s₀["x" ← 5] := step.assₙ
 
 private example:
    ([|
@@ -40,11 +40,11 @@ private example:
         z := 4
       end
     |], s₀)
-    ⟹ s₀["x" ← 2]["z" ← 4] :=
+    ==>ₙ s₀["x" ← 2]["z" ← 4] :=
     step.catₙ _ step.assₙ $ step.if₀ₙ rfl step.assₙ
 
 private example:
-  ([| x := 2; x := 3|], s₀) ⟹ s₀["x" ← 3] :=
+  ([| x := 2; x := 3|], s₀) ==>ₙ s₀["x" ← 3] :=
   let h1: s₀["x" ← 3] = s₀["x" ← 2]["x" ← 3] :=
     Map.eval_last.symm
   h1 ▸ step.catₙ _ step.assₙ step.assₙ
@@ -54,22 +54,22 @@ private example:
 -/
 
 theorem skip_eq:
-  ((skip₁, s₁) ⟹ s₂) = (s₁ = s₂) :=
+  ((skip₁, s₁) ==>ₙ s₂) = (s₁ = s₂) :=
   propext {
     mp := λ (step.skipₙ) ↦ rfl,
     mpr := (· ▸ step.skipₙ)
   }
 
 theorem cat_eq:
-  ((c₁++c₂, s₁) ⟹ s₃) = ∃s₂, ((c₁, s₁) ⟹ s₂) ∧ ((c₂, s₂) ⟹ s₃) :=
+  ((c₁++c₂, s₁) ==>ₙ s₃) = ∃s₂, ((c₁, s₁) ==>ₙ s₂) ∧ ((c₂, s₂) ==>ₙ s₃) :=
   propext {
     mp := λ (step.catₙ s₂ h₁ h₂) ↦ ⟨s₂, h₁, h₂⟩,
     mpr := λ ⟨s₂, h₁, h₂⟩ ↦ step.catₙ s₂ h₁ h₂
   }
 
 theorem if_eq:
-  ((if b then c₁ else c₂ end, s₁) ⟹ s₂)
-    = bif b s₁ then (c₁, s₁) ⟹ s₂ else (c₂, s₁) ⟹ s₂ :=
+  ((if b then c₁ else c₂ end, s₁) ==>ₙ s₂)
+    = bif b s₁ then (c₁, s₁) ==>ₙ s₂ else (c₂, s₁) ==>ₙ s₂ :=
   propext {
     mp := λ hmp ↦ match hmp with
       | step.if₁ₙ hb h | step.if₀ₙ hb h => hb ▸ h,
@@ -79,8 +79,8 @@ theorem if_eq:
   }
 
 theorem if_eq':
-  ((if b then c₁ else c₂ end, s₁) ⟹ s₂)
-    = ((bif b s₁ then c₁ else c₂, s₁) ⟹ s₂) :=
+  ((if b then c₁ else c₂ end, s₁) ==>ₙ s₂)
+    = ((bif b s₁ then c₁ else c₂, s₁) ==>ₙ s₂) :=
   propext {
     mp := λ hmp ↦ match hmp with
       | step.if₁ₙ hb h | step.if₀ₙ hb h => hb ▸ h,
@@ -90,9 +90,9 @@ theorem if_eq':
   }
 
 theorem while_eq:
-  ((while b loop c end, s₁) ⟹ s₃) =
+  ((while b loop c end, s₁) ==>ₙ s₃) =
     bif b s₁ then
-      ∃s₂, ((c, s₁) ⟹ s₂) ∧ ((while b loop c end, s₂) ⟹ s₃)
+      ∃s₂, ((c, s₁) ==>ₙ s₂) ∧ ((while b loop c end, s₂) ==>ₙ s₃)
     else
       s₁ = s₃ :=
   propext {
@@ -109,7 +109,7 @@ theorem while_eq:
 -/
 
 instance equiv: Setoid Com where
-  r c₁ c₂ := ∀{s₁ s₂: State}, ((c₁, s₁) ⟹ s₂) ↔ ((c₂, s₁) ⟹ s₂)
+  r c₁ c₂ := ∀{s₁ s₂: State}, ((c₁, s₁) ==>ₙ s₂) ↔ ((c₂, s₁) ==>ₙ s₂)
   iseqv := {
     refl := λ _ _ _ ↦ Iff.rfl
     symm := λ h ↦ Iff.symm h
@@ -165,7 +165,7 @@ theorem loop_unfold:
 -/
 
 theorem loop_tt (htrue: b ≈ Bexp.true₁):
-  ¬((while b loop c end, s) ⟹ t) := by
+  ¬((while b loop c end, s) ==>ₙ t) := by
   intro hmp
   generalize hconf: (while b loop c end, s) = conf at hmp
   induction hmp generalizing s with
@@ -186,7 +186,7 @@ theorem loop_tt (htrue: b ≈ Bexp.true₁):
 -/
 
 theorem deterministic
-  (hps₁: conf ⟹ s₁) (hps₂: conf ⟹ s₂): s₁ = s₂ :=
+  (hps₁: conf ==>ₙ s₁) (hps₂: conf ==>ₙ s₂): s₁ = s₂ :=
   by induction hps₁ generalizing s₂ with
   | skipₙ => match hps₂ with | step.skipₙ => rfl
   | assₙ => match hps₂ with | step.assₙ => rfl

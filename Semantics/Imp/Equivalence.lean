@@ -5,7 +5,7 @@ import Semantics.Imp.Denotational
 namespace Com
 
 theorem Structural.from_natural
-  (hconf: conf ⟹ s₂): conf ⇒* (skip₁, s₂) := by
+  (hconf: conf ==>ₙ s₂): conf =>ₛ* (skip₁, s₂) := by
   induction hconf with
   | skipₙ => exact RTL.refl
   | assₙ => exact RTL.single step.assₛ
@@ -18,7 +18,7 @@ theorem Structural.from_natural
     exact RTL.head step.whileₛ $ hb ▸ RTL.refl
 
 theorem Natural.from_structural_step
-  (hconf₁: conf₁ ⇒ conf₂) (hconf₂: conf₂ ⟹ s₂): conf₁ ⟹ s₂ := by
+  (hconf₁: conf₁ =>ₛ conf₂) (hconf₂: conf₂ ==>ₙ s₂): conf₁ ==>ₙ s₂ := by
   induction hconf₁ generalizing s₂ with
   | assₛ => exact (skip_eq.mp hconf₂) ▸ step.assₙ
   | cat₀ₛ => exact step.catₙ _ step.skipₙ hconf₂
@@ -29,17 +29,17 @@ theorem Natural.from_structural_step
   | whileₛ => rw [loop_unfold]; exact if_eq' ▸ hconf₂
 
 theorem Natural.from_structural
-  (hconf: conf ⇒* (skip₁, s₂)): conf ⟹ s₂ := by
+  (hconf: conf =>ₛ* (skip₁, s₂)): conf ==>ₙ s₂ := by
   induction hconf using RTL.head_induction_on with
   | refl => exact step.skipₙ
   | head hsingle _ hs₂ => exact from_structural_step hsingle hs₂
 
 theorem structural_eq_natural:
-  ((c₁, s₁) ⇒* (skip₁, s₂)) = ((c₁, s₁) ⟹ s₂) :=
+  ((c₁, s₁) =>ₛ* (skip₁, s₂)) = ((c₁, s₁) ==>ₙ s₂) :=
   propext ⟨Natural.from_structural, Structural.from_natural⟩
 
 theorem denote.from_natural
-  (hconf: conf ⟹ s₃): (conf.2, s₃) ∈ ⟦conf.1⟧ := by
+  (hconf: conf ==>ₙ s₃): (conf.2, s₃) ∈ ⟦conf.1⟧ := by
   induction hconf with
   | skipₙ => exact SFun.mem_id.mpr rfl
   | assₙ  => exact SFun.mem_id.mpr rfl
@@ -62,7 +62,7 @@ theorem denote.from_natural
       rfl
 
 theorem Natural.from_denote
-  (hmem: (s₁, s₃) ∈ ⟦c⟧): (c, s₁) ⟹ s₃ := by
+  (hmem: (s₁, s₃) ∈ ⟦c⟧): (c, s₁) ==>ₙ s₃ := by
   revert hmem
   induction c generalizing s₁ s₃ with
   | skip₁ =>
@@ -87,7 +87,7 @@ theorem Natural.from_denote
       exact step.if₀ₙ hb (ih₂ h₁)
   | while₁ b c ih =>
     suffices
-      ⟦while b loop c end⟧ ⊆ {(s₁, s₃) | (while b loop c end, s₁) ⟹ s₃} by
+      ⟦while b loop c end⟧ ⊆ {(s₁, s₃) | (while b loop c end, s₁) ==>ₙ s₃} by
       apply this
 
     apply Fix.lfp_le
@@ -100,11 +100,11 @@ theorem Natural.from_denote
       rw [SFun.mem_id] at hid
       exact hid ▸ step.while₀ₙ hb
 
-theorem natural_eq_denote: ((s₁, s₂) ∈ ⟦c⟧) = ((c, s₁) ⟹ s₂) :=
+theorem natural_eq_denote: ((s₁, s₂) ∈ ⟦c⟧) = ((c, s₁) ==>ₙ s₂) :=
   propext ⟨Natural.from_denote, denote.from_natural⟩
 
 theorem structural_eq_denote:
-  ((c, s₁) ⇒* (skip₁, s₂)) = ((s₁, s₂) ∈ ⟦c⟧) :=
+  ((c, s₁) =>ₛ* (skip₁, s₂)) = ((s₁, s₂) ∈ ⟦c⟧) :=
   by rw [structural_eq_natural, natural_eq_denote]
 
 end Com

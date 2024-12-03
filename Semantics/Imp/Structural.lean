@@ -21,16 +21,16 @@ inductive step: Config → Config → Prop where
     step (while b loop c end, s)
           (bif b s then c++while b loop c end else skip₁, s)
 
-infixl:10 " ⇒ " => step
+infixl:10 " =>ₛ " => step
 
 private example:
-  ([|x := 0; while x ≤ 2 loop x := x + 1 end|], s₀) ⇒
+  ([|x := 0; while x ≤ 2 loop x := x + 1 end|], s₀) =>ₛ
       ([|skip; while x ≤ 2 loop x := x + 1 end|], s₀["x" ← 0]) :=
   step.catₙₛ step.assₛ
 
 theorem cat_eq:
-  ((c₁++c₃, s₁) ⇒ conf)
-    = ((∃c₂ s₂, ((c₁, s₁) ⇒ (c₂, s₂)) ∧ conf = (c₂++c₃, s₂))
+  ((c₁++c₃, s₁) =>ₛ conf)
+    = ((∃c₂ s₂, ((c₁, s₁) =>ₛ (c₂, s₂)) ∧ conf = (c₂++c₃, s₂))
       ∨ (c₁ = skip₁ ∧ conf = (c₃, s₁))) :=
   propext {
     mp := λ hmp ↦ match hmp with
@@ -42,7 +42,7 @@ theorem cat_eq:
   }
 
 theorem cond_eq:
-  ((if b then c₁ else c₂ end, s) ⇒ conf)
+  ((if b then c₁ else c₂ end, s) =>ₛ conf)
     = (b s ∧ conf = (c₁, s) ∨ b s = false ∧ conf = (c₂, s)) :=
   propext {
     mp := λ hmp ↦ match hb: b s with
@@ -57,34 +57,34 @@ theorem cond_eq:
   }
 
 theorem cond_false (hb: b s₁ = false):
-  ((if b then c₁ else c₂ end, s₁) ⇒ conf) = (conf = (c₂, s₁)) :=
+  ((if b then c₁ else c₂ end, s₁) =>ₛ conf) = (conf = (c₂, s₁)) :=
   propext {
     mp := λ hmp ↦ match hb ▸ cond_eq ▸ hmp with
       | Or.inr ⟨_, h₂⟩ => h₂,
     mpr := λ hmpr ↦ cond_eq ▸ Or.inr ⟨hb, hmpr⟩
   }
 
-infixl:10 " ⇒* " => RTL step
+infixl:10 " =>ₛ* " => RTL step
 
 theorem star.demo₂:
-  ([|x := 2; while 0 ≤ x loop x := x + 1 end|], s₀) ⇒*
+  ([|x := 2; while 0 ≤ x loop x := x + 1 end|], s₀) =>ₛ*
       ([|while 0 ≤ x loop x := x + 1 end|], s₀["x" ← 2]) :=
   RTL.head (step.catₙₛ step.assₛ) (RTL.head step.cat₀ₛ RTL.refl)
 
 theorem star.cat_skip_cat
-  (hc₁: (c₁, s₁) ⇒* (skip₁, s₂)):
-  (c₁++c₂, s₁) ⇒* (skip₁++c₂, s₂) :=
+  (hc₁: (c₁, s₁) =>ₛ* (skip₁, s₂)):
+  (c₁++c₂, s₁) =>ₛ* (skip₁++c₂, s₂) :=
   RTL.lift (λ (c₁, s) ↦ (c₁++c₂, s)) (λ h ↦ step.catₙₛ h) hc₁
 
 theorem star.cat
-  (hc₁: (c₁, s₁) ⇒* (skip₁, s₂))
-  (hc₂: (c₂, s₂) ⇒* (skip₁, s₃)):
-  (c₁++c₂, s₁) ⇒* (skip₁, s₃) :=
+  (hc₁: (c₁, s₁) =>ₛ* (skip₁, s₂))
+  (hc₂: (c₂, s₂) =>ₛ* (skip₁, s₃)):
+  (c₁++c₂, s₁) =>ₛ* (skip₁, s₃) :=
   RTL.trans (cat_skip_cat hc₁) (RTL.trans (RTL.single step.cat₀ₛ) hc₂)
 
 theorem star.cat_no_influence
-  (hc₁: (c₁, s) ⇒* (skip₁, s₁)):
-  (c₁++c₂, s) ⇒* (c₂, s₁) :=
+  (hc₁: (c₁, s) =>ₛ* (skip₁, s₁)):
+  (c₁++c₂, s) =>ₛ* (c₂, s₁) :=
   RTL.trans (cat_skip_cat hc₁) (RTL.single step.cat₀ₛ)
 
 end Structural

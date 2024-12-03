@@ -16,14 +16,14 @@ private inductive step: Bexp × State → Bool → Prop
   | eqₙ: step (eq₁ a₁ a₂, s) (a₁ s == a₂ s)
   | leₙ: step (le₁ a₁ a₂, s) (a₁ s <= a₂ s)
 
-infix:10 " ⟹ₗ " => step
+infix:10 " ==>ₗ " => step
 
 private instance step.equiv: Setoid Bexp where
-  r b₁ b₂ := ∀{s n}, ((b₁, s) ⟹ₗ n) = ((b₂, s) ⟹ₗ n)
+  r b₁ b₂ := ∀{s n}, ((b₁, s) ==>ₗ n) = ((b₂, s) ==>ₗ n)
   iseqv := {
-    refl := λ _ => rfl
-    symm := λ h => h.symm
-    trans := λ h₁ h₂ => h₁ ▸ h₂
+    refl := λ _ ↦ rfl
+    symm := λ h ↦ h.symm
+    trans := λ h₁ h₂ ↦ h₁ ▸ h₂
   }
 
 end Natural
@@ -39,21 +39,21 @@ def reduce (b: Bexp) (s: State): Bool :=
   | eq₁ a₁ a₂  => a₁ s == a₂ s
   | le₁ a₁ a₂  => a₁ s <= a₂ s
 
-instance: CoeFun Bexp (λ _ => State → Bool) := ⟨reduce⟩
+instance: CoeFun Bexp (λ _ ↦ State → Bool) := ⟨reduce⟩
 
 instance reduce.equiv: Setoid Bexp where
   r b₁ b₂:= ∀{s}, b₁ s = b₂ s
   iseqv := {
-    refl := λ _ => rfl
-    symm := λ h => h.symm
-    trans := λ h₁ h₂ => h₁ ▸ h₂
+    refl := λ _ ↦ rfl
+    symm := λ h ↦ h.symm
+    trans := λ h₁ h₂ ↦ h₁ ▸ h₂
   }
 
 section Equivalence
 
 -- relational definition is equivalent to recursive
 private theorem reduce.from_natural
-  (hstep: conf ⟹ₗ x): conf.1 conf.2 = x :=
+  (hstep: conf ==>ₗ x): conf.1 conf.2 = x :=
   by induction hstep with
   | notₙ _ ih => exact ih ▸ rfl
   | andₙ _ _ ihb₁ ihb₂ | orₙ _ _ ihb₁ ihb₂ =>
@@ -61,7 +61,7 @@ private theorem reduce.from_natural
   | _ => rfl
 
 private theorem Natural.from_reduce
-  (hred: b s = x): (b, s) ⟹ₗ x :=
+  (hred: b s = x): (b, s) ==>ₗ x :=
   by induction b generalizing x with
   | true₁ => exact hred ▸ step.trueₙ
   | false₁ => exact hred ▸ step.falseₙ
@@ -74,11 +74,11 @@ private theorem Natural.from_reduce
   | le₁ => exact hred ▸ step.leₙ
 
 private theorem step_eq_reduce:
-  ((b, s) ⟹ₗ x) = (b s = x) :=
+  ((b, s) ==>ₗ x) = (b s = x) :=
   propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
 private theorem step_eq_reduce':
-  (b, s) ⟹ₗ b s :=
+  (b, s) ==>ₗ b s :=
   Natural.from_reduce rfl
 
 private theorem not_true_eq_false:

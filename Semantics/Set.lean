@@ -18,7 +18,7 @@ theorem ext {a b: Set α} (h: ∀ (x: α), x ∈ a ↔ x ∈ b):
   funext (λ x ↦ propext (h x))
 
 protected def Subset (s₁ s₂: Set α) :=
-  ∀ {{a}}, a ∈ s₁ → a ∈ s₂
+  ∀⦃a⦄, a ∈ s₁ → a ∈ s₂
 
 instance: LE (Set α) :=
   ⟨Set.Subset⟩

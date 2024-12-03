@@ -13,10 +13,10 @@ private inductive step: Aexp × State → Int → Prop
   | mulₙ (ha₁: step (a₁, s) n₁) (ha₂: step (a₂, s) n₂):
     step (a₁ * a₂, s) (n₁ * n₂)
 
-infix:10 " ⟹ₐ " => step
+infix:10 " ==>ₐ " => step
 
 private instance step.equiv: Setoid Aexp where
-  r a₁ a₂ := ∀{s n}, ((a₁, s) ⟹ₐ n) = ((a₂, s) ⟹ₐ n)
+  r a₁ a₂ := ∀{s n}, ((a₁, s) ==>ₐ n) = ((a₂, s) ==>ₐ n)
   iseqv := {
     refl := λ _ ↦ rfl
     symm := λ h ↦ h.symm
@@ -27,8 +27,8 @@ end Natural
 
 def reduce (a: Aexp) (s: State): Int :=
   match a with
-  | val₁ a => a
-  | var₁ a => s a
+  | val₁ n => n
+  | var₁ v => s v
   | add₁ a₁ a₂ => a₁.reduce s + a₂.reduce s
   | sub₁ a₁ a₂ => a₁.reduce s - a₂.reduce s
   | mul₁ a₁ a₂ => a₁.reduce s * a₂.reduce s
@@ -38,16 +38,16 @@ instance: CoeFun Aexp (λ _ ↦ State → Int) := ⟨reduce⟩
 instance reduce.equiv: Setoid Aexp where
   r a₁ a₂ := ∀{s}, a₁ s = a₂ s
   iseqv := {
-    refl := λ _ => rfl
-    symm := λ h => h.symm
-    trans := λ h₁ h₂ => h₁ ▸ h₂
+    refl := λ _ ↦ rfl
+    symm := λ h ↦ h.symm
+    trans := λ h₁ h₂ ↦ h₁ ▸ h₂
   }
 
 section Equivalence
 
 -- relational definition is equal to recursive
 private theorem reduce.from_natural
-  (hstep: conf ⟹ₐ n): conf.1 conf.2 = n :=
+  (hstep: conf ==>ₐ n): conf.1 conf.2 = n :=
   by induction hstep with
   | addₙ _ _ iha₁ iha₂ => exact iha₁ ▸ iha₂ ▸ rfl
   | subₙ _ _ iha₁ iha₂ => exact iha₁ ▸ iha₂ ▸ rfl
@@ -55,7 +55,7 @@ private theorem reduce.from_natural
   | _ => rfl
 
 private theorem Natural.from_reduce
-  (hred: a s = n): (a, s) ⟹ₐ n :=
+  (hred: a s = n): (a, s) ==>ₐ n :=
   by induction a generalizing n with
   | val₁ a => exact hred ▸ step.valₙ
   | var₁ a => exact hred ▸ step.varₙ
@@ -67,11 +67,11 @@ private theorem Natural.from_reduce
     exact hred ▸ step.mulₙ (iha₁ rfl) (iha₂ rfl)
 
 private theorem step_eq_reduce:
-  ((a, s) ⟹ₐ n) = (a s = n) :=
+  ((a, s) ==>ₐ n) = (a s = n) :=
   propext ⟨reduce.from_natural, Natural.from_reduce⟩
 
 private theorem step_eq_reduce':
-  (a, s) ⟹ₐ a s :=
+  (a, s) ==>ₐ a s :=
   Natural.from_reduce rfl
 
 private theorem step_eq_eq_reduce_eq:

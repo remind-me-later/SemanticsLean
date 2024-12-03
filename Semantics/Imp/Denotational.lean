@@ -11,7 +11,7 @@ namespace Com
 
 def denote_while (b: Bexp) (f: State →ˢ State):
   (State →ˢ State) → (State →ˢ State) :=
-  λ g => Set.ite {(s, _) | b s} (f ○ g) SFun.id
+  λ g ↦ Set.ite {(s, _) | b s} (f ○ g) SFun.id
 
 def denote: Com → (State →ˢ State)
   | skip₁      => SFun.id
@@ -23,7 +23,7 @@ def denote: Com → (State →ˢ State)
       Fix.lfp $ denote_while b c.denote
 
 theorem monotone_denote_loop: monotone (denote_while b c) :=
-  λ _ _ hmp =>
+  λ _ _ hmp ↦
   Set.ite_mono _ (SFun.comp_mono PartialOrder.le_rfl hmp) PartialOrder.le_rfl
 
 notation (priority := high) "⟦" c "⟧" => denote c
@@ -36,7 +36,7 @@ namespace denote
 instance equiv: Setoid Com where
   r a b := ⟦a⟧ = ⟦b⟧
   iseqv := {
-    refl := λ _ => rfl,
+    refl := λ _ ↦ rfl,
     symm := Eq.symm
     trans := Eq.trans
   }

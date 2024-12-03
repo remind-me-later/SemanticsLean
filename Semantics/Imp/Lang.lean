@@ -5,7 +5,7 @@ def s₀: State := Map.default 0
 
 #eval s₀ "x"
 #eval (s₀["x" ← 3]["x" ← 4]) "x"
-#eval (s₀["x" ← 3]["x" ← 4]["x" ← 7]) "x"
+#eval (s₀["x" ← 3]["x" ← 4]["x" ← 7]) "x" -- 7
 
 example: s₀["x" ← 3] = s₀["x" ← 4]["x" ← 3] := Map.eval_last.symm
 

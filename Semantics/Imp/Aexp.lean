@@ -23,6 +23,11 @@ private instance big_step.equiv: Setoid Aexp where
     trans := (· ▸ ·)
   }
 
+private example: ((var₁ "x" + 5) + (9 - 7), s₀) ==>ₐ 7 :=
+  big_step.addₙ
+    (big_step.addₙ big_step.varₙ big_step.valₙ)
+    (big_step.subₙ big_step.valₙ big_step.valₙ)
+
 end Natural
 
 def reduce (a: Aexp) (s: State): Int :=
@@ -42,6 +47,8 @@ instance reduce.equiv: Setoid Aexp where
     symm := λ h ↦ h.symm
     trans := λ h₁ h₂ ↦ h₁ ▸ h₂
   }
+
+#eval ((var₁ "x" + 5) + (9 - 7)) s₀ -- 7
 
 section Equivalence
 

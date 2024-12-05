@@ -41,13 +41,36 @@ private example:
       end
     |], s₀)
     ==>ₙ s₀["x" ← 2]["z" ← 4] :=
-    big_step.catₙ _ big_step.assₙ $ big_step.if₀ₙ rfl big_step.assₙ
+    big_step.catₙ (s₀["x" ← 2]) big_step.assₙ $ big_step.if₀ₙ rfl big_step.assₙ
 
 private example:
   ([| x := 2; x := 3|], s₀) ==>ₙ s₀["x" ← 3] :=
   let h1: s₀["x" ← 3] = s₀["x" ← 2]["x" ← 3] :=
     Map.eval_last.symm
   h1 ▸ big_step.catₙ _ big_step.assₙ big_step.assₙ
+
+-- factorial of x = 2
+private example:
+  ([|
+    x := 2;
+    y := 1;
+    while 2 ≤ x loop
+      y := y × x;
+      x := x - 1
+    end
+  |], s₀)
+  ==>ₙ s₀["x" ← 2]["y" ← 1]["y" ← 2]["x" ← 1] := by
+  apply big_step.catₙ (s₀["x" ← 2]["y" ← 1])
+  apply big_step.catₙ (s₀["x" ← 2])
+  apply big_step.assₙ
+  apply big_step.assₙ
+  apply big_step.while₁ₙ (s₀["x" ← 2]["y" ← 1]["y" ← 2]["x" ← 1])
+  apply rfl
+  apply big_step.catₙ (s₀["x" ← 2]["y" ← 1]["y" ← 2])
+  apply big_step.assₙ
+  apply big_step.assₙ
+  apply big_step.while₀ₙ
+  apply rfl
 
 /-
 ## Rewriting rules

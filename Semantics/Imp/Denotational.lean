@@ -9,57 +9,57 @@ From Concrete semantics with Isabelle
 
 namespace Com
 
-def denote_while (b: Bexp) (f: State →ˢ State):
-  (State →ˢ State) → (State →ˢ State) :=
-  λ g ↦ Set.ite {(s, _) | b s} (f ○ g) SFun.id
+def denote_while (b: Bexp) (f: State ->s State):
+  (State ->s State) -> (State ->s State) :=
+  fun g => Set.ite {(s, _) | b s} (f ○ g) SFun.id
 
-def denote: Com → (State →ˢ State)
-  | skip₁      => SFun.id
-  | ass₁ v a   => {(s, t) | t = s[v ← a s]}
-  | cat₁ c₁ c₂ => c₁.denote ○ c₂.denote
-  | if b then c₁ else c₂ end =>
-      Set.ite {(s, _) | b s} c₁.denote c₂.denote
+def denote: Com -> (State ->s State)
+  | skip      => SFun.id
+  | ass v a   => {(s, t) | t = s[v <- a s]}
+  | cat c c' => denote c ○ denote c'
+  | if b then c else c' end =>
+      Set.ite {(s, _) | b s} (denote c) (denote c')
   | while b loop c end =>
-      Fix.lfp $ denote_while b c.denote
+      Fix.lfp $ denote_while b (denote c)
 
 theorem monotone_denote_loop: monotone (denote_while b c) :=
-  λ _ _ hmp ↦
+  fun _ _ hmp =>
   Set.ite_mono _ (SFun.comp_mono PartialOrder.le_rfl hmp) PartialOrder.le_rfl
 
-notation (priority := high) "⟦" c "⟧" => denote c
+notation (priority := high) "[[" c "]]" => denote c
 
-#check (s₀, s₀["x"←5]["x"←1]) ∈ ⟦[|x := 5; if x ≤ 1 then skip else x := 1 end|]⟧
-#check (s₀, s₀["x"←5]) ∈ ⟦[|x := 5; while x ≤ 1 loop x := 1 end|]⟧
+#check (s0, s0["x"<-5]["x"<-1]) ∈ [[[|x := 5; if x <= 1 then skip else x := 1 end|]]]
+#check (s0, s0["x"<-5]) ∈ [[[|x := 5; while x <= 1 loop x := 1 end|]]]
 
 namespace denote
 
 instance equiv: Setoid Com where
-  r a b := ⟦a⟧ = ⟦b⟧
+  r a b := [[a]] = [[b]]
   iseqv := {
-    refl := λ _ ↦ rfl,
+    refl := fun _ => rfl,
     symm := Eq.symm
     trans := Eq.trans
   }
 
 theorem skipl:
-  (skip₁++c) ≈ c := by
+  (skip++c) ≈ c := by
   simp only [HasEquiv.Equiv, equiv, denote, SFun.id_comp]
 
 theorem skipr:
-  (c++skip₁) ≈ c := by
+  (c++skip) ≈ c := by
   simp only [HasEquiv.Equiv, equiv, denote, SFun.comp_id]
 
 theorem while_unfold:
-  while b loop c end ≈ if b then c++ while b loop c end else skip₁ end :=
+  while b loop c end ≈ if b then c++ while b loop c end else skip end :=
   Fix.lfp_eq _ monotone_denote_loop
 
 /-
 ## Congruence
 -/
 
-theorem cat_congr {c₁ c₂ d₁ d₂: Com}
-  (hc: c₁ ≈ c₂) (hd: d₁ ≈ d₂):
-  (c₁++d₁) ≈ (c₂++d₂) := by
+theorem cat_congr {c c' d₁ d₂: Com}
+  (hc: c ≈ c') (hd: d₁ ≈ d₂):
+  (c++d₁) ≈ (c'++d₂) := by
   simp only [HasEquiv.Equiv, equiv, denote]
   exact hc ▸ hd ▸ rfl
 

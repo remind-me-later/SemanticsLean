@@ -4,107 +4,110 @@ import Semantics.Imp.Denotational
 
 namespace Com
 
-theorem Structural.from_natural
-  (hconf: conf ==>ₙ s₂): conf =>ₛ* (skip₁, s₂) := by
+theorem Structural.from_natural {conf: Com × State}
+  (hconf: conf ==> s'): conf ~>* (skip, s') := by
   induction hconf with
-  | skipₙ => exact RTL.refl
-  | assₙ => exact RTL.single small_step.assₛ
-  | catₙ _ _ _ ihc₁ ihc₂ => exact star.cat ihc₁ ihc₂
-  | if₁ₙ hb _ ih => exact RTL.head small_step.ifₛ (hb ▸ ih)
-  | if₀ₙ hb _ ih => exact RTL.head small_step.ifₛ (hb ▸ ih)
-  | while₁ₙ _ hb _ _ ihc ihw =>
-    exact RTL.head small_step.whileₛ $ RTL.trans (hb ▸ star.cat ihc ihw) RTL.refl
-  | while₀ₙ hb =>
-    exact RTL.head small_step.whileₛ $ hb ▸ RTL.refl
+  | skip => exact RTL.refl
+  | ass => exact RTL.single small_step.ass
+  | cat _ _ _ ihcatl ihcatr => exact star.cat ihcatl ihcatr
+  | iftrue hcond _ ih => exact RTL.head small_step.ifelse (hcond ▸ ih)
+  | iffalse hcond _ ih => exact RTL.head small_step.ifelse (hcond ▸ ih)
+  | whiletrue _ hcond _ _ ihc ihw =>
+    exact RTL.head small_step.whileloop $ RTL.trans (hcond ▸ star.cat ihc ihw) RTL.refl
+  | whilefalse hcond =>
+    exact RTL.head small_step.whileloop $ hcond ▸ RTL.refl
 
 theorem Natural.from_structural_step
-  (hconf₁: conf₁ =>ₛ conf₂) (hconf₂: conf₂ ==>ₙ s₂): conf₁ ==>ₙ s₂ := by
-  induction hconf₁ generalizing s₂ with
-  | assₛ => exact (skip_eq.mp hconf₂) ▸ big_step.assₙ
-  | cat₀ₛ => exact big_step.catₙ _ big_step.skipₙ hconf₂
-  | catₙₛ _ ih =>
-    match hconf₂ with
-    | big_step.catₙ s₂ hc₁ hc₂ => exact big_step.catₙ s₂ (ih hc₁) hc₂
-  | ifₛ => exact if_eq' ▸ hconf₂
-  | whileₛ => rw [loop_unfold]; exact if_eq' ▸ hconf₂
+  (hconf: conf ~> conf') (hconf': conf' ==> s'): conf ==> s' := by
+  induction hconf generalizing s' with
+  | ass => exact (skip_eq.mp hconf') ▸ big_step.ass
+  | skipcat => exact big_step.cat _ big_step.skip hconf'
+  | cat _ ih =>
+    match hconf' with
+    | big_step.cat s' hcatl hccatr => exact big_step.cat s' (ih hcatl) hccatr
+  | ifelse => exact if_eq' ▸ hconf'
+  | whileloop => rw [loop_unfold]; exact if_eq' ▸ hconf'
 
 theorem Natural.from_structural
-  (hconf: conf =>ₛ* (skip₁, s₂)): conf ==>ₙ s₂ := by
+  (hconf: conf ~>* (skip, s')): conf ==> s' := by
   induction hconf using RTL.head_induction_on with
-  | refl => exact big_step.skipₙ
-  | head hsingle _ hs₂ => exact from_structural_step hsingle hs₂
+  | refl => exact big_step.skip
+  | head hsingle _ hs' => exact from_structural_step hsingle hs'
 
 theorem structural_eq_natural:
-  ((c₁, s₁) =>ₛ* (skip₁, s₂)) = ((c₁, s₁) ==>ₙ s₂) :=
-  propext ⟨Natural.from_structural, Structural.from_natural⟩
+  ((c, s) ~>* (skip, s')) = ((c, s) ==> s') :=
+  propext $ Iff.intro Natural.from_structural Structural.from_natural
 
-theorem denote.from_natural
-  (hconf: conf ==>ₙ s₃): (conf.2, s₃) ∈ ⟦conf.1⟧ := by
+theorem denote.from_natural {conf: Com × State}
+  (hconf: conf ==> s''): (conf.2, s'') ∈ [[conf.1]] := by
   induction hconf with
-  | skipₙ => exact SFun.mem_id.mpr rfl
-  | assₙ  => exact SFun.mem_id.mpr rfl
-  | catₙ s₂ _ _ ih₁ ih₂ => exact ⟨s₂, ih₁, ih₂⟩
-  | if₁ₙ hb _ ih => exact Or.inl ⟨ih, hb⟩
-  | if₀ₙ hb _ ih =>
+  | skip => exact SFun.mem_id.mpr rfl
+  | ass  => exact SFun.mem_id.mpr rfl
+  | cat s' _ _ ihcatl ihcatr =>
+    exact Exists.intro s' $ And.intro ihcatl ihcatr
+  | iftrue hcond _ ih => exact Or.inl $ And.intro ih hcond
+  | iffalse hcond _ ih =>
       apply Or.inr
-      simp only [Set.mem_diff, Set.mem_comprehend, hb,
+      simp only [Set.mem_diff, Set.mem_comprehend, hcond,
                   Bool.false_eq_true, not_false_eq_true,
                   and_true]
       exact ih
-  | while₁ₙ s₂ hb _ _ ih₁ ih₂ =>
-    exact while_unfold ▸ Or.inl ⟨⟨s₂, ih₁, ih₂⟩, hb⟩
-  | while₀ₙ hb =>
+  | whiletrue s' hcond _ _ ihwhilestep ihwhilerest =>
+    exact while_unfold ▸
+      (Or.inl $ And.intro
+        (Exists.intro s' $ And.intro ihwhilestep ihwhilerest) hcond)
+  | whilefalse hcond =>
       rw [while_unfold]
       apply Or.inr
-      simp only [Set.mem_diff, Set.mem_comprehend, hb,
+      simp only [Set.mem_diff, Set.mem_comprehend, hcond,
                   Bool.false_eq_true, not_false_eq_true,
                   and_true]
       rfl
 
 theorem Natural.from_denote
-  (hmem: (s₁, s₃) ∈ ⟦c⟧): (c, s₁) ==>ₙ s₃ := by
+  (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
   revert hmem
-  induction c generalizing s₁ s₃ with
-  | skip₁ =>
+  induction c generalizing s s'' with
+  | skip =>
     intro hmp
     rw [denote, SFun.mem_id] at hmp
-    exact hmp ▸ big_step.skipₙ
-  | ass₁ =>
+    exact hmp ▸ big_step.skip
+  | ass =>
     intro hmp
     rw [denote.eq_def, Set.mem_comprehend] at hmp
     simp only at hmp
-    exact hmp ▸ big_step.assₙ
-  | cat₁ _ _ ih₁ ih₂ =>
-    intro ⟨s₂, h₁, h₂⟩
-    exact big_step.catₙ s₂ (ih₁ h₁) (ih₂ h₂)
-  | if₁ _ _ _ ih₁ ih₂ =>
+    exact hmp ▸ big_step.ass
+  | cat _ _ ihcatl ihcatr =>
+    intro (Exists.intro s' $ And.intro hl hr)
+    exact big_step.cat s' (ihcatl hl) (ihcatr hr)
+  | ifelse _ _ _ ih1 ih2 =>
     intro hmp
     match hmp with
-    | Or.inl ⟨h₁, hb⟩ =>
-      exact big_step.if₁ₙ hb (ih₁ h₁)
-    | Or.inr ⟨h₁, hb⟩ =>
-      simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
-      exact big_step.if₀ₙ hb (ih₂ h₁)
-  | while₁ b c ih =>
+    | Or.inl $ And.intro hstep hcond =>
+      exact big_step.iftrue hcond (ih1 hstep)
+    | Or.inr $ And.intro hstep hcond =>
+      simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
+      exact big_step.iffalse hcond (ih2 hstep)
+  | whileloop b c ih =>
     suffices
-      ⟦while b loop c end⟧ ⊆ {(s₁, s₃) | (while b loop c end, s₁) ==>ₙ s₃} by
+      [[while b loop c end]] ⊆ {(s, s'') | (while b loop c end, s) ==> s''} by
       apply this
 
     apply Fix.lfp_le
-    intro ⟨_, _⟩ hmp
+    intro (_, _) hmp
     match hmp with
-    | Or.inl ⟨⟨s₂, h₁, h₂⟩, hb⟩ =>
-      exact big_step.while₁ₙ s₂ hb (ih h₁) h₂
-    | Or.inr ⟨hid, hb⟩ =>
-      simp only [Set.mem_comprehend, Bool.not_eq_true] at hb
+    | Or.inl $ And.intro (Exists.intro s' $ And.intro hstep hrest) hcond =>
+      exact big_step.whiletrue s' hcond (ih hstep) hrest
+    | Or.inr $ And.intro hid hcond =>
+      simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
       rw [SFun.mem_id] at hid
-      exact hid ▸ big_step.while₀ₙ hb
+      exact hid ▸ big_step.whilefalse hcond
 
-theorem natural_eq_denote: ((s₁, s₂) ∈ ⟦c⟧) = ((c, s₁) ==>ₙ s₂) :=
-  propext ⟨Natural.from_denote, denote.from_natural⟩
+theorem natural_eq_denote: ((s, s') ∈ [[c]]) = ((c, s) ==> s') :=
+  propext $ Iff.intro Natural.from_denote denote.from_natural
 
 theorem structural_eq_denote:
-  ((c, s₁) =>ₛ* (skip₁, s₂)) = ((s₁, s₂) ∈ ⟦c⟧) :=
+  ((c, s) ~>* (skip, s')) = ((s, s') ∈ [[c]]) :=
   by rw [structural_eq_natural, natural_eq_denote]
 
 end Com

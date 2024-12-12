@@ -4,26 +4,26 @@ namespace Bexp
 namespace Natural
 
 -- Operational semantics of Bexp
-private inductive big_step: Bexp × State → Bool → Prop
-  | trueₙ: big_step (true₁, _) true
-  | falseₙ: big_step (false₁, _) false
-  | notₙ (h: big_step (b, s) n):
-    big_step (~~~b, s) (!n)
-  | andₙ (h₁: big_step (b₁, s) n₁) (h₂: big_step (b₂, s) n₂):
-    big_step (b₁ &&& b₂, s) (n₁ && n₂)
-  | orₙ (h₁: big_step (b₁, s) n₁) (h₂: big_step (b₂, s) n₂):
-    big_step (b₁ ||| b₂, s) (n₁ || n₂)
-  | eqₙ: big_step (eq₁ a₁ a₂, s) (a₁ s == a₂ s)
-  | leₙ: big_step (le₁ a₁ a₂, s) (a₁ s <= a₂ s)
+private inductive big_step: Bexp × State -> Bool -> Prop
+  | true: big_step (true, _) Bool.true
+  | false: big_step (false, _) Bool.false
+  | not (h: big_step (b, s) x):
+    big_step (~~~b, s) (!x)
+  | and (h1: big_step (b, s) x) (h2: big_step (b', s) y):
+    big_step (b &&& b', s) (x && y)
+  | or (h1: big_step (b, s) x) (h2: big_step (b', s) y):
+    big_step (b ||| b', s) (x || y)
+  | eq: big_step (eq a a', s) (a s == a' s)
+  | le: big_step (le a a', s) (a s <= a' s)
 
-infix:10 " ==>ₗ " => big_step
+infix:10 " ==> " => big_step
 
 private instance big_step.equiv: Setoid Bexp where
-  r b₁ b₂ := ∀{s n}, ((b₁, s) ==>ₗ n) = ((b₂, s) ==>ₗ n)
+  r b b' := ∀{s n}, ((b, s) ==> n) = ((b', s) ==> n)
   iseqv := {
-    refl := λ _ ↦ rfl
-    symm := λ h ↦ h.symm
-    trans := λ h₁ h₂ ↦ h₁ ▸ h₂
+    refl := fun _ => rfl
+    symm := fun h => h.symm
+    trans := fun h1 h2 => h1 ▸ h2
   }
 
 end Natural
@@ -31,54 +31,54 @@ end Natural
 -- Denotational semantics of Bexp
 def reduce (b: Bexp) (s: State): Bool :=
   match b with
-  | true₁  => true
-  | false₁ => false
-  | not₁ b => !b.reduce s
-  | and₁ b₁ b₂ => b₁.reduce s && b₂.reduce s
-  | or₁ b₁ b₂  => b₁.reduce s || b₂.reduce s
-  | eq₁ a₁ a₂  => a₁ s == a₂ s
-  | le₁ a₁ a₂  => a₁ s <= a₂ s
+  | true  => Bool.true
+  | false => Bool.false
+  | not b => !b.reduce s
+  | and b b' => b.reduce s && b'.reduce s
+  | or b b'  => b.reduce s || b'.reduce s
+  | eq a a'  => a s == a' s
+  | le a a'  => a s <= a' s
 
-instance: CoeFun Bexp (λ _ ↦ State → Bool) := ⟨reduce⟩
+instance: CoeFun Bexp (fun _ => State -> Bool) := CoeFun.mk reduce
 
 instance reduce.equiv: Setoid Bexp where
-  r b₁ b₂:= ∀{s}, b₁ s = b₂ s
+  r b b':= ∀{s}, b s = b' s
   iseqv := {
-    refl := λ _ ↦ rfl
-    symm := λ h ↦ h.symm
-    trans := λ h₁ h₂ ↦ h₁ ▸ h₂
+    refl := fun _ => rfl
+    symm := fun h => h.symm
+    trans := fun h1 h2 => h1 ▸ h2
   }
 
 section Equivalence
 
 -- relational definition is equivalent to recursive
-private theorem reduce.from_natural
-  (hbig_step: conf ==>ₗ x): conf.1 conf.2 = x :=
+private theorem reduce.from_natural {conf: Bexp × State}
+  (hbig_step: conf ==> x): conf.1 conf.2 = x :=
   by induction hbig_step with
-  | notₙ _ ih => exact ih ▸ rfl
-  | andₙ _ _ ihb₁ ihb₂ | orₙ _ _ ihb₁ ihb₂ =>
-    exact ihb₁ ▸ ihb₂ ▸ rfl
+  | not _ ih => exact ih ▸ rfl
+  | and _ _ ihb ihb' | or _ _ ihb ihb' =>
+    exact ihb ▸ ihb' ▸ rfl
   | _ => rfl
 
-private theorem Natural.from_reduce
-  (hred: b s = x): (b, s) ==>ₗ x :=
+private theorem Natural.from_reduce {b: Bexp}
+  (hred: b s = x): (b, s) ==> x :=
   by induction b generalizing x with
-  | true₁ => exact hred ▸ big_step.trueₙ
-  | false₁ => exact hred ▸ big_step.falseₙ
-  | not₁ _ ih => exact hred ▸ big_step.notₙ (ih rfl)
-  | and₁ _ _ ihb₁ ihb₂ =>
-    exact hred ▸ big_step.andₙ (ihb₁ rfl) (ihb₂ rfl)
-  | or₁ _ _ ihb₁ ihb₂ =>
-    exact hred ▸ big_step.orₙ (ihb₁ rfl) (ihb₂ rfl)
-  | eq₁ => exact hred ▸ big_step.eqₙ
-  | le₁ => exact hred ▸ big_step.leₙ
+  | true => exact hred ▸ big_step.true
+  | false => exact hred ▸ big_step.false
+  | not _ ih => exact hred ▸ big_step.not (ih rfl)
+  | and _ _ ihb ihb' =>
+    exact hred ▸ big_step.and (ihb rfl) (ihb' rfl)
+  | or _ _ ihb ihb' =>
+    exact hred ▸ big_step.or (ihb rfl) (ihb' rfl)
+  | eq => exact hred ▸ big_step.eq
+  | le => exact hred ▸ big_step.le
 
-private theorem big_step_eq_reduce:
-  ((b, s) ==>ₗ x) = (b s = x) :=
-  propext ⟨reduce.from_natural, Natural.from_reduce⟩
+private theorem big_step_eq_reduce {b: Bexp}:
+  ((b, s) ==> x) = (b s = x) :=
+  propext $ Iff.intro reduce.from_natural Natural.from_reduce
 
-private theorem big_step_eq_reduce':
-  (b, s) ==>ₗ b s :=
+private theorem big_step_eq_reduce' {b: Bexp}:
+  (b, s) ==> b s :=
   Natural.from_reduce rfl
 
 private theorem not_true_eq_false:
@@ -86,14 +86,13 @@ private theorem not_true_eq_false:
   rfl
 
 private theorem big_step_eq_eq_reduce_eq:
-  Natural.big_step.equiv.r b₁ b₂ ↔ reduce.equiv.r b₁ b₂ := by
+  Natural.big_step.equiv.r b b' <-> reduce.equiv.r b b' := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
-  . exact λ h ↦ (big_step_eq_reduce ▸ h).mpr $ big_step_eq_reduce.mpr rfl
-  . exact λ h ↦
-    {
-      mp := λ h1 ↦ (h ▸ (big_step_eq_reduce ▸ h1)) ▸ big_step_eq_reduce',
-      mpr := λ h1 ↦ (h ▸ (big_step_eq_reduce ▸ h1)) ▸ big_step_eq_reduce'
+  . exact fun h => (big_step_eq_reduce ▸ h).mpr $ big_step_eq_reduce.mpr rfl
+  . exact fun h => {
+      mp := fun h1 => (h ▸ (big_step_eq_reduce ▸ h1)) ▸ big_step_eq_reduce',
+      mpr := fun h1 => (h ▸ (big_step_eq_reduce ▸ h1)) ▸ big_step_eq_reduce'
     }
 
 end Equivalence

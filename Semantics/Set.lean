@@ -1,52 +1,52 @@
 -- # Sets
 
-def Set (α: Type) := α → Prop
+def Set (α: Type) := α -> Prop
 
-def setOf (p: α → Prop): Set α := p
+def setOf (p: α -> Prop): Set α := p
 
 namespace Set
 
 protected def Mem (s: Set α) (a: α): Prop := s a
 
-instance: Membership α (Set α) := ⟨Set.Mem⟩
+instance: Membership α (Set α) := Membership.mk Set.Mem
 
-theorem ext {a b: Set α} (h: ∀ (x: α), x ∈ a ↔ x ∈ b): a = b :=
-  funext (propext $ h ·)
+theorem ext {a b: Set α} (h: ∀(x: α), x ∈ a <-> x ∈ b): a = b :=
+  funext fun x => propext (h x)
 
-protected def Subset (s₁ s₂: Set α) :=
-  ∀⦃a⦄, a ∈ s₁ → a ∈ s₂
+protected def Subset (a b: Set α) :=
+  ∀{{x}}, x ∈ a -> x ∈ b
 
-instance: LE (Set α) := ⟨Set.Subset⟩
+instance: LE (Set α) := LE.mk Set.Subset
 
-instance: HasSubset (Set α) := ⟨(· ≤ ·)⟩
+instance: HasSubset (Set α) := HasSubset.mk (. <= .)
 
-instance: EmptyCollection (Set α) := ⟨λ _ ↦ False⟩
+instance: EmptyCollection (Set α) := EmptyCollection.mk fun _ => False
 
-notation (priority := high) "{" x " | " p "}" => setOf $ λ x ↦ p
+notation (priority := high) "{" x " | " p "}" => setOf fun x => p
 
 def univ: Set α := {_ | True}
 
 protected def insert (a: α) (s: Set α): Set α := {b | b = a ∨ b ∈ s}
 
-instance: Insert α (Set α) := ⟨Set.insert⟩
+instance: Insert α (Set α) := Insert.mk Set.insert
 
 protected def singleton (a: α): Set α := {b | b = a}
 
-instance instSingletonSet: Singleton α (Set α) := ⟨Set.singleton⟩
+instance instSingletonSet: Singleton α (Set α) := Singleton.mk Set.singleton
 
-protected def union (s₁ s₂: Set α): Set α := {a | a ∈ s₁ ∨ a ∈ s₂}
+protected def union (a b: Set α): Set α := {x | x ∈ a ∨ x ∈ b}
 
-instance: Union (Set α) := ⟨Set.union⟩
+instance: Union (Set α) := Union.mk Set.union
 
-protected def inter (s₁ s₂: Set α): Set α := {a | a ∈ s₁ ∧ a ∈ s₂}
+protected def inter (a b: Set α): Set α := {x | x ∈ a ∧ x ∈ b}
 
-instance: Inter (Set α) := ⟨Set.inter⟩
+instance: Inter (Set α) := Inter.mk Set.inter
 
 protected def compl (s: Set α): Set α := {a | a ∉ s}
 
-protected def diff (s t: Set α): Set α := {a | a ∈ s ∧ a ∉ t}
+protected def diff (a b: Set α): Set α := {x | x ∈ a ∧ x ∉ b}
 
-instance: SDiff (Set α) := ⟨Set.diff⟩
+instance: SDiff (Set α) := SDiff.mk Set.diff
 
 end Set
 
@@ -54,38 +54,38 @@ end Set
   ## Set theorems
 -/
 
-theorem Set.mem_comprehend (a: α) (P: α → Prop): a ∈ ({a | P a}: Set α) ↔ P a :=
+theorem Set.mem_comprehend (a: α) (P: α -> Prop): a ∈ ({a | P a}: Set α) <-> P a :=
   Iff.rfl
 
-theorem Set.mem_diff {s t: Set α} (x: α): x ∈ s \ t ↔ x ∈ s ∧ x ∉ t :=
+theorem Set.mem_diff {s t: Set α} (x: α): x ∈ s \ t <-> x ∈ s ∧ x ∉ t :=
   Iff.rfl
 
 /-
   ### Basic subset properties
 -/
 
-theorem Subset.refl (x: Set α): x ⊆ x := λ _ ↦ id
+theorem Subset.refl (x: Set α): x ⊆ x := fun _ => id
 
-theorem Subset.trans {x y z: Set α} (hsub₁: x ⊆ y) (hsub₂: y ⊆ z): x ⊆ z :=
-  λ _ h ↦ hsub₂ $ hsub₁ h
+theorem Subset.trans {a b c: Set α} (hab: a ⊆ b) (hbc: b ⊆ c): a ⊆ c :=
+  fun _ h => hbc (hab h)
 
-theorem Subset.antisymm {x y: Set α} (hsub₁: x ⊆ y) (hsub₂: y ⊆ x): x = y :=
-  funext λ _ ↦ propext ⟨(hsub₁ ·), (hsub₂ ·)⟩
+theorem Subset.antisymm {a b: Set α} (hab: a ⊆ b) (hba: b ⊆ a): a = b :=
+  funext fun _ => propext (Iff.intro (fun mp => hab mp) (fun mp => hba mp))
 
-theorem Subset.from_eq {x y: Set α} (heq: x = y): x ⊆ y :=
-  λ _ h ↦ heq ▸ h
+theorem Subset.from_eq {a b: Set α} (heq: a = b): a ⊆ b :=
+  fun _x hxa => heq ▸ hxa
 
 /-
   ### Set if then else
 -/
 
-def Set.ite (t s s': Set α): Set α := s ∩ t ∪ s' \ t
+def Set.ite (t a b: Set α): Set α := a ∩ t ∪ b \ t
 
-theorem Set.ite_mono (t: Set α) (h: s₁ ⊆ s₂) (h': s₁' ⊆ s₂'):
-  t.ite s₁ s₁' ⊆ t.ite s₂ s₂' := λ _ h2 ↦
+theorem Set.ite_mono (t: Set α) (hab: a ⊆ b) (hab': a' ⊆ b'):
+  t.ite a a' ⊆ t.ite b b' := fun _ h2 =>
   match h2 with
-  | Or.inl ⟨hl, hr⟩ => Or.inl ⟨h hl, hr⟩
-  | Or.inr ⟨hl, hr⟩ => Or.inr ⟨h' hl, hr⟩
+  | Or.inl (And.intro hl hr) => Or.inl (And.intro (hab hl) hr)
+  | Or.inr (And.intro hl hr) => Or.inr (And.intro (hab' hl) hr)
 
 /-
   ## Set theoretic (partial) functions
@@ -95,40 +95,40 @@ theorem Set.ite_mono (t: Set α) (h: s₁ ⊆ s₂) (h': s₁' ⊆ s₂'):
 
 namespace SFun
 
-notation:20 α " →ˢ " β => Set (α × β)
+notation:20 α " ->s " β => Set (α × β)
 
-def id: α →ˢ α := {p | p.1 = p.2}
+def id: α ->s α := {p | p.1 = p.2}
 
-theorem mem_id: (a, b) ∈ id ↔ a = b :=
+theorem mem_id: (a, b) ∈ id <-> a = b :=
   Iff.rfl
 
-def comp (f g: α →ˢ α): α →ˢ α :=
+def comp (f g: α ->s α): α ->s α :=
   {x | ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g}
 
 infixl:90 " ○ " => SFun.comp
 
-theorem mem_comp: x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g :=
+theorem mem_comp: x ∈ f ○ g <-> ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g :=
   Iff.rfl
 
 theorem comp_mono (hfh: f ⊆ h) (hgk: g ⊆ k): f ○ g ⊆ h ○ k :=
-  λ _ ⟨z, h₁, h₂⟩ ↦ ⟨z, hfh h₁, hgk h₂⟩
+  fun _ (Exists.intro z (And.intro hl hr)) =>
+    Exists.intro z (And.intro (hfh hl) (hgk hr))
 
 theorem comp_id: f ○ id = f := by
   apply funext
-  intro (_s₁, s₂)
+  intro (_x, y)
   apply propext
   constructor
-  . intro ⟨z, h₁, h₂⟩
-    apply mem_id.mp h₂ ▸ h₁
-  . exact (⟨s₂, ·, rfl⟩)
+  . intro (Exists.intro z (And.intro hl hr))
+    apply mem_id.mp hr ▸ hl
+  . exact fun mp => (Exists.intro y (And.intro mp rfl))
 
 theorem id_comp: id ○ f = f := by
-  funext (s₁, _s₂)
+  funext (x, _y)
   apply propext
   constructor
-  . intro ⟨z, h₁, h₂⟩
-    apply mem_id.mp h₁ ▸ h₂
-  . intro h
-    exact ⟨s₁, rfl, h⟩
+  . intro (Exists.intro z (And.intro hl hr))
+    apply mem_id.mp hl ▸ hr
+  . exact fun mp => (Exists.intro x (And.intro rfl mp))
 
 end SFun

@@ -22,7 +22,7 @@ private instance big_step.equiv: Setoid Bexp where
   r b b' := ∀{s n}, ((b, s) ==> n) = ((b', s) ==> n)
   iseqv := {
     refl := fun _ => rfl
-    symm := fun h => h.symm
+    symm := fun h => Eq.symm h
     trans := fun h1 h2 => h1 ▸ h2
   }
 
@@ -33,9 +33,9 @@ def reduce (b: Bexp) (s: State): Bool :=
   match b with
   | true  => Bool.true
   | false => Bool.false
-  | not b => !b.reduce s
-  | and b b' => b.reduce s && b'.reduce s
-  | or b b'  => b.reduce s || b'.reduce s
+  | not b => !reduce b s
+  | and b b' => reduce b s && reduce b' s
+  | or b b'  => reduce b s || reduce b' s
   | eq a a'  => a s == a' s
   | le a a'  => a s <= a' s
 
@@ -45,7 +45,7 @@ instance reduce.equiv: Setoid Bexp where
   r b b':= ∀{s}, b s = b' s
   iseqv := {
     refl := fun _ => rfl
-    symm := fun h => h.symm
+    symm := fun h => Eq.symm h
     trans := fun h1 h2 => h1 ▸ h2
   }
 
@@ -75,7 +75,7 @@ private theorem Natural.from_reduce {b: Bexp}
 
 private theorem big_step_eq_reduce {b: Bexp}:
   ((b, s) ==> x) = (b s = x) :=
-  propext $ Iff.intro reduce.from_natural Natural.from_reduce
+  propext (Iff.intro reduce.from_natural Natural.from_reduce)
 
 private theorem big_step_eq_reduce' {b: Bexp}:
   (b, s) ==> b s :=
@@ -89,7 +89,7 @@ private theorem big_step_eq_eq_reduce_eq:
   Natural.big_step.equiv.r b b' <-> reduce.equiv.r b b' := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
-  . exact fun h => (big_step_eq_reduce ▸ h).mpr $ big_step_eq_reduce.mpr rfl
+  . exact fun h => Iff.mpr (big_step_eq_reduce ▸ h) (Eq.mpr big_step_eq_reduce rfl)
   . exact fun h => {
       mp := fun h1 => (h ▸ (big_step_eq_reduce ▸ h1)) ▸ big_step_eq_reduce',
       mpr := fun h1 => (h ▸ (big_step_eq_reduce ▸ h1)) ▸ big_step_eq_reduce'

@@ -75,7 +75,7 @@ private theorem Natural.from_reduce
 
 private theorem big_step_eq_reduce:
   ((a, s) ==> n) = (a s = n) :=
-  propext $ Iff.intro reduce.from_natural Natural.from_reduce
+  propext (Iff.intro reduce.from_natural Natural.from_reduce)
 
 private theorem big_step_eq_reduce':
   (a, s) ==> a s :=

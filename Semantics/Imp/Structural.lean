@@ -34,11 +34,11 @@ theorem cat_eq:
       ∨ (c = skip ∧ conf = (c'', s))) :=
   propext {
     mp := fun hmp => match hmp with
-      | small_step.skipcat => Or.inr $ And.intro rfl rfl
+      | small_step.skipcat => Or.inr (And.intro rfl rfl)
       | small_step.cat h =>
-        Or.inl $ Exists.intro _ $ Exists.intro _ $ And.intro h rfl,
+        Or.inl (Exists.intro _ (Exists.intro _ (And.intro h rfl))),
     mpr := fun hmpr => match hmpr with
-      | Or.inl (Exists.intro _c' $ Exists.intro _s' $ And.intro hl hr) =>
+      | Or.inl (Exists.intro _c' (Exists.intro _s' (And.intro hl hr))) =>
         hr ▸ small_step.cat hl
       | Or.inr (And.intro hl hr) => hl ▸ hr ▸ small_step.skipcat
   }
@@ -48,8 +48,8 @@ theorem cond_eq:
     = (b s ∧ conf = (c, s) ∨ b s = false ∧ conf = (c', s)) :=
   propext {
     mp := fun hmp => match hb: b s with
-      | false => match hmp with | small_step.ifelse => Or.inr $ And.intro rfl $ hb ▸ rfl
-      | true => match hmp with | small_step.ifelse => Or.inl $ And.intro rfl $ hb ▸ rfl,
+      | false => match hmp with | small_step.ifelse => Or.inr (And.intro rfl (hb ▸ rfl))
+      | true => match hmp with | small_step.ifelse => Or.inl (And.intro rfl (hb ▸ rfl)),
     mpr := fun hmpr =>
       let hss: conf = (bif b s then c else c', s) :=
         match hb: b s with
@@ -63,7 +63,7 @@ theorem cond_false (hb: b s = false):
   propext {
     mp := fun hmp => match hb ▸ cond_eq ▸ hmp with
       | Or.inr (And.intro _ hr) => hr,
-    mpr := (cond_eq ▸ Or.inr $ And.intro hb .)
+    mpr := fun mp => cond_eq ▸ Or.inr (And.intro hb mp)
   }
 
 infixl:10 " ~>* " => RTL small_step

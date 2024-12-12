@@ -17,10 +17,10 @@ inductive Aexp where
   | sub : Aexp -> Aexp -> Aexp
   | mul : Aexp -> Aexp -> Aexp
 
-instance: OfNat Aexp n := OfNat.mk $ Aexp.val n
+instance: OfNat Aexp n := OfNat.mk (Aexp.val n)
 instance: Add Aexp := Add.mk Aexp.add
 instance: Sub Aexp := Sub.mk Aexp.sub
-instance: Neg Aexp := Neg.mk (Aexp.sub 0 .)
+instance: Neg Aexp := Neg.mk fun n => Aexp.sub 0 n
 instance: Mul Aexp := Mul.mk Aexp.mul
 
 -- x + 3

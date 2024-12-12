@@ -41,7 +41,7 @@ private example:
       end
     |], s0)
     ==> s0["x" <- 2]["z" <- 4] :=
-    big_step.cat (s0["x" <- 2]) big_step.ass $ big_step.iffalse rfl big_step.ass
+    big_step.cat (s0["x" <- 2]) big_step.ass (big_step.iffalse rfl big_step.ass)
 
 private example:
   ([| x := 2; x := 3|], s0) ==> s0["x" <- 3] :=
@@ -86,8 +86,8 @@ theorem skip_eq:
 theorem cat_eq:
   ((c++c', s) ==> s') = ∃s'', ((c, s) ==> s'') ∧ ((c', s'') ==> s') :=
   propext {
-    mp := fun (big_step.cat s'' hcatl hcatr) => Exists.intro s'' $ And.intro hcatl hcatr,
-    mpr := fun (Exists.intro s'' $ And.intro hcatl hcatr) => big_step.cat s'' hcatl hcatr
+    mp := fun (big_step.cat s'' hcatl hcatr) => Exists.intro s'' (And.intro hcatl hcatr),
+    mpr := fun (Exists.intro s'' (And.intro hcatl hcatr)) => big_step.cat s'' hcatl hcatr
   }
 
 theorem if_eq:
@@ -122,10 +122,10 @@ theorem while_eq:
   propext {
     mp := fun hmp => match hmp with
       | big_step.whiletrue s'' hcond hwhilestep hwhilerest =>
-        hcond ▸ (Exists.intro s'' $ And.intro hwhilestep hwhilerest)
+        hcond ▸ (Exists.intro s'' (And.intro hwhilestep hwhilerest))
       | big_step.whilefalse hb => hb ▸ rfl,
     mpr := match hb: b s with
-      | true => fun (Exists.intro s'' $ And.intro hwhilestep hwhilerest) =>
+      | true => fun (Exists.intro s'' (And.intro hwhilestep hwhilerest)) =>
         big_step.whiletrue s'' hb hwhilestep hwhilerest
       | false => (. ▸ big_step.whilefalse hb)
   }

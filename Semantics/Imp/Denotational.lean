@@ -20,7 +20,7 @@ def denote: Com -> (State ->s State)
   | if b then c else c' end =>
       Set.ite {(s, _) | b s} (denote c) (denote c')
   | while b loop c end =>
-      Fix.lfp $ denote_while b (denote c)
+      Fix.lfp (denote_while b (denote c))
 
 theorem monotone_denote_loop: monotone (denote_while b c) :=
   fun _ _ hmp =>

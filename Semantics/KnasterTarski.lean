@@ -115,6 +115,6 @@ theorem lfp_eq [CompleteLattice α] (f: α -> α)
     (hf: monotone f): lfp f = f (lfp f) :=
   let h: f (lfp f) <= lfp f :=
     le_lfp (fun a h => PartialOrder.le_trans (hf _ a (lfp_le h)) h)
-  PartialOrder.le_antisymm (lfp_le $ hf _ _ h) h
+  PartialOrder.le_antisymm (lfp_le (hf _ _ h)) h
 
 end Fix

@@ -13,9 +13,9 @@ theorem Structural.from_natural {conf: Com × State}
   | iftrue hcond _ ih => exact RTL.head small_step.ifelse (hcond ▸ ih)
   | iffalse hcond _ ih => exact RTL.head small_step.ifelse (hcond ▸ ih)
   | whiletrue _ hcond _ _ ihc ihw =>
-    exact RTL.head small_step.whileloop $ RTL.trans (hcond ▸ star.cat ihc ihw) RTL.refl
+    exact RTL.head small_step.whileloop (RTL.trans (hcond ▸ star.cat ihc ihw) RTL.refl)
   | whilefalse hcond =>
-    exact RTL.head small_step.whileloop $ hcond ▸ RTL.refl
+    exact RTL.head small_step.whileloop (hcond ▸ RTL.refl)
 
 theorem Natural.from_structural_step
   (hconf: conf ~> conf') (hconf': conf' ==> s'): conf ==> s' := by
@@ -36,7 +36,7 @@ theorem Natural.from_structural
 
 theorem structural_eq_natural:
   ((c, s) ~>* (skip, s')) = ((c, s) ==> s') :=
-  propext $ Iff.intro Natural.from_structural Structural.from_natural
+  propext (Iff.intro Natural.from_structural Structural.from_natural)
 
 theorem denote.from_natural {conf: Com × State}
   (hconf: conf ==> s''): (conf.2, s'') ∈ [[conf.1]] := by
@@ -44,8 +44,8 @@ theorem denote.from_natural {conf: Com × State}
   | skip => exact SFun.mem_id.mpr rfl
   | ass  => exact SFun.mem_id.mpr rfl
   | cat s' _ _ ihcatl ihcatr =>
-    exact Exists.intro s' $ And.intro ihcatl ihcatr
-  | iftrue hcond _ ih => exact Or.inl $ And.intro ih hcond
+    exact Exists.intro s' (And.intro ihcatl ihcatr)
+  | iftrue hcond _ ih => exact Or.inl (And.intro ih hcond)
   | iffalse hcond _ ih =>
       apply Or.inr
       simp only [Set.mem_diff, Set.mem_comprehend, hcond,
@@ -54,8 +54,8 @@ theorem denote.from_natural {conf: Com × State}
       exact ih
   | whiletrue s' hcond _ _ ihwhilestep ihwhilerest =>
     exact while_unfold ▸
-      (Or.inl $ And.intro
-        (Exists.intro s' $ And.intro ihwhilestep ihwhilerest) hcond)
+      (Or.inl (And.intro
+        (Exists.intro s' (And.intro ihwhilestep ihwhilerest)) hcond))
   | whilefalse hcond =>
       rw [while_unfold]
       apply Or.inr
@@ -78,14 +78,14 @@ theorem Natural.from_denote
     simp only at hmp
     exact hmp ▸ big_step.ass
   | cat _ _ ihcatl ihcatr =>
-    intro (Exists.intro s' $ And.intro hl hr)
+    intro (Exists.intro s' (And.intro hl hr))
     exact big_step.cat s' (ihcatl hl) (ihcatr hr)
   | ifelse _ _ _ ih1 ih2 =>
     intro hmp
     match hmp with
-    | Or.inl $ And.intro hstep hcond =>
+    | Or.inl (And.intro hstep hcond) =>
       exact big_step.iftrue hcond (ih1 hstep)
-    | Or.inr $ And.intro hstep hcond =>
+    | Or.inr (And.intro hstep hcond) =>
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
       exact big_step.iffalse hcond (ih2 hstep)
   | whileloop b c ih =>
@@ -96,15 +96,15 @@ theorem Natural.from_denote
     apply Fix.lfp_le
     intro (_, _) hmp
     match hmp with
-    | Or.inl $ And.intro (Exists.intro s' $ And.intro hstep hrest) hcond =>
+    | Or.inl (And.intro (Exists.intro s' (And.intro hstep hrest)) hcond) =>
       exact big_step.whiletrue s' hcond (ih hstep) hrest
-    | Or.inr $ And.intro hid hcond =>
+    | Or.inr (And.intro hid hcond) =>
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
       rw [SFun.mem_id] at hid
       exact hid ▸ big_step.whilefalse hcond
 
 theorem natural_eq_denote: ((s, s') ∈ [[c]]) = ((c, s) ==> s') :=
-  propext $ Iff.intro Natural.from_denote denote.from_natural
+  propext (Iff.intro Natural.from_denote denote.from_natural)
 
 theorem structural_eq_denote:
   ((c, s) ~>* (skip, s')) = ((s, s') ∈ [[c]]) :=

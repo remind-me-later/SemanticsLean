@@ -1,24 +1,24 @@
 import Semantics.Imp.Aexp
 
 namespace Bexp
-namespace Natural
+namespace BigStep
 
 -- Operational semantics of Bexp
-private inductive big_step: Bexp × State -> Bool -> Prop
-  | true: big_step (true, _) Bool.true
-  | false: big_step (false, _) Bool.false
-  | not (h: big_step (b, s) x):
-    big_step (~~~b, s) (!x)
-  | and (h1: big_step (b, s) x) (h2: big_step (b', s) y):
-    big_step (b &&& b', s) (x && y)
-  | or (h1: big_step (b, s) x) (h2: big_step (b', s) y):
-    big_step (b ||| b', s) (x || y)
-  | eq: big_step (eq a a', s) (a s == a' s)
-  | le: big_step (le a a', s) (a s <= a' s)
+private inductive BigStep: Bexp × State -> Bool -> Prop
+  | true: BigStep (true, _) Bool.true
+  | false: BigStep (false, _) Bool.false
+  | not (h: BigStep (b, s) x):
+    BigStep (~~~b, s) (!x)
+  | and (h1: BigStep (b, s) x) (h2: BigStep (b', s) y):
+    BigStep (b &&& b', s) (x && y)
+  | or (h1: BigStep (b, s) x) (h2: BigStep (b', s) y):
+    BigStep (b ||| b', s) (x || y)
+  | eq: BigStep (eq a a', s) (a s == a' s)
+  | le: BigStep (le a a', s) (a s <= a' s)
 
-infix:10 " ==> " => big_step
+infix:10 " ==> " => BigStep
 
-private instance big_step.equiv: Setoid Bexp where
+private instance BigStep.equiv: Setoid Bexp where
   r b b' := ∀{s n}, ((b, s) ==> n) = ((b', s) ==> n)
   iseqv := {
     refl := fun _ => rfl
@@ -26,7 +26,7 @@ private instance big_step.equiv: Setoid Bexp where
     trans := fun h1 h2 => h1 ▸ h2
   }
 
-end Natural
+end BigStep
 
 -- Denotational semantics of Bexp
 def reduce (b: Bexp) (s: State): Bool :=
@@ -53,46 +53,46 @@ section Equivalence
 
 -- relational definition is equivalent to recursive
 private theorem reduce.from_natural {conf: Bexp × State}
-  (hbig_step: conf ==> x): conf.1 conf.2 = x :=
-  by induction hbig_step with
+  (hBigStep: conf ==> x): conf.1 conf.2 = x :=
+  by induction hBigStep with
   | not _ ih => exact ih ▸ rfl
   | and _ _ ihb ihb' | or _ _ ihb ihb' =>
     exact ihb ▸ ihb' ▸ rfl
   | _ => rfl
 
-private theorem Natural.from_reduce {b: Bexp}
+private theorem BigStep.from_reduce {b: Bexp}
   (hred: b s = x): (b, s) ==> x :=
   by induction b generalizing x with
-  | true => exact hred ▸ big_step.true
-  | false => exact hred ▸ big_step.false
-  | not _ ih => exact hred ▸ big_step.not (ih rfl)
+  | true => exact hred ▸ BigStep.true
+  | false => exact hred ▸ BigStep.false
+  | not _ ih => exact hred ▸ BigStep.not (ih rfl)
   | and _ _ ihb ihb' =>
-    exact hred ▸ big_step.and (ihb rfl) (ihb' rfl)
+    exact hred ▸ BigStep.and (ihb rfl) (ihb' rfl)
   | or _ _ ihb ihb' =>
-    exact hred ▸ big_step.or (ihb rfl) (ihb' rfl)
-  | eq => exact hred ▸ big_step.eq
-  | le => exact hred ▸ big_step.le
+    exact hred ▸ BigStep.or (ihb rfl) (ihb' rfl)
+  | eq => exact hred ▸ BigStep.eq
+  | le => exact hred ▸ BigStep.le
 
-private theorem big_step_eq_reduce {b: Bexp}:
+private theorem BigStep_eq_reduce {b: Bexp}:
   ((b, s) ==> x) = (b s = x) :=
-  propext (Iff.intro reduce.from_natural Natural.from_reduce)
+  propext (Iff.intro reduce.from_natural BigStep.from_reduce)
 
-private theorem big_step_eq_reduce' {b: Bexp}:
+private theorem BigStep_eq_reduce' {b: Bexp}:
   (b, s) ==> b s :=
-  Natural.from_reduce rfl
+  BigStep.from_reduce rfl
 
 private theorem not_true_eq_false:
   (!(reduce b s)) = (~~~b) s :=
   rfl
 
-private theorem big_step_eq_eq_reduce_eq:
-  Natural.big_step.equiv.r b b' <-> reduce.equiv.r b b' := by
+private theorem BigStep_eq_eq_reduce_eq:
+  BigStep.BigStep.equiv.r b b' <-> reduce.equiv.r b b' := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
-  . exact fun h => Iff.mpr (big_step_eq_reduce ▸ h) (Eq.mpr big_step_eq_reduce rfl)
+  . exact fun h => Iff.mpr (BigStep_eq_reduce ▸ h) (Eq.mpr BigStep_eq_reduce rfl)
   . exact fun h => {
-      mp := fun h1 => (h ▸ (big_step_eq_reduce ▸ h1)) ▸ big_step_eq_reduce',
-      mpr := fun h1 => (h ▸ (big_step_eq_reduce ▸ h1)) ▸ big_step_eq_reduce'
+      mp := fun h1 => (h ▸ (BigStep_eq_reduce ▸ h1)) ▸ BigStep_eq_reduce',
+      mpr := fun h1 => (h ▸ (BigStep_eq_reduce ▸ h1)) ▸ BigStep_eq_reduce'
     }
 
 end Equivalence

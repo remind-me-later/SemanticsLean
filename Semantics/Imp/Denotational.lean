@@ -9,7 +9,7 @@ From Concrete semantics with Isabelle
 
 namespace Com
 
-def denote_while (b: Bexp) (f: State ->s State):
+private def denote_while (b: Bexp) (f: State ->s State):
   (State ->s State) -> (State ->s State) :=
   fun g => Set.ite {(s, _) | b s} (f ○ g) SFun.id
 
@@ -31,7 +31,7 @@ notation (priority := high) "[[" c "]]" => denote c
 #check (s0, s0["x"<-5]["x"<-1]) ∈ [[[|x := 5; if x <= 1 then skip else x := 1 end|]]]
 #check (s0, s0["x"<-5]) ∈ [[[|x := 5; while x <= 1 loop x := 1 end|]]]
 
-namespace denote
+namespace Denotational
 
 instance equiv: Setoid Com where
   r a b := [[a]] = [[b]]
@@ -73,5 +73,5 @@ theorem loop_congr (hc: c1 ≈ c2):
   simp only [HasEquiv.Equiv, equiv, denote]
   exact hc ▸ rfl
 
-end denote
+end Denotational
 end Com

@@ -26,7 +26,7 @@ notation (priority := high) "{" x " | " p "}" => setOf fun x => p
 
 def univ: Set α := {_ | True}
 
-protected def insert (a: α) (s: Set α): Set α := {b | b = a ∨ b ∈ s}
+protected def insert (a: α) (s: Set α): Set α := {x | x = a ∨ x ∈ s}
 
 instance: Insert α (Set α) := Insert.mk Set.insert
 

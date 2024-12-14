@@ -1,35 +1,36 @@
 import Semantics.Imp.Bexp
 
 namespace Com
-namespace Natural
 
-inductive big_step: Com × State -> State -> Prop
+inductive BigStep: Com × State -> State -> Prop
   | skip:
-    big_step (skip, s) s
+    BigStep (skip, s) s
 
   | ass:
-    big_step (ass v a, s) (s[v <- a s])
+    BigStep (ass v a, s) (s[v <- a s])
 
-  | cat (s'': State) (hcatl: big_step (c, s) s'') (hcatr: big_step (c', s'') s'):
-    big_step (c++c', s) s'
+  | cat (s'': State) (hcatl: BigStep (c, s) s'') (hcatr: BigStep (c', s'') s'):
+    BigStep (c++c', s) s'
 
-  | iffalse (hcond: b s = false) (hifright: big_step (c', s) s'):
-    big_step (if b then _ else c' end, s) s'
+  | iffalse (hcond: b s = false) (hifright: BigStep (c', s) s'):
+    BigStep (if b then _ else c' end, s) s'
 
-  | iftrue (hcond: b s) (hifleft: big_step (c, s) s'):
-    big_step (if b then c else _ end, s) s'
+  | iftrue (hcond: b s) (hifleft: BigStep (c, s) s'):
+    BigStep (if b then c else _ end, s) s'
 
   | whilefalse (hcond: b s = false):
-    big_step (while b loop c end, s) s
+    BigStep (while b loop c end, s) s
 
   | whiletrue
-    (s'': State) (hcond: b s) (hwhilestep: big_step (c, s) s'')
-    (hwhilerest: big_step (while b loop c end, s'') s'):
-    big_step (while b loop c end, s) s'
+    (s'': State) (hcond: b s) (hwhilestep: BigStep (c, s) s'')
+    (hwhilerest: BigStep (while b loop c end, s'') s'):
+    BigStep (while b loop c end, s) s'
 
-infix:10 " ==> " => big_step
+infix:10 " ==> " => BigStep
 
-private example:  ([|x := 5|], s0) ==> s0["x" <- 5] := big_step.ass
+namespace BigStep
+
+private example: ([|x := 5|], s0) ==> s0["x" <- 5] := ass
 
 private example:
    ([|
@@ -41,13 +42,13 @@ private example:
       end
     |], s0)
     ==> s0["x" <- 2]["z" <- 4] :=
-    big_step.cat (s0["x" <- 2]) big_step.ass (big_step.iffalse rfl big_step.ass)
+    cat (s0["x" <- 2]) ass (iffalse rfl ass)
 
 private example:
   ([| x := 2; x := 3|], s0) ==> s0["x" <- 3] :=
   let h1: s0["x" <- 3] = s0["x" <- 2]["x" <- 3] :=
     Map.forget.symm
-  h1 ▸ big_step.cat _ big_step.ass big_step.ass
+  h1 ▸ cat _ ass ass
 
 -- factorial of x = 2
 private example:
@@ -60,16 +61,16 @@ private example:
     end
   |], s0)
   ==> s0["x" <- 2]["y" <- 1]["y" <- 2]["x" <- 1] := by
-  apply big_step.cat (s0["x" <- 2]["y" <- 1])
-  apply big_step.cat (s0["x" <- 2])
-  apply big_step.ass
-  apply big_step.ass
-  apply big_step.whiletrue (s0["x" <- 2]["y" <- 1]["y" <- 2]["x" <- 1])
+  apply cat (s0["x" <- 2]["y" <- 1])
+  apply cat (s0["x" <- 2])
+  apply ass
+  apply ass
+  apply whiletrue (s0["x" <- 2]["y" <- 1]["y" <- 2]["x" <- 1])
   apply rfl
-  apply big_step.cat (s0["x" <- 2]["y" <- 1]["y" <- 2])
-  apply big_step.ass
-  apply big_step.ass
-  apply big_step.whilefalse
+  apply cat (s0["x" <- 2]["y" <- 1]["y" <- 2])
+  apply ass
+  apply ass
+  apply whilefalse
   apply rfl
 
 /-
@@ -77,17 +78,17 @@ private example:
 -/
 
 theorem skip_eq:
-  ((skip, s) ==> s') = (s = s') :=
+  ((Com.skip, s) ==> s') = (s = s') :=
   propext {
-    mp := fun (big_step.skip) => rfl,
-    mpr := (· ▸ big_step.skip)
+    mp := fun (skip) => rfl,
+    mpr := (· ▸ skip)
   }
 
 theorem cat_eq:
   ((c++c', s) ==> s') = ∃s'', ((c, s) ==> s'') ∧ ((c', s'') ==> s') :=
   propext {
-    mp := fun (big_step.cat s'' hcatl hcatr) => Exists.intro s'' (And.intro hcatl hcatr),
-    mpr := fun (Exists.intro s'' (And.intro hcatl hcatr)) => big_step.cat s'' hcatl hcatr
+    mp := fun (cat s'' hcatl hcatr) => Exists.intro s'' (And.intro hcatl hcatr),
+    mpr := fun (Exists.intro s'' (And.intro hcatl hcatr)) => cat s'' hcatl hcatr
   }
 
 theorem if_eq:
@@ -95,10 +96,10 @@ theorem if_eq:
     = bif b s then (c, s) ==> s' else (c', s) ==> s' :=
   propext {
     mp := fun hmp => match hmp with
-      | big_step.iftrue hb h | big_step.iffalse hb h => hb ▸ h,
+      | iftrue hb h | iffalse hb h => hb ▸ h,
     mpr := match hb: b s with
-      | true => (big_step.iftrue hb .)
-      | false => (big_step.iffalse hb .)
+      | true => (iftrue hb .)
+      | false => (iffalse hb .)
   }
 
 theorem if_eq':
@@ -106,11 +107,11 @@ theorem if_eq':
     = ((bif b s then c else c', s) ==> s') :=
   propext {
     mp := fun hmp => match hmp with
-      | big_step.iftrue hcond hif | big_step.iffalse hcond hif =>
+      | iftrue hcond hif | iffalse hcond hif =>
         hcond ▸ hif,
     mpr := match hcond: b s with
-      | true => (big_step.iftrue hcond .)
-      | false => (big_step.iffalse hcond .)
+      | true => (iftrue hcond .)
+      | false => (iffalse hcond .)
   }
 
 theorem while_eq:
@@ -121,13 +122,13 @@ theorem while_eq:
       s = s' :=
   propext {
     mp := fun hmp => match hmp with
-      | big_step.whiletrue s'' hcond hwhilestep hwhilerest =>
+      | whiletrue s'' hcond hwhilestep hwhilerest =>
         hcond ▸ (Exists.intro s'' (And.intro hwhilestep hwhilerest))
-      | big_step.whilefalse hb => hb ▸ rfl,
+      | whilefalse hb => hb ▸ rfl,
     mpr := match hb: b s with
       | true => fun (Exists.intro s'' (And.intro hwhilestep hwhilerest)) =>
-        big_step.whiletrue s'' hb hwhilestep hwhilerest
-      | false => (. ▸ big_step.whilefalse hb)
+        whiletrue s'' hb hwhilestep hwhilerest
+      | false => (. ▸ whilefalse hb)
   }
 
 /-
@@ -142,14 +143,14 @@ instance equiv: Setoid Com where
     trans := fun h1 h2 => h1.trans h2
   }
 
-theorem skipl: (skip++c) ≈ c := {
-    mp := fun (big_step.cat _ hcatl hcatr) => skip_eq.mp hcatl ▸ hcatr,
-    mpr := (big_step.cat _ big_step.skip .)
+theorem skipl: (Com.skip++c) ≈ c := {
+    mp := fun (cat _ hcatl hcatr) => skip_eq.mp hcatl ▸ hcatr,
+    mpr := (cat _ skip .)
   }
 
-theorem skipr: (c++skip) ≈ c := {
-    mp := fun (big_step.cat _ hc hd) => skip_eq.mp hd ▸ hc,
-    mpr := (big_step.cat _ · big_step.skip)
+theorem skipr: (c++Com.skip) ≈ c := {
+    mp := fun (cat _ hc hd) => skip_eq.mp hd ▸ hc,
+    mpr := (cat _ · skip)
   }
 
 theorem cond_true (hb: b ≈ Bexp.true):
@@ -166,21 +167,21 @@ theorem cond_false (hb: b ≈ Bexp.false):
 
 theorem loop_unfold:
   while b loop c end ≈
-    if b then c++while b loop c end else skip end := by
+    if b then c++while b loop c end else Com.skip end := by
   intro s _s''
   rw [if_eq']
   constructor
   . intro hmp
     match hmp with
-    | big_step.whiletrue s' hb hc hw => exact hb ▸ big_step.cat s' hc hw
-    | big_step.whilefalse hb => exact hb ▸ big_step.skip
+    | whiletrue s' hb hc hw => exact hb ▸ cat s' hc hw
+    | whilefalse hb => exact hb ▸ skip
   . match hb: b s with
     | false =>
-      intro (big_step.skip)
-      exact big_step.whilefalse hb
+      intro (skip)
+      exact whilefalse hb
     | true =>
-      intro (big_step.cat s' hc hw)
-      exact big_step.whiletrue s' hb hc hw
+      intro (cat s' hc hw)
+      exact whiletrue s' hb hc hw
 
 /-
 ## Non termination
@@ -210,39 +211,39 @@ theorem loop_tt (htrue: b ≈ Bexp.true):
 theorem deterministic {conf: Com × State}
   (hps: conf ==> s) (hps': conf ==> s'): s = s' :=
   by induction hps generalizing s' with
-  | skip => match hps' with | big_step.skip => rfl
-  | ass => match hps' with | big_step.ass => rfl
+  | skip => match hps' with | skip => rfl
+  | ass => match hps' with | ass => rfl
   | cat _ _ _ ihc ihc₂ =>
     match hps' with
-    | big_step.cat _ hc hc₂ =>
+    | cat _ hc hc₂ =>
       exact ihc₂ (ihc hc ▸ hc₂)
   | iftrue hb _ ihc =>
     match hps' with
-    | big_step.iftrue _ hc =>
+    | iftrue _ hc =>
       exact ihc hc
-    | big_step.iffalse hb₁ _ =>
+    | iffalse hb₁ _ =>
       rw [hb] at hb₁
       contradiction
   | iffalse hb _ ihc₂ =>
     match hps' with
-    | big_step.iftrue hb₁ _ =>
+    | iftrue hb₁ _ =>
       rw [hb] at hb₁
       contradiction
-    | big_step.iffalse _ hd =>
+    | iffalse _ hd =>
       exact ihc₂ hd
   | whiletrue _ hb _ _ ihc ihw =>
     match hps' with
-    | big_step.whiletrue _ _ hc hw =>
+    | whiletrue _ _ hc hw =>
       exact ihw (ihc hc ▸ hw)
-    | big_step.whilefalse hb₁ =>
+    | whilefalse hb₁ =>
       rw [hb] at hb₁
       contradiction
   | whilefalse hb =>
     match hps' with
-    | big_step.whiletrue _ hb₁ _ _ =>
+    | whiletrue _ hb₁ _ _ =>
       rw [hb] at hb₁
       contradiction
-    | big_step.whilefalse _ => rfl
+    | whilefalse _ => rfl
 
-end Natural
+end BigStep
 end Com

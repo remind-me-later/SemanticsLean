@@ -7,30 +7,30 @@ namespace Com
 theorem SmallStep.from_natural {conf: Com × State}
   (hconf: conf ==> s'): conf ~>* (skip, s') := by
   induction hconf with
-  | skip => exact RTL.refl
-  | ass => exact RTL.single ass
+  | skip => exact ReflTrans.refl
+  | ass => exact ReflTrans.single ass
   | cat _ _ _ ihcatl ihcatr => exact star.cat ihcatl ihcatr
-  | iftrue hcond _ ih => exact RTL.head ifelse (hcond ▸ ih)
-  | iffalse hcond _ ih => exact RTL.head ifelse (hcond ▸ ih)
+  | iftrue hcond _ ih => exact ReflTrans.head ifElse (hcond ▸ ih)
+  | iffalse hcond _ ih => exact ReflTrans.head ifElse (hcond ▸ ih)
   | whiletrue _ hcond _ _ ihc ihw =>
-    exact RTL.head whileloop (RTL.trans (hcond ▸ star.cat ihc ihw) RTL.refl)
+    exact ReflTrans.head whileLoop (ReflTrans.trans (hcond ▸ star.cat ihc ihw) ReflTrans.refl)
   | whilefalse hcond =>
-    exact RTL.head whileloop (hcond ▸ RTL.refl)
+    exact ReflTrans.head whileLoop (hcond ▸ ReflTrans.refl)
 
 theorem BigStep.from_structural_step
   (hconf: conf ~> conf') (hconf': conf' ==> s'): conf ==> s' := by
   induction hconf generalizing s' with
   | ass => exact (skip_eq.mp hconf') ▸ ass
-  | skipcat => exact cat _ skip hconf'
+  | skipCat => exact cat _ skip hconf'
   | cat _ ih =>
     match hconf' with
     | cat s' hcatl hccatr => exact cat s' (ih hcatl) hccatr
-  | ifelse => exact if_eq' ▸ hconf'
-  | whileloop => rw [loop_unfold]; exact if_eq' ▸ hconf'
+  | ifElse => exact if_eq' ▸ hconf'
+  | whileLoop => rw [loop_unfold]; exact if_eq' ▸ hconf'
 
 theorem BigStep.from_structural
   (hconf: conf ~>* (Com.skip, s')): conf ==> s' := by
-  induction hconf using RTL.head_induction_on with
+  induction hconf using ReflTrans.head_induction_on with
   | refl => exact skip
   | head hsingle _ hs' => exact from_structural_step hsingle hs'
 

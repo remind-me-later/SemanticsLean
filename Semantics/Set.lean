@@ -82,7 +82,7 @@ theorem Subset.from_eq {a b: Set α} (heq: a = b): a ⊆ b :=
 def Set.ite (t a b: Set α): Set α := a ∩ t ∪ b \ t
 
 theorem Set.ite_mono (t: Set α) (hab: a ⊆ b) (hab': a' ⊆ b'):
-  t.ite a a' ⊆ t.ite b b' := fun _ h2 =>
+  ite t a a' ⊆ ite t b b' := fun _ h2 =>
   match h2 with
   | Or.inl (And.intro hl hr) => Or.inl (And.intro (hab hl) hr)
   | Or.inr (And.intro hl hr) => Or.inr (And.intro (hab' hl) hr)

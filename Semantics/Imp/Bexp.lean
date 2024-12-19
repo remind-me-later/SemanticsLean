@@ -45,8 +45,8 @@ instance reduce.equiv: Setoid Bexp where
   r b b':= ∀{s}, b s = b' s
   iseqv := {
     refl := fun _ => rfl
-    symm := fun h => Eq.symm h
-    trans := fun h1 h2 => h1 ▸ h2
+    symm := (Eq.symm .)
+    trans := (. ▸ .)
   }
 
 section Equivalence

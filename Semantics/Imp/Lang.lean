@@ -60,9 +60,6 @@ instance: Append Com := Append.mk Com.cat
 /-
 ## Syntax
 -/
--- Meta syntax
-notation "if " c " then " a " else " b " end" => Com.ifElse c a b
-notation "while " c " loop " a " end" => Com.whileLoop c a
 
 declare_syntax_cat imp
 

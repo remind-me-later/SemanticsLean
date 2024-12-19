@@ -7,15 +7,15 @@ namespace Com
 theorem SmallStep.from_natural {conf: Com × State}
   (hconf: conf ==> s'): conf ~>* (skip, s') := by
   induction hconf with
-  | skip => exact ReflTrans.refl
-  | ass => exact ReflTrans.single ass
+  | skip => exact .refl
+  | ass => exact .single ass
   | cat _ _ _ ihcatl ihcatr => exact star.cat ihcatl ihcatr
-  | ifTrue hcond _ ih => exact ReflTrans.head ifElse (hcond ▸ ih)
-  | ifFalse hcond _ ih => exact ReflTrans.head ifElse (hcond ▸ ih)
+  | ifTrue hcond _ ih => exact .head ifElse (hcond ▸ ih)
+  | ifFalse hcond _ ih => exact .head ifElse (hcond ▸ ih)
   | whileTrue _ hcond _ _ ihc ihw =>
-    exact ReflTrans.head whileLoop (ReflTrans.trans (hcond ▸ star.cat ihc ihw) ReflTrans.refl)
+    exact .head whileLoop (.trans (hcond ▸ star.cat ihc ihw) .refl)
   | whileFalse hcond =>
-    exact ReflTrans.head whileLoop (hcond ▸ ReflTrans.refl)
+    exact .head whileLoop (hcond ▸ .refl)
 
 theorem BigStep.from_structural_step
   (hconf: conf ~> conf') (hconf': conf' ==> s'): conf ==> s' := by
@@ -87,7 +87,7 @@ theorem BigStep.from_denote
       exact ifFalse hcond (ih2 hstep)
   | whileLoop b c ih =>
     suffices
-      [[while b loop c end]] <= {(s, s'') | (while b loop c end, s) ==> s''} by
+      [[whileLoop b c]] <= {(s, s'') | (whileLoop b c, s) ==> s''} by
       apply this
 
     apply Fix.lfp_le

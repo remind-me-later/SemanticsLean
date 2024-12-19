@@ -17,10 +17,8 @@ def denote: Com -> (State ->s State)
   | skip      => SFun.id
   | ass v a   => {(s, t) | t = s[v <- a s]}
   | cat c c' => denote c ○ denote c'
-  | if b then c else c' end =>
-      Set.ite {(s, _) | b s} (denote c) (denote c')
-  | while b loop c end =>
-      Fix.lfp (denote_while b (denote c))
+  | ifElse b c c' => Set.ite {(s, _) | b s} (denote c) (denote c')
+  | whileLoop b c => Fix.lfp (denote_while b (denote c))
 
 theorem monotone_denote_loop: monotone (denote_while b c) :=
   fun _ _ hmp =>
@@ -50,26 +48,24 @@ theorem skipr:
   simp only [HasEquiv.Equiv, equiv, denote, SFun.comp_id]
 
 theorem while_unfold:
-  while b loop c end ≈ if b then c++ while b loop c end else skip end :=
+  whileLoop b c ≈ ifElse b (c++whileLoop b c) skip :=
   Fix.lfp_eq _ monotone_denote_loop
 
 /-
 ## Congruence
 -/
 
-theorem cat_congr {c c' d₁ d₂: Com}
-  (hc: c ≈ c') (hd: d₁ ≈ d₂):
+theorem cat_congr {c c' d₁ d₂: Com} (hc: c ≈ c') (hd: d₁ ≈ d₂):
   (c++d₁) ≈ (c'++d₂) := by
   simp only [HasEquiv.Equiv, equiv, denote]
   exact hc ▸ hd ▸ rfl
 
 theorem cond_congr (hc: c1 ≈ c2) (hd: d1 ≈ d2):
-  if b then c1 else d1 end ≈ if b then c2 else d2 end := by
+  ifElse b c1 d1 ≈ ifElse b c2 d2 := by
   simp only [HasEquiv.Equiv, equiv, denote]
   exact hc ▸ hd ▸ rfl
 
-theorem loop_congr (hc: c1 ≈ c2):
-  while b loop c1 end ≈ while b loop c2 end := by
+theorem loop_congr (hc: c1 ≈ c2): whileLoop b c1 ≈ whileLoop b c2 := by
   simp only [HasEquiv.Equiv, equiv, denote]
   exact hc ▸ rfl
 

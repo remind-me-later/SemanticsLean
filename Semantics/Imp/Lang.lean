@@ -17,11 +17,11 @@ inductive Aexp where
   | sub : Aexp -> Aexp -> Aexp
   | mul : Aexp -> Aexp -> Aexp
 
-instance: OfNat Aexp n := OfNat.mk (Aexp.val n)
-instance: Add Aexp := Add.mk Aexp.add
-instance: Sub Aexp := Sub.mk Aexp.sub
-instance: Neg Aexp := Neg.mk fun n => Aexp.sub 0 n
-instance: Mul Aexp := Mul.mk Aexp.mul
+instance: OfNat Aexp n := ⟨Aexp.val n⟩
+instance: Add Aexp := ⟨Aexp.add⟩
+instance: Sub Aexp := ⟨Aexp.sub⟩
+instance: Neg Aexp := ⟨(Aexp.sub 0 .)⟩
+instance: Mul Aexp := ⟨Aexp.mul⟩
 
 -- x + 3
 #check Aexp.var "x" + 3
@@ -41,9 +41,9 @@ inductive Bexp where
   | eq : Aexp -> Aexp -> Bexp
   | le : Aexp -> Aexp -> Bexp
 
-instance: Complement Bexp := Complement.mk Bexp.not
-instance: AndOp Bexp := AndOp.mk Bexp.and
-instance: OrOp Bexp := OrOp.mk Bexp.or
+instance: Complement Bexp := ⟨Bexp.not⟩
+instance: AndOp Bexp := ⟨Bexp.and⟩
+instance: OrOp Bexp := ⟨Bexp.or⟩
 
 -- !(x <= 3)
 #check ~~~(Bexp.le (Aexp.var "x") 3)
@@ -52,8 +52,8 @@ inductive Com where
   | skip
   | cat        : Com -> Com -> Com
   | ass        : String -> Aexp -> Com
-  | ifelse     : Bexp -> Com -> Com -> Com
-  | whileloop  : Bexp -> Com -> Com
+  | ifElse     : Bexp -> Com -> Com -> Com
+  | whileLoop  : Bexp -> Com -> Com
 
 instance: Append Com := Append.mk Com.cat
 
@@ -61,8 +61,8 @@ instance: Append Com := Append.mk Com.cat
 ## Syntax
 -/
 -- Meta syntax
-notation "if " c " then " a " else " b " end" => Com.ifelse c a b
-notation "while " c " loop " a " end" => Com.whileloop c a
+notation "if " c " then " a " else " b " end" => Com.ifElse c a b
+notation "while " c " loop " a " end" => Com.whileLoop c a
 
 declare_syntax_cat imp
 
@@ -110,8 +110,8 @@ macro_rules
   -- com
   | `([|$x:ident := $y|]) => `(Com.ass $(Lean.quote (toString x.getId)) [|$y|])
   | `([|$x ; $y|])       => `(Com.cat [|$x|] [|$y|])
-  | `([|if $b then $x else $y end|]) => `(Com.ifelse [|$b|] [|$x|] [|$y|])
-  | `([|while $b loop $x end|]) => `(Com.whileloop [|$b|] [|$x|])
+  | `([|if $b then $x else $y end|]) => `(Com.ifElse [|$b|] [|$x|] [|$y|])
+  | `([|while $b loop $x end|]) => `(Com.whileLoop [|$b|] [|$x|])
 
 #check [|
 n := 5; i := 2; res := 1;

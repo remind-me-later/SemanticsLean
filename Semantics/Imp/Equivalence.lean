@@ -10,11 +10,11 @@ theorem SmallStep.from_natural {conf: Com × State}
   | skip => exact ReflTrans.refl
   | ass => exact ReflTrans.single ass
   | cat _ _ _ ihcatl ihcatr => exact star.cat ihcatl ihcatr
-  | iftrue hcond _ ih => exact ReflTrans.head ifElse (hcond ▸ ih)
-  | iffalse hcond _ ih => exact ReflTrans.head ifElse (hcond ▸ ih)
-  | whiletrue _ hcond _ _ ihc ihw =>
+  | ifTrue hcond _ ih => exact ReflTrans.head ifElse (hcond ▸ ih)
+  | ifFalse hcond _ ih => exact ReflTrans.head ifElse (hcond ▸ ih)
+  | whileTrue _ hcond _ _ ihc ihw =>
     exact ReflTrans.head whileLoop (ReflTrans.trans (hcond ▸ star.cat ihc ihw) ReflTrans.refl)
-  | whilefalse hcond =>
+  | whileFalse hcond =>
     exact ReflTrans.head whileLoop (hcond ▸ ReflTrans.refl)
 
 theorem BigStep.from_structural_step
@@ -36,27 +36,25 @@ theorem BigStep.from_structural
 
 theorem structural_eq_natural:
   ((c, s) ~>* (skip, s')) = ((c, s) ==> s') :=
-  propext (Iff.intro BigStep.from_structural SmallStep.from_natural)
+  propext ⟨BigStep.from_structural, SmallStep.from_natural⟩
 
 theorem denote.from_natural {conf: Com × State}
   (hconf: conf ==> s''): (conf.2, s'') ∈ [[conf.1]] := by
   induction hconf with
   | skip => exact SFun.mem_id.mpr rfl
   | ass  => exact SFun.mem_id.mpr rfl
-  | cat s' _ _ ihcatl ihcatr =>
-    exact Exists.intro s' (And.intro ihcatl ihcatr)
-  | iftrue hcond _ ih => exact Or.inl (And.intro ih hcond)
-  | iffalse hcond _ ih =>
+  | cat s' _ _ ihcatl ihcatr => exact ⟨s', ihcatl, ihcatr⟩
+  | ifTrue hcond _ ih => exact Or.inl ⟨ih, hcond⟩
+  | ifFalse hcond _ ih =>
       apply Or.inr
       simp only [Set.mem_diff, Set.mem_comprehend, hcond,
                   Bool.false_eq_true, not_false_eq_true,
                   and_true]
       exact ih
-  | whiletrue s' hcond _ _ ihwhilestep ihwhilerest =>
+  | whileTrue s' hcond _ _ ihwhilestep ihwhilerest =>
     exact Denotational.while_unfold ▸
-      (Or.inl (And.intro
-        (Exists.intro s' (And.intro ihwhilestep ihwhilerest)) hcond))
-  | whilefalse hcond =>
+      Or.inl ⟨⟨s', ihwhilestep, ihwhilerest⟩, hcond⟩
+  | whileFalse hcond =>
       rw [Denotational.while_unfold]
       apply Or.inr
       simp only [Set.mem_diff, Set.mem_comprehend, hcond,
@@ -78,33 +76,32 @@ theorem BigStep.from_denote
     simp only at hmp
     exact hmp ▸ ass
   | cat _ _ ihcatl ihcatr =>
-    intro (Exists.intro s' (And.intro hl hr))
-    exact cat s' (ihcatl hl) (ihcatr hr)
-  | ifelse _ _ _ ih1 ih2 =>
+    exact fun ⟨s', hl, hr⟩ => cat s' (ihcatl hl) (ihcatr hr)
+  | ifElse _ _ _ ih1 ih2 =>
     intro hmp
     match hmp with
-    | Or.inl (And.intro hstep hcond) =>
-      exact iftrue hcond (ih1 hstep)
-    | Or.inr (And.intro hstep hcond) =>
+    | Or.inl ⟨hstep, hcond⟩ =>
+      exact ifTrue hcond (ih1 hstep)
+    | Or.inr ⟨hstep, hcond⟩ =>
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
-      exact iffalse hcond (ih2 hstep)
-  | whileloop b c ih =>
+      exact ifFalse hcond (ih2 hstep)
+  | whileLoop b c ih =>
     suffices
-      [[while b loop c end]] ⊆ {(s, s'') | (while b loop c end, s) ==> s''} by
+      [[while b loop c end]] <= {(s, s'') | (while b loop c end, s) ==> s''} by
       apply this
 
     apply Fix.lfp_le
     intro (_, _) hmp
     match hmp with
-    | Or.inl (And.intro (Exists.intro s' (And.intro hstep hrest)) hcond) =>
-      exact whiletrue s' hcond (ih hstep) hrest
-    | Or.inr (And.intro hid hcond) =>
+    | Or.inl ⟨⟨s', hstep, hrest⟩, hcond⟩ =>
+      exact whileTrue s' hcond (ih hstep) hrest
+    | Or.inr ⟨hid, hcond⟩ =>
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
       rw [SFun.mem_id] at hid
-      exact hid ▸ whilefalse hcond
+      exact hid ▸ whileFalse hcond
 
 theorem natural_eq_denote: ((s, s') ∈ [[c]]) = ((c, s) ==> s') :=
-  propext (Iff.intro BigStep.from_denote denote.from_natural)
+  propext ⟨BigStep.from_denote, denote.from_natural⟩
 
 theorem structural_eq_denote:
   ((c, s) ~>* (skip, s')) = ((s, s') ∈ [[c]]) :=

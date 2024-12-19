@@ -30,6 +30,6 @@ theorem lift {r: α -> α -> Prop} {p: β -> β -> Prop} {a b: α} (f: α -> β)
     (h: ∀{a b}, r a b -> p (f a) (f b)) (hab: ReflTrans r a b): ReflTrans p (f a) (f b) := by
   induction hab with
   | refl => exact refl
-  | tail _ hbc ih => exact tail ih (h hbc)
+  | tail _hab hbc ih => exact tail ih (h hbc)
 
 end ReflTrans

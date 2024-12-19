@@ -18,7 +18,7 @@ private inductive BigStep: Bexp × State -> Bool -> Prop
 
 infix:10 " ==> " => BigStep
 
-private instance BigStep.equiv: Setoid Bexp where
+private instance equiv: Setoid Bexp where
   r b b' := ∀{s n}, ((b, s) ==> n) = ((b', s) ==> n)
   iseqv := {
     refl := fun _ => rfl
@@ -39,7 +39,7 @@ def reduce (b: Bexp) (s: State): Bool :=
   | eq a a'  => a s == a' s
   | le a a'  => a s <= a' s
 
-instance: CoeFun Bexp (fun _ => State -> Bool) := CoeFun.mk reduce
+instance: CoeFun Bexp (fun _b => State -> Bool) := ⟨reduce⟩
 
 instance reduce.equiv: Setoid Bexp where
   r b b':= ∀{s}, b s = b' s
@@ -86,7 +86,7 @@ private theorem not_true_eq_false:
   rfl
 
 private theorem BigStep_eq_eq_reduce_eq:
-  BigStep.BigStep.equiv.r b b' <-> reduce.equiv.r b b' := by
+  BigStep.equiv.r b b' <-> reduce.equiv.r b b' := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
   . exact fun h => Iff.mpr (BigStep_eq_reduce ▸ h) (Eq.mpr BigStep_eq_reduce rfl)

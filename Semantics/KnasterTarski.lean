@@ -7,7 +7,7 @@ import Semantics.Set
 class PartialOrder (α: Type) extends LE α, LT α where
   le_refl: ∀a: α, a <= a
   le_trans: ∀{{a b c: α}}, a <= b -> b <= c -> a <= c
-  le_iff_le_not_le: ∀{{a b: α}}, a < b <-> a <= b ∧ Not (b <= a)
+  le_iff_le_not_le: ∀{{a b: α}}, a < b <-> a <= b ∧ ¬(b <= a)
   le_antisymm: ∀{{a b: α}}, a <= b -> b <= a -> a = b
 
 theorem PartialOrder.le_rfl [PartialOrder α] {a: α}:
@@ -17,10 +17,7 @@ theorem PartialOrder.le_rfl [PartialOrder α] {a: α}:
 theorem Set.le_def (a b : Set α) :
   a <= b <-> a ⊆ b := Iff.rfl
 
-instance Set.LT (α: Type): LT (Set α) :=
-  {
-    lt := fun a b => a ⊆ b ∧ a ≠ b
-  }
+instance Set.LT (α: Type): LT (Set α) := ⟨fun a b => a ⊆ b ∧ a ≠ b⟩
 
 theorem Set.lt_def (a b : Set α):
   a < b <-> a ⊆ b ∧ a ≠ b :=
@@ -30,14 +27,12 @@ instance Set.partialOrder: PartialOrder (Set α) :=
   {
     le := fun a b => a ⊆ b,
     lt := fun a b => a ⊆ b ∧ a ≠ b,
-    le_refl := fun _a _b hba => hba,
-    le_antisymm := fun _a _b hab hba => Subset.antisymm hab hba,
-    le_iff_le_not_le := fun _a _b => Iff.intro
-        (fun (And.intro hl hr) =>
-          And.intro hl (fun mp => hr (Subset.antisymm hl mp)))
-        (fun (And.intro hl hr) =>
-          And.intro hl (fun mp => hr (Subset.from_eq (Eq.symm mp))))
-    le_trans := fun _a _b _c hab hbc _x ha => hbc (hab ha)
+    le_refl := fun _a _b => id,
+    le_antisymm := fun _a _b => Subset.antisymm,
+    le_iff_le_not_le := fun _a _b =>
+      ⟨fun ⟨hl, hr⟩ => ⟨hl, (hr $ Subset.antisymm hl .)⟩,
+        fun ⟨hl, hr⟩ => ⟨hl, (hr $ Subset.from_eq $ Eq.symm .)⟩⟩
+    le_trans := fun _a _b _c => Subset.trans
   }
 
 class CompleteLattice (α: Type) extends PartialOrder α where
@@ -113,8 +108,8 @@ namespace Fix
 
 theorem lfp_eq [CompleteLattice α] (f: α -> α)
     (hf: monotone f): lfp f = f (lfp f) :=
-  let h: f (lfp f) <= lfp f :=
-    le_lfp (fun a h => PartialOrder.le_trans (hf _ a (lfp_le h)) h)
+  have h: f (lfp f) <= lfp f :=
+    le_lfp (fun a h => PartialOrder.le_trans (hf _ a $ lfp_le h) h)
   PartialOrder.le_antisymm (lfp_le (hf _ _ h)) h
 
 end Fix

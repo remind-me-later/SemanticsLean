@@ -12,10 +12,10 @@ namespace Map
 
 def default (v: α): Map α := fun _ => v
 
-def update (m: Map α) (k: String) (v: α) :=
+def update (k: String) (v: α) (m: Map α) :=
   fun k' => bif k == k' then v else m k'
 
-notation m "[" k " <- " v "]" => Map.update m k v
+notation m "[" k " <- " v "]" => Map.update k v m
 
 theorem eval:
   (m[k <- v]) k = v := by

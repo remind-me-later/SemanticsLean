@@ -16,11 +16,11 @@ private inductive BigStep: Aexp × State -> Int -> Prop
 infix:10 " ==> " => BigStep
 
 private instance equiv: Setoid Aexp where
-  r a a' := ∀{s n}, ((a, s) ==> n) = ((a', s) ==> n)
+  r a a' := ∀{s n}, ((a, s) ==> n) <-> ((a', s) ==> n)
   iseqv := {
-    refl := fun _ => rfl
-    symm := (Eq.symm .)
-    trans := (. ▸ .)
+    refl := fun _ => Iff.rfl
+    symm := (Iff.symm .)
+    trans := (Iff.trans . .)
   }
 
 private example: ((var "x" + 5) + (9 - 7), s0) ==> 7 :=
@@ -43,7 +43,7 @@ instance reduce.equiv: Setoid Aexp where
   iseqv := {
     refl := fun _ => rfl
     symm := (Eq.symm .)
-    trans := (. ▸ .)
+    trans := (Eq.trans . .)
   }
 
 #eval (var "x" + 5) + (9 - 7) $ s0 -- 7
@@ -72,8 +72,8 @@ private theorem BigStep.from_reduce
     exact hred ▸ (iha rfl).mul (iha' rfl)
 
 private theorem BigStep_eq_reduce:
-  ((a, s) ==> n) = (a s = n) :=
-  propext ⟨reduce.from_natural, BigStep.from_reduce⟩
+  ((a, s) ==> n) <-> (a s = n) :=
+  ⟨reduce.from_natural, BigStep.from_reduce⟩
 
 private theorem BigStep_eq_reduce':
   (a, s) ==> a s :=
@@ -83,11 +83,13 @@ private theorem BigStep_eq_eq_reduce_eq:
   BigStep.equiv.r b b' <-> reduce.equiv.r b b' := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
-  . exact fun h => Iff.mpr (BigStep_eq_reduce ▸ h) (Eq.mpr BigStep_eq_reduce rfl)
-  . exact fun h => {
-      mp := fun h1 => (h ▸ (BigStep_eq_reduce ▸ h1)) ▸ BigStep_eq_reduce',
-      mpr := fun h1 => (h ▸ (BigStep_eq_reduce ▸ h1)) ▸ BigStep_eq_reduce'
-    }
+  . intro h s
+    specialize @h s (b s)
+    rw [BigStep_eq_reduce, BigStep_eq_reduce, eq_self, true_iff] at h
+    exact h.symm
+  . intro h s n
+    specialize @h s
+    rw [BigStep_eq_reduce, BigStep_eq_reduce, h]
 
 end Equivalence
 

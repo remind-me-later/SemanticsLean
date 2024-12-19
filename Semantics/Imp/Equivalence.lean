@@ -22,21 +22,20 @@ theorem BigStep.from_structural_step
   induction hconf generalizing s' with
   | ass => exact (skip_eq.mp hconf') ▸ ass
   | skipCat => exact cat _ skip hconf'
-  | cat _ ih =>
-    match hconf' with
+  | cat _ ih => match hconf' with
     | cat s' hcatl hccatr => exact cat s' (ih hcatl) hccatr
-  | ifElse => exact if_eq' ▸ hconf'
-  | whileLoop => rw [loop_unfold]; exact if_eq' ▸ hconf'
+  | ifElse => rw [if_eq']; exact hconf'
+  | whileLoop => rw [loop_unfold, if_eq']; exact hconf'
 
 theorem BigStep.from_structural
-  (hconf: conf ~>* (Com.skip, s')): conf ==> s' := by
+  (hconf: conf ~>* (.skip, s')): conf ==> s' := by
   induction hconf using ReflTrans.head_induction_on with
   | refl => exact skip
   | head hsingle _ hs' => exact from_structural_step hsingle hs'
 
 theorem structural_eq_natural:
-  ((c, s) ~>* (skip, s')) = ((c, s) ==> s') :=
-  propext ⟨BigStep.from_structural, SmallStep.from_natural⟩
+  ((c, s) ~>* (skip, s')) <-> ((c, s) ==> s') :=
+  ⟨BigStep.from_structural, SmallStep.from_natural⟩
 
 theorem denote.from_natural {conf: Com × State}
   (hconf: conf ==> s''): (conf.2, s'') ∈ [[conf.1]] := by
@@ -62,8 +61,7 @@ theorem denote.from_natural {conf: Com × State}
                   and_true]
       rfl
 
-theorem BigStep.from_denote
-  (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
+theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
   revert hmem
   induction c generalizing s s'' with
   | skip =>
@@ -86,8 +84,7 @@ theorem BigStep.from_denote
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
       exact ifFalse hcond (ih2 hstep)
   | whileLoop b c ih =>
-    suffices
-      [[whileLoop b c]] <= {(s, s'') | (whileLoop b c, s) ==> s''} by
+    suffices [[whileLoop b c]] <= {(s, s'') | (whileLoop b c, s) ==> s''} by
       apply this
 
     apply Fix.lfp_le
@@ -100,11 +97,10 @@ theorem BigStep.from_denote
       rw [SFun.mem_id] at hid
       exact hid ▸ whileFalse hcond
 
-theorem natural_eq_denote: ((s, s') ∈ [[c]]) = ((c, s) ==> s') :=
-  propext ⟨BigStep.from_denote, denote.from_natural⟩
+theorem natural_eq_denote: ((s, s') ∈ [[c]]) <-> ((c, s) ==> s') :=
+  ⟨BigStep.from_denote, denote.from_natural⟩
 
-theorem structural_eq_denote:
-  ((c, s) ~>* (skip, s')) = ((s, s') ∈ [[c]]) :=
+theorem structural_eq_denote: ((c, s) ~>* (skip, s')) = ((s, s') ∈ [[c]]) :=
   by rw [structural_eq_natural, natural_eq_denote]
 
 end Com

@@ -4,26 +4,26 @@ import Semantics.ReflTransRel
 namespace Com
 
 inductive SmallStep: Com × State -> Com × State -> Prop where
-  | ass: SmallStep (ass v a, s) (skip, s[v <- a s])
-  | skipCat: SmallStep (skip++c, s) (c, s)
+  | ass: SmallStep (ass v a, s) ({}, s[v <- a s])
+  | skipCat: SmallStep ({}++c, s) (c, s)
   | cat (hstep: SmallStep (c, s) (c', s')):
     SmallStep (c++c'', s) (c'++c'', s')
   | ifElse: SmallStep (ifElse b c c', s) (cond (b s) c c', s)
   | whileLoop:
-    SmallStep (whileLoop b c, s) (cond (b s) (c++whileLoop b c) skip, s)
+    SmallStep (whileLoop b c, s) (cond (b s) (c++whileLoop b c) {}, s)
 
 infixl:10 " ~> " => SmallStep
 
 namespace SmallStep
 
 private example:
-  ([|x := 1; while x <= 2 loop x := x + 1 end|], s0) ~>
-      ([|skip; while x <= 2 loop x := x + 1 end|], s0["x" <- 1]) := cat ass
+  ([|x = 1; while x <= 2 {x = x + 1}|], s0) ~>
+      ([|skip; while x <= 2 {x = x + 1}|], s0["x" <- 1]) := cat ass
 
 theorem cat_eq:
   ((c++c'', s) ~> conf)
     <-> ((∃c' s', ((c, s) ~> (c', s')) ∧ conf = (c'++c'', s'))
-      ∨ (c = skip ∧ conf = (c'', s))) := {
+      ∨ (c = {} ∧ conf = (c'', s))) := {
     mp := fun hmp => match hmp with
       | skipCat => Or.inr ⟨rfl, rfl⟩
       | cat h => Or.inl ⟨_, _, h, rfl⟩,
@@ -34,7 +34,7 @@ theorem cat_eq:
 
 theorem cond_eq:
   ((.ifElse b c c', s) ~> conf)
-    = (b s ∧ conf = (c, s) ∨ b s = false ∧ conf = (c', s)) := propext {
+    <-> (b s ∧ conf = (c, s) ∨ b s = false ∧ conf = (c', s)) := {
     mp := fun hmp => match hb: b s with
       | false => match hmp with | ifElse => Or.inr ⟨rfl, hb ▸ rfl⟩
       | true => match hmp with | ifElse => Or.inl ⟨rfl, hb ▸ rfl⟩,
@@ -46,16 +46,14 @@ theorem cond_eq:
   }
 
 theorem cond_false (hb: b s = false):
-  ((.ifElse b c c', s) ~> conf) = (conf = (c', s)) := propext {
-    mp := fun hmp => match hb ▸ cond_eq ▸ hmp with | Or.inr ⟨_, hr⟩ => hr,
-    mpr := fun mp => cond_eq ▸ Or.inr ⟨hb, mp⟩
-  }
+  ((.ifElse b c c', s) ~> conf) <-> (conf = (c', s)) := by
+  rw [cond_eq, hb]
+  exact ⟨fun (Or.inr ⟨rfl, h⟩) => h, (Or.inr ⟨rfl, .⟩)⟩
 
 infixl:10 " ~>* " => ReflTrans SmallStep
 
-private example:
-  ([|x := 1; while x <= 1 loop x := x + 1 end|], s0) ~>*
-      (skip, s0["x" <- 1]["x" <- 2]) := by
+private example: ([|x = 1; while x <= 1 {x = x + 1}|], s0) ~>*
+    ({}, s0["x" <- 1]["x" <- 2]) := by
   apply ReflTrans.head (cat ass) (ReflTrans.head skipCat _)
   apply ReflTrans.head whileLoop
   have hs : s0["x" <- Aexp.reduce 1 s0] = s0["x" <- 1] := rfl
@@ -73,15 +71,15 @@ private example:
   simp
   apply ReflTrans.refl
 
-theorem star.cat_skip_cat (hc: (c, s) ~>* (skip, s')):
-  (c++c', s) ~>* (skip++c', s') :=
+theorem star.cat_skip_cat (hc: (c, s) ~>* ({}, s')):
+  (c++c', s) ~>* ({}++c', s') :=
   .lift (fun (c, s) => (c++c', s)) (cat .) hc
 
-theorem star.cat (hc: (c, s) ~>* (skip, s')) (hc': (c', s') ~>* (skip, s'')):
-  (c++c', s) ~>* (skip, s'') :=
+theorem star.cat (hc: (c, s) ~>* ({}, s')) (hc': (c', s') ~>* ({}, s'')):
+  (c++c', s) ~>* ({}, s'') :=
   .trans (cat_skip_cat hc) $ .trans (.single skipCat) hc'
 
-theorem star.cat_no_influence (hc: (c, s) ~>* (skip, s)):
+theorem star.cat_no_influence (hc: (c, s) ~>* ({}, s)):
   (c++c', s) ~>* (c', s) :=
   .trans (cat_skip_cat hc) $ .single skipCat
 

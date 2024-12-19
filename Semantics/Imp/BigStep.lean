@@ -3,7 +3,7 @@ import Semantics.Imp.Bexp
 namespace Com
 
 inductive BigStep: Com × State -> State -> Prop
-  | skip: BigStep (skip, s) s
+  | skip: BigStep ({}, s) s
   | ass: BigStep (ass v a, s) (s[v <- a s])
   | cat (s'': State) (hcatl: BigStep (c, s) s'') (hcatr: BigStep (c', s'') s'):
     BigStep (c++c', s) s'
@@ -21,22 +21,22 @@ infix:10 " ==> " => BigStep
 
 namespace BigStep
 
-private example: ([|x := 5|], s0) ==> s0["x" <- 5] := ass
+private example: ([|x = 5|], s0) ==> s0["x" <- 5] := ass
 
 private example:
    ([|
-      x := 2;
-      if x <= 1 then
-        y := 3
-      else
-        z := 4
-      end
+      x = 2;
+      if x <= 1 {
+        y = 3
+      } else {
+        z = 4
+      }
     |], s0)
     ==> s0["x" <- 2]["z" <- 4] :=
     cat (s0["x" <- 2]) ass (ifFalse rfl ass)
 
 private example:
-  ([| x := 2; x := 3|], s0) ==> s0["x" <- 3] :=
+  ([| x = 2; x = 3|], s0) ==> s0["x" <- 3] :=
   let h1: s0["x" <- 3] = s0["x" <- 2]["x" <- 3] :=
     Map.forget.symm
   h1 ▸ cat _ ass ass
@@ -44,12 +44,11 @@ private example:
 -- factorial of x = 2
 private example:
   ([|
-    x := 2;
-    y := 1;
-    while 2 <= x loop
-      y := y * x;
-      x := x - 1
-    end
+    x = 2; y = 1;
+    while 2 <= x {
+      y = y * x;
+      x = x - 1
+    }
   |], s0)
   ==> s0["x" <- 2]["y" <- 1]["y" <- 2]["x" <- 1] := by
   apply cat (s0["x" <- 2]["y" <- 1])
@@ -68,23 +67,19 @@ private example:
 ## Rewriting rules
 -/
 
-theorem skip_eq:
-  ((.skip, s) ==> s') = (s = s') :=
-  propext {
+theorem skip_eq: (({}, s) ==> s') <-> (s = s') := {
     mp := fun (skip) => rfl,
     mpr := (· ▸ skip)
   }
 
 theorem cat_eq:
-  ((c++c', s) ==> s') = ∃s'', ((c, s) ==> s'') ∧ ((c', s'') ==> s') :=
-  propext {
+  ((c++c', s) ==> s') <-> ∃s'', ((c, s) ==> s'') ∧ ((c', s'') ==> s') := {
     mp := fun (cat s'' hcatl hcatr) => ⟨s'', hcatl, hcatr⟩,
     mpr := fun ⟨s'', hcatl, hcatr⟩ => cat s'' hcatl hcatr
   }
 
 theorem if_eq: ((ifElse b c c', s) ==> s')
-    = cond (b s) ((c, s) ==> s') ((c', s) ==> s') :=
-  propext {
+    <-> cond (b s) ((c, s) ==> s') ((c', s) ==> s') := {
     mp := fun hmp => match hmp with
       | ifTrue hcond hstep | ifFalse hcond hstep =>
         hcond ▸ hstep,
@@ -94,8 +89,7 @@ theorem if_eq: ((ifElse b c c', s) ==> s')
   }
 
 theorem if_eq': ((ifElse b c c', s) ==> s')
-    = ((cond (b s) c c', s) ==> s') :=
-  propext {
+    <-> ((cond (b s) c c', s) ==> s') := {
     mp := fun hmp => match hmp with
       | ifTrue hcond hif | ifFalse hcond hif =>
         hcond ▸ hif,
@@ -105,11 +99,10 @@ theorem if_eq': ((ifElse b c c', s) ==> s')
   }
 
 theorem while_eq:
-  ((whileLoop b c, s) ==> s') =
+  ((whileLoop b c, s) ==> s') <->
     cond (b s)
       (∃s'', ((c, s) ==> s'') ∧ ((whileLoop b c, s'') ==> s'))
-      (s = s') :=
-  propext {
+      (s = s') := {
     mp := fun hmp => match hmp with
       | whileTrue s'' hcond hwhilestep hwhilerest =>
         hcond ▸ ⟨s'', hwhilestep, hwhilerest⟩
@@ -132,12 +125,12 @@ instance equiv: Setoid Com where
     trans := (Iff.trans . .)
   }
 
-theorem skipl: (Com.skip++c) ≈ c := {
+theorem skipl {c: Com}: ({}++c) ≈ c := {
   mp := fun (cat _ hcatl hcatr) => skip_eq.mp hcatl ▸ hcatr,
   mpr := (cat _ skip .)
 }
 
-theorem skipr: (c++Com.skip) ≈ c := {
+theorem skipr {c: Com}: (c++{}) ≈ c := {
   mp := fun (cat _ hc hd) => skip_eq.mp hd ▸ hc,
   mpr := (cat _ · skip)
 }
@@ -152,7 +145,7 @@ theorem cond_false (hb: b ≈ Bexp.false): ifElse b c c' ≈ c' := by
   rw [if_eq, hb]
   rfl
 
-theorem loop_unfold: whileLoop b c ≈ ifElse b (c++whileLoop b c) .skip := by
+theorem loop_unfold: whileLoop b c ≈ ifElse b (c++whileLoop b c) {} := by
   intro s _s''
   rw [if_eq']
   exact {

@@ -28,15 +28,15 @@ private example: ((var "x" + 5) + (9 - 7), s0) ==> 7 :=
 
 end BigStep
 
-def reduce (a: Aexp) (s: State): Int :=
+def eval (a: Aexp) (s: State): Int :=
   match a with
   | val n => n
   | var v => s v
-  | add a a' => reduce a s + reduce a' s
-  | sub a a' => reduce a s - reduce a' s
-  | mul a a' => reduce a s * reduce a' s
+  | add a a' => eval a s + eval a' s
+  | sub a a' => eval a s - eval a' s
+  | mul a a' => eval a s * eval a' s
 
-instance: CoeFun Aexp (fun _a => State -> Int) := ⟨reduce⟩
+instance: CoeFun Aexp (fun _a => State -> Int) := ⟨eval⟩
 
 instance reduce.equiv: Setoid Aexp where
   r a a' := ∀{s}, a s = a' s

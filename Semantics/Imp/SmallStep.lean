@@ -53,7 +53,7 @@ private example: ([|x = 1; while x <= 1 {x = x + 1}|], s0) ~>*
     ({}, s0["x" <- 1]["x" <- 2]) := by
   apply ReflTrans.head (cat ass) (ReflTrans.head skipCat _)
   apply ReflTrans.head whileLoop
-  have hs : s0["x" <- Aexp.reduce 1 s0] = s0["x" <- 1] := rfl
+  have hs : s0["x" <- Aexp.eval 1 s0] = s0["x" <- 1] := rfl
   have hcond : (Bexp.le (Aexp.var "x") 1) (s0["x" <- 1]) = true := rfl
   rw [hs, hcond]
   apply ReflTrans.head (cat ass)

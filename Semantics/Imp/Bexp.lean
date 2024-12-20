@@ -29,17 +29,17 @@ private instance equiv: Setoid Bexp where
 end BigStep
 
 -- Denotational semantics of Bexp
-def reduce (b: Bexp) (s: State): Bool :=
+def eval (b: Bexp) (s: State): Bool :=
   match b with
   | true  => .true
   | false => .false
-  | not b => !reduce b s
-  | and b b' => reduce b s && reduce b' s
-  | or b b'  => reduce b s || reduce b' s
+  | not b => !eval b s
+  | and b b' => eval b s && eval b' s
+  | or b b'  => eval b s || eval b' s
   | eq a a'  => a s == a' s
   | le a a'  => a s <= a' s
 
-instance: CoeFun Bexp (fun _b => State -> Bool) := ⟨reduce⟩
+instance: CoeFun Bexp (fun _b => State -> Bool) := ⟨eval⟩
 
 instance reduce.equiv: Setoid Bexp where
   r b b':= ∀{s}, b s = b' s

@@ -16,14 +16,12 @@ infixl:10 " ~> " => SmallStep
 
 namespace SmallStep
 
-private example:
-  ([|x = 1; while x <= 2 {x = x + 1}|], s0) ~>
-      ([|skip; while x <= 2 {x = x + 1}|], s0["x" <- 1]) := cat ass
+private example: ([|x = 1; while x <= 2 {x = x + 1}|], s0) ~>
+  ([|skip; while x <= 2 {x = x + 1}|], s0["x" <- 1]) := cat ass
 
-theorem cat_eq:
-  ((c++c'', s) ~> conf)
-    <-> ((∃c' s', ((c, s) ~> (c', s')) ∧ conf = (c'++c'', s'))
-      ∨ (c = {} ∧ conf = (c'', s))) := {
+theorem cat_eq: ((c++c'', s) ~> conf)
+  <-> ((∃c' s', ((c, s) ~> (c', s')) ∧ conf = (c'++c'', s'))
+    ∨ (c = {} ∧ conf = (c'', s))) := {
     mp := fun hmp => match hmp with
       | skipCat => Or.inr ⟨rfl, rfl⟩
       | cat h => Or.inl ⟨_, _, h, rfl⟩,
@@ -32,9 +30,8 @@ theorem cat_eq:
       | Or.inr ⟨hl, hr⟩ => hl ▸ hr ▸ skipCat
   }
 
-theorem cond_eq:
-  ((.ifElse b c c', s) ~> conf)
-    <-> (b s ∧ conf = (c, s) ∨ b s = false ∧ conf = (c', s)) := {
+theorem cond_eq: ((.ifElse b c c', s) ~> conf)
+  <-> (b s ∧ conf = (c, s) ∨ b s = false ∧ conf = (c', s)) := {
     mp := fun hmp => match hb: b s with
       | false => match hmp with | ifElse => Or.inr ⟨rfl, hb ▸ rfl⟩
       | true => match hmp with | ifElse => Or.inl ⟨rfl, hb ▸ rfl⟩,
@@ -45,8 +42,8 @@ theorem cond_eq:
       hss ▸ ifElse
   }
 
-theorem cond_false (hb: b s = false):
-  ((.ifElse b c c', s) ~> conf) <-> (conf = (c', s)) := by
+theorem cond_false (hb: b s = false): ((.ifElse b c c', s) ~> conf)
+  <-> (conf = (c', s)) := by
   rw [cond_eq, hb]
   exact ⟨fun (Or.inr ⟨rfl, h⟩) => h, (Or.inr ⟨rfl, .⟩)⟩
 
@@ -59,7 +56,6 @@ private example: ([|x = 1; while x <= 1 {x = x + 1}|], s0) ~>*
   have hs : s0["x" <- Aexp.reduce 1 s0] = s0["x" <- 1] := rfl
   have hcond : (Bexp.le (Aexp.var "x") 1) (s0["x" <- 1]) = true := rfl
   rw [hs, hcond]
-  simp
   apply ReflTrans.head (cat ass)
   apply ReflTrans.head skipCat
   apply ReflTrans.head whileLoop
@@ -68,7 +64,6 @@ private example: ([|x = 1; while x <= 1 {x = x + 1}|], s0) ~>*
   have hcond : (Bexp.le (Aexp.var "x") 1) (s0["x" <- 1]["x" <- 2])
     = false := rfl
   rw [hs, hcond]
-  simp
   apply ReflTrans.refl
 
 theorem star.cat_skip_cat (hc: (c, s) ~>* ({}, s')):

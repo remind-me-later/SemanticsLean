@@ -23,43 +23,22 @@ namespace BigStep
 
 private example: ([|x = 5|], s0) ==> s0["x" <- 5] := ass
 
-private example:
-   ([|
-      x = 2;
-      if x <= 1 {
-        y = 3
-      } else {
-        z = 4
-      }
-    |], s0)
-    ==> s0["x" <- 2]["z" <- 4] :=
-    cat (s0["x" <- 2]) ass (ifFalse rfl ass)
+private example: ([|x = 2; if x <= 1 {y = 3} else {z = 4}|], s0)
+  ==> s0["x" <- 2]["z" <- 4] :=
+  cat (s0["x" <- 2]) ass (ifFalse rfl ass)
 
-private example:
-  ([| x = 2; x = 3|], s0) ==> s0["x" <- 3] :=
-  let h1: s0["x" <- 3] = s0["x" <- 2]["x" <- 3] :=
+private example: ([| x = 2; x = 3|], s0) ==> s0["x" <- 3] :=
+  have h1: s0["x" <- 3] = s0["x" <- 2]["x" <- 3] :=
     Map.forget.symm
   h1 ▸ cat _ ass ass
 
 -- factorial of x = 2
-private example:
-  ([|
-    x = 2; y = 1;
-    while 2 <= x {
-      y = y * x;
-      x = x - 1
-    }
-  |], s0)
+private example: ([|x = 2; y = 1; while 2 <= x {y = y * x; x = x - 1}|], s0)
   ==> s0["x" <- 2]["y" <- 1]["y" <- 2]["x" <- 1] := by
-  apply cat (s0["x" <- 2]["y" <- 1])
-  apply cat (s0["x" <- 2])
-  apply ass
-  apply ass
+  apply cat (s0["x" <- 2]["y" <- 1]) (cat (s0["x" <- 2]) ass ass)
   apply whileTrue (s0["x" <- 2]["y" <- 1]["y" <- 2]["x" <- 1])
   apply rfl
-  apply cat (s0["x" <- 2]["y" <- 1]["y" <- 2])
-  apply ass
-  apply ass
+  apply cat (s0["x" <- 2]["y" <- 1]["y" <- 2]) ass ass
   apply whileFalse
   apply rfl
 
@@ -67,10 +46,8 @@ private example:
 ## Rewriting rules
 -/
 
-theorem skip_eq: (({}, s) ==> s') <-> (s = s') := {
-    mp := fun (skip) => rfl,
-    mpr := (· ▸ skip)
-  }
+theorem skip_eq: (({}, s) ==> s') <-> (s = s') :=
+  ⟨fun (skip) => rfl, (· ▸ skip)⟩
 
 theorem cat_eq:
   ((c++c', s) ==> s') <-> ∃s'', ((c, s) ==> s'') ∧ ((c', s'') ==> s') := {
@@ -89,20 +66,17 @@ theorem if_eq: ((ifElse b c c', s) ==> s')
   }
 
 theorem if_eq': ((ifElse b c c', s) ==> s')
-    <-> ((cond (b s) c c', s) ==> s') := {
+  <-> ((cond (b s) c c', s) ==> s') := {
     mp := fun hmp => match hmp with
-      | ifTrue hcond hif | ifFalse hcond hif =>
-        hcond ▸ hif,
+      | ifTrue hcond hif | ifFalse hcond hif => hcond ▸ hif,
     mpr := match hcond: b s with
       | true => (ifTrue hcond .)
       | false => (ifFalse hcond .)
   }
 
-theorem while_eq:
-  ((whileLoop b c, s) ==> s') <->
-    cond (b s)
-      (∃s'', ((c, s) ==> s'') ∧ ((whileLoop b c, s'') ==> s'))
-      (s = s') := {
+theorem while_eq: ((whileLoop b c, s) ==> s') <->
+  cond (b s) (∃s'', ((c, s) ==> s'') ∧ ((whileLoop b c, s'') ==> s'))
+  (s = s') := {
     mp := fun hmp => match hmp with
       | whileTrue s'' hcond hwhilestep hwhilerest =>
         hcond ▸ ⟨s'', hwhilestep, hwhilerest⟩
@@ -125,29 +99,20 @@ instance equiv: Setoid Com where
     trans := (Iff.trans . .)
   }
 
-theorem skipl {c: Com}: ({}++c) ≈ c := {
-  mp := fun (cat _ hcatl hcatr) => skip_eq.mp hcatl ▸ hcatr,
-  mpr := (cat _ skip .)
-}
+theorem skipl {c: Com}: ({}++c) ≈ c :=
+  ⟨fun (cat _ hcatl hcatr) => skip_eq.mp hcatl ▸ hcatr, (cat _ skip .)⟩
 
-theorem skipr {c: Com}: (c++{}) ≈ c := {
-  mp := fun (cat _ hc hd) => skip_eq.mp hd ▸ hc,
-  mpr := (cat _ · skip)
-}
+theorem skipr {c: Com}: (c++{}) ≈ c :=
+  ⟨fun (cat _ hc hd) => skip_eq.mp hd ▸ hc, (cat _ · skip)⟩
 
 theorem cond_true (hb: b ≈ Bexp.true): ifElse b c c' ≈ c := by
-  intro _ _
-  rw [if_eq, hb]
-  rfl
+  intro _ _; rw [if_eq, hb]; rfl
 
 theorem cond_false (hb: b ≈ Bexp.false): ifElse b c c' ≈ c' := by
-  intro _ _
-  rw [if_eq, hb]
-  rfl
+  intro _ _; rw [if_eq, hb]; rfl
 
 theorem loop_unfold: whileLoop b c ≈ ifElse b (c++whileLoop b c) {} := by
-  intro s _s''
-  rw [if_eq']
+  intro s _s''; rw [if_eq']
   exact {
     mp := fun hmp => match hmp with
       | whileTrue s' hb hc hw => hb ▸ cat s' hc hw
@@ -165,16 +130,11 @@ theorem loop_tt (htrue: b ≈ Bexp.true): ¬((whileLoop b c, s) ==> s') := by
   intro hmp
   generalize hconf: (whileLoop b c, s) = conf at hmp
   induction hmp generalizing s with
-  | whileTrue _ _ _ _ _ ihw =>
-    match hconf with
+  | whileTrue _ _ _ _ _ ihw => match hconf with
     | Eq.refl _ => exact ihw rfl
-  | whileFalse hb =>
-    match hconf with
-    | Eq.refl _ =>
-      rw [htrue] at hb
-      contradiction
-  | _ =>
-    match Prod.mk.injEq _ _ _ _ ▸ hconf with
+  | whileFalse hb => match hconf with
+    | Eq.refl _ => rw [htrue] at hb; contradiction
+  | _ => match Prod.mk.injEq _ _ _ _ ▸ hconf with
     | ⟨_, _⟩ => contradiction
 
 /-

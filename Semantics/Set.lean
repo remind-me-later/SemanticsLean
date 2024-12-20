@@ -113,20 +113,24 @@ theorem mem_comp: x ∈ f ○ g <-> ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g :=
 theorem comp_mono (hfh: f ⊆ h) (hgk: g ⊆ k): f ○ g ⊆ h ○ k :=
   fun _ ⟨z, hl, hr⟩ => ⟨z, hfh hl, hgk hr⟩
 
-theorem comp_id: x ∈ f ○ id <-> x ∈ f := by
+theorem comp_id: f ○ id = f := by
+  apply funext
+  intro x
+  apply propext
   constructor
-  . intro ⟨_z, hl, hr⟩
-    have hh := mem_id.mp hr ▸ hl
-    exact hh
-  . intro h
-    exact ⟨_, h, mem_id.mpr rfl⟩
+  . intro ⟨_, hl, hr⟩
+    have := mem_id.mp hr ▸ hl
+    exact this
+  . exact (⟨_, ., mem_id.mpr rfl⟩)
 
-theorem id_comp: x ∈ id ○ f <-> x ∈ f := by
+theorem id_comp: id ○ f = f := by
+  apply funext
+  intro x
+  apply propext
   constructor
-  . intro ⟨_z, hl, hr⟩
-    have hh := mem_id.mp hl ▸ hr
-    exact hh
-  . intro h
-    exact ⟨_, mem_id.mpr rfl, h⟩
+  . intro ⟨_, hl, hr⟩
+    have := mem_id.mp hl ▸ hr
+    exact this
+  . exact (⟨_, mem_id.mpr rfl, .⟩)
 
 end SFun

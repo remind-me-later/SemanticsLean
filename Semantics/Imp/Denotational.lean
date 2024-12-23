@@ -9,16 +9,16 @@ From Concrete semantics with Isabelle
 
 namespace Com
 
-private def denote_while (b: Bexp) (f: State ->s State):
-  (State ->s State) -> (State ->s State) :=
+private def denote_while (b: Bexp) (f: Set (State × State)):
+  Set (State × State) → Set (State × State) :=
   fun g => Set.ite {(s, _) | b s} (f ○ g) SRel.id
 
-def denote: Com -> (State ->s State)
-  | skip      => SRel.id
-  | ass v a   => {(s, t) | t = s[v <- a s]}
-  | cat c c' => denote c ○ denote c'
-  | ifElse b c c' => Set.ite {(s, _) | b s} (denote c) (denote c')
-  | whileLoop b c => Fix.lfp (denote_while b (denote c))
+def denote: Com → Set (State × State)
+  | skip => SRel.id
+  | ass v a => {(s, t) | t = s[v ← a s]}
+  | cat c c' => c.denote ○ c'.denote
+  | ifElse b c c' => Set.ite {(s, _) | b s} c.denote c'.denote
+  | whileLoop b c => Fix.lfp $ denote_while b c.denote
 
 theorem denote_while_mono: monotone (denote_while b c) :=
   fun _ _ hmp =>
@@ -26,8 +26,8 @@ theorem denote_while_mono: monotone (denote_while b c) :=
 
 notation (priority := high) "[[" c "]]" => denote c
 
-#check (s0, s0["x"<-5]["x"<-1]) ∈ [[[|x = 5; if x <= 1 {skip} else {x = 1}|]]]
-#check (s0, s0["x"<-5]) ∈ [[[|x = 5; while x <= 1 {x = 1}|]]]
+#check (s0, s0["x"←5]["x"←1]) ∈ [[[|x = 5; if x <= 1 {skip} else {x = 1}|]]]
+#check (s0, s0["x"←5]) ∈ [[[|x = 5; while x <= 1 {x = 1}|]]]
 
 namespace Denotational
 

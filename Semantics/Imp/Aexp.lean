@@ -3,7 +3,7 @@ import Semantics.Imp.Lang
 namespace Aexp
 namespace BigStep
 
-private inductive BigStep: Aexp × State -> Int -> Prop
+private inductive BigStep: Aexp × State → Int → Prop
   | val: BigStep (val n, _) n
   | var: BigStep (var v, s) (s v)
   | add (ha: BigStep (a, s) x) (ha': BigStep (a', s) y):
@@ -16,7 +16,7 @@ private inductive BigStep: Aexp × State -> Int -> Prop
 infix:10 " ==> " => BigStep
 
 private instance equiv: Setoid Aexp where
-  r a a' := ∀{s n}, ((a, s) ==> n) <-> ((a', s) ==> n)
+  r a a' := ∀{s n}, ((a, s) ==> n) ↔ ((a', s) ==> n)
   iseqv := {
     refl := fun _ => Iff.rfl
     symm := (Iff.symm .)
@@ -36,7 +36,7 @@ def eval (a: Aexp) (s: State): Int :=
   | sub a a' => eval a s - eval a' s
   | mul a a' => eval a s * eval a' s
 
-instance: CoeFun Aexp (fun _a => State -> Int) := ⟨eval⟩
+instance: CoeFun Aexp (fun _a => State → Int) := ⟨eval⟩
 
 instance reduce.equiv: Setoid Aexp where
   r a a' := ∀{s}, a s = a' s
@@ -72,7 +72,7 @@ private theorem BigStep.from_reduce
     exact hred ▸ (iha rfl).mul (iha' rfl)
 
 private theorem BigStep_eq_reduce:
-  ((a, s) ==> n) <-> (a s = n) :=
+  ((a, s) ==> n) ↔ (a s = n) :=
   ⟨reduce.from_natural, BigStep.from_reduce⟩
 
 private theorem BigStep_eq_reduce':
@@ -80,7 +80,7 @@ private theorem BigStep_eq_reduce':
   BigStep.from_reduce rfl
 
 private theorem BigStep_eq_eq_reduce_eq:
-  BigStep.equiv.r b b' <-> reduce.equiv.r b b' := by
+  BigStep.equiv.r b b' ↔ reduce.equiv.r b b' := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
   . intro h s

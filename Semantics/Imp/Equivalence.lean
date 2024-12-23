@@ -34,7 +34,7 @@ theorem BigStep.from_structural
   | head hsingle _ hs' => exact from_structural_step hsingle hs'
 
 theorem structural_eq_natural:
-  ((c, s) ~>* (skip, s')) <-> ((c, s) ==> s') :=
+  ((c, s) ~>* (skip, s')) ↔ ((c, s) ==> s') :=
   ⟨BigStep.from_structural, SmallStep.from_natural⟩
 
 theorem denote.from_natural {conf: Com × State}
@@ -84,7 +84,7 @@ theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
       exact ifFalse hcond (ih2 hstep)
   | whileLoop b c ih =>
-    suffices [[whileLoop b c]] <= {(s, s'') | (whileLoop b c, s) ==> s''} by
+    suffices [[whileLoop b c]] ≤ {(s, s'') | (whileLoop b c, s) ==> s''} by
       apply this
 
     apply Fix.lfp_le
@@ -97,7 +97,7 @@ theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
       rw [SRel.mem_id] at hid
       exact hid ▸ whileFalse hcond
 
-theorem natural_eq_denote: ((s, s') ∈ [[c]]) <-> ((c, s) ==> s') :=
+theorem natural_eq_denote: ((s, s') ∈ [[c]]) ↔ ((c, s) ==> s') :=
   ⟨BigStep.from_denote, denote.from_natural⟩
 
 theorem structural_eq_denote: ((c, s) ~>* (skip, s')) = ((s, s') ∈ [[c]]) :=

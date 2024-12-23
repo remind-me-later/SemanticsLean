@@ -4,7 +4,7 @@ namespace Bexp
 namespace BigStep
 
 -- Operational semantics of Bexp
-private inductive BigStep: Bexp × State -> Bool -> Prop
+private inductive BigStep: Bexp × State → Bool → Prop
   | true: BigStep (true, _) .true
   | false: BigStep (false, _) .false
   | not (h: BigStep (b, s) x):
@@ -19,7 +19,7 @@ private inductive BigStep: Bexp × State -> Bool -> Prop
 infix:10 " ==> " => BigStep
 
 private instance equiv: Setoid Bexp where
-  r b b' := ∀{s n}, ((b, s) ==> n) <-> ((b', s) ==> n)
+  r b b' := ∀{s n}, ((b, s) ==> n) ↔ ((b', s) ==> n)
   iseqv := {
     refl := fun _ => Iff.rfl
     symm := (Iff.symm .)
@@ -39,7 +39,7 @@ def eval (b: Bexp) (s: State): Bool :=
   | eq a a'  => a s == a' s
   | le a a'  => a s <= a' s
 
-instance: CoeFun Bexp (fun _b => State -> Bool) := ⟨eval⟩
+instance: CoeFun Bexp (fun _b => State → Bool) := ⟨eval⟩
 
 instance reduce.equiv: Setoid Bexp where
   r b b':= ∀{s}, b s = b' s
@@ -74,7 +74,7 @@ private theorem BigStep.from_reduce {b: Bexp}
   | le => exact hred ▸ BigStep.le
 
 private theorem BigStep_eq_reduce {b: Bexp}:
-  ((b, s) ==> x) <-> (b s = x) :=
+  ((b, s) ==> x) ↔ (b s = x) :=
   ⟨reduce.from_natural, BigStep.from_reduce⟩
 
 private theorem BigStep_eq_reduce' {b: Bexp}:
@@ -85,7 +85,7 @@ private theorem not_true_eq_false {b: Bexp}: (!b s) = (~~~b) s :=
   rfl
 
 private theorem BigStep_eq_eq_reduce_eq:
-  BigStep.equiv.r b b' <-> reduce.equiv.r b b' := by
+  BigStep.equiv.r b b' ↔ reduce.equiv.r b b' := by
   simp only [Setoid.r, eq_iff_iff]
   constructor
   . intro h s

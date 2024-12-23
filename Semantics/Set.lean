@@ -1,8 +1,8 @@
 -- # Sets
 
-def Set (α: Type) := α -> Prop
+def Set (α: Type) := α → Prop
 
-def setOf (p: α -> Prop): Set α := p
+def setOf (p: α → Prop): Set α := p
 
 namespace Set
 
@@ -10,11 +10,11 @@ protected def Mem (s: Set α) (a: α): Prop := s a
 
 instance: Membership α (Set α) := ⟨Set.Mem⟩
 
-theorem ext {a b: Set α} (h: ∀(x: α), x ∈ a <-> x ∈ b): a = b :=
+theorem ext {a b: Set α} (h: ∀(x: α), x ∈ a ↔ x ∈ b): a = b :=
   funext fun x => propext (h x)
 
 protected def Subset (a b: Set α) :=
-  ∀{{x}}, x ∈ a -> x ∈ b
+  ∀{{x}}, x ∈ a → x ∈ b
 
 instance: HasSubset (Set α) := ⟨Set.Subset⟩
 
@@ -56,10 +56,10 @@ end Set
   ## Set theorems
 -/
 
-theorem Set.mem_comprehend (a: α) (P: α -> Prop): a ∈ ({a | P a}: Set α) <-> P a :=
+theorem Set.mem_comprehend (a: α) (P: α → Prop): a ∈ ({a | P a}: Set α) ↔ P a :=
   Iff.rfl
 
-theorem Set.mem_diff {s t: Set α} (x: α): x ∈ s \ t <-> x ∈ s ∧ x ∉ t :=
+theorem Set.mem_diff {s t: Set α} (x: α): x ∈ s \ t ↔ x ∈ s ∧ x ∉ t :=
   Iff.rfl
 
 /-
@@ -91,19 +91,17 @@ def Set.ite (t a b: Set α): Set α := a ∩ t ∪ b \ t
 
 namespace SRel
 
-notation:20 α " ->s " β => Set (α × β)
+def id: Set (α × α) := {p | p.1 = p.2}
 
-def id: α ->s α := {p | p.1 = p.2}
-
-theorem mem_id: (a, b) ∈ id <-> a = b :=
+theorem mem_id: (a, b) ∈ id ↔ a = b :=
   Iff.rfl
 
-def comp (f g: α ->s α): α ->s α :=
+def comp (f g: Set (α × α)): Set (α × α) :=
   {(x, z) | ∃y, (x, y) ∈ f ∧ (y, z) ∈ g}
 
 infixl:90 " ○ " => SRel.comp
 
-theorem mem_comp: x ∈ f ○ g <-> ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g :=
+theorem mem_comp: x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g :=
   Iff.rfl
 
 theorem comp_id: f ○ id = f := by

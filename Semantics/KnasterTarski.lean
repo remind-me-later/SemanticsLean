@@ -8,18 +8,18 @@ import Semantics.Set
 -/
 
 class PartialOrder (α: Type) extends LE α, LT α where
-  le_refl: ∀a: α, a <= a
-  le_trans: ∀{{a b c: α}}, a <= b -> b <= c -> a <= c
-  lt_iff_le_not_le: ∀{{a b: α}}, a < b <-> a <= b ∧ ¬(b <= a)
-  le_antisymm: ∀{{a b: α}}, a <= b -> b <= a -> a = b
+  le_refl: ∀a: α, a ≤ a
+  le_trans: ∀{{a b c: α}}, a ≤ b → b ≤ c → a ≤ c
+  lt_iff_le_not_le: ∀{{a b: α}}, a < b ↔ a ≤ b ∧ ¬(b ≤ a)
+  le_antisymm: ∀{{a b: α}}, a ≤ b → b ≤ a → a = b
 
 @[refl]
-theorem PartialOrder.le_rfl [PartialOrder α] {a: α}: a <= a := le_refl a
+theorem PartialOrder.le_rfl [PartialOrder α] {a: α}: a ≤ a := le_refl a
 
 class CompleteLattice (α: Type) extends PartialOrder α where
-  Inf: Set α -> α
-  Inf_le: ∀{{s: Set α}}, ∀x ∈ s, Inf s <= x
-  le_Inf: ∀{{s: Set α}} {{a: α}}, (∀b ∈ s, a <= b) -> a <= Inf s
+  Inf: Set α → α
+  Inf_le: ∀{{s: Set α}}, ∀x ∈ s, Inf s ≤ x
+  le_Inf: ∀{{s: Set α}} {{a: α}}, (∀b ∈ s, a ≤ b) → a ≤ Inf s
 
 theorem inf_unique [CompleteLattice α] (s: Set α) (a b: α)
   (h: CompleteLattice.Inf s = a) (h': CompleteLattice.Inf s = b): a = b :=
@@ -51,19 +51,19 @@ instance Set.completeLattice: CompleteLattice (Set α) := {
 
 namespace Fix
 
-def pre_fp [PartialOrder α] (f: α -> α) (a: α): Prop :=
-  f a <= a
+def pre_fp [PartialOrder α] (f: α → α) (a: α): Prop :=
+  f a ≤ a
 
-def lfp [CompleteLattice α] (f: α -> α): α :=
-  CompleteLattice.Inf {a | f a <= a}
+def lfp [CompleteLattice α] (f: α → α): α :=
+  CompleteLattice.Inf {a | f a ≤ a}
 
-theorem lfp_le [CompleteLattice α] {f: α -> α} (h: pre_fp f a):
-  lfp f <= a :=
+theorem lfp_le [CompleteLattice α] {f: α → α} (h: pre_fp f a):
+  lfp f ≤ a :=
   CompleteLattice.Inf_le _ h
 
-theorem le_lfp [CompleteLattice α] {f: α -> α}
-  (h: ∀a', pre_fp f a' -> a <= a'):
-  a <= lfp f :=
+theorem le_lfp [CompleteLattice α] {f: α → α}
+  (h: ∀a', pre_fp f a' → a ≤ a'):
+  a ≤ lfp f :=
   CompleteLattice.le_Inf h
 
 end Fix
@@ -72,8 +72,8 @@ end Fix
 ## Monotonic Functions
 -/
 
-def monotone [PartialOrder α] [PartialOrder β] (f: α -> β): Prop :=
-  ∀a b, a <= b -> f a <= f b
+def monotone [PartialOrder α] [PartialOrder β] (f: α → β): Prop :=
+  ∀a b, a ≤ b → f a ≤ f b
 
 theorem monotone_id [PartialOrder α]:
   monotone (@id α) := fun _ _ => id
@@ -97,9 +97,9 @@ theorem SRel.comp_mono (hfh: f ⊆ h) (hgk: g ⊆ k): f ○ g ⊆ h ○ k :=
 
 namespace Fix
 
-theorem lfp_eq [CompleteLattice α] (f: α -> α)
+theorem lfp_eq [CompleteLattice α] (f: α → α)
     (hf: monotone f): lfp f = f (lfp f) :=
-  have h: f (lfp f) <= lfp f :=
+  have h: f (lfp f) ≤ lfp f :=
     le_lfp (fun a h => PartialOrder.le_trans (hf _ a $ lfp_le h) h)
   PartialOrder.le_antisymm (lfp_le (hf _ _ h)) h
 

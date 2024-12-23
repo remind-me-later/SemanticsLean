@@ -4,18 +4,18 @@ def State := Map Int
 def s0: State := Map.default 0
 
 #eval s0 "x"
-#eval (s0["x" <- 3]["x" <- 4]) "x"
-#eval (s0["x" <- 3]["x" <- 4]["x" <- 7]) "x" -- 7
+#eval (s0["x" ← 3]["x" ← 4]) "x"
+#eval (s0["x" ← 3]["x" ← 4]["x" ← 7]) "x" -- 7
 
-example: s0["x" <- 3] = s0["x" <- 4]["x" <- 3] := Map.forget.symm
+example: s0["x" ← 3] = s0["x" ← 4]["x" ← 3] := Map.forget.symm
 
 inductive Aexp where
-  | val : Int -> Aexp
-  | var : String -> Aexp
+  | val : Int → Aexp
+  | var : String → Aexp
   -- arithmetic
-  | add : Aexp -> Aexp -> Aexp
-  | sub : Aexp -> Aexp -> Aexp
-  | mul : Aexp -> Aexp -> Aexp
+  | add : Aexp → Aexp → Aexp
+  | sub : Aexp → Aexp → Aexp
+  | mul : Aexp → Aexp → Aexp
 
 instance: OfNat Aexp n := ⟨.val n⟩
 instance: Add Aexp := ⟨.add⟩
@@ -34,12 +34,12 @@ inductive Bexp where
   | true
   | false
   -- boolean
-  | not : Bexp -> Bexp
-  | and : Bexp -> Bexp -> Bexp
-  | or  : Bexp -> Bexp -> Bexp
+  | not : Bexp → Bexp
+  | and : Bexp → Bexp → Bexp
+  | or  : Bexp → Bexp → Bexp
   -- comparison
-  | eq : Aexp -> Aexp -> Bexp
-  | le : Aexp -> Aexp -> Bexp
+  | eq : Aexp → Aexp → Bexp
+  | le : Aexp → Aexp → Bexp
 
 instance: Complement Bexp := ⟨.not⟩
 instance: AndOp Bexp := ⟨.and⟩
@@ -50,10 +50,10 @@ instance: OrOp Bexp := ⟨.or⟩
 
 inductive Com where
   | skip
-  | cat       : Com -> Com -> Com
-  | ass       : String -> Aexp -> Com
-  | ifElse    : Bexp -> Com -> Com -> Com
-  | whileLoop : Bexp -> Com -> Com
+  | cat       : Com → Com → Com
+  | ass       : String → Aexp → Com
+  | ifElse    : Bexp → Com → Com → Com
+  | whileLoop : Bexp → Com → Com
 
 instance: EmptyCollection Com := ⟨.skip⟩
 instance: Append Com := ⟨.cat⟩

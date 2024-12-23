@@ -2,9 +2,9 @@ import Semantics.Imp.Bexp
 
 namespace Com
 
-inductive BigStep: Com × State -> State -> Prop
+inductive BigStep: Com × State → State → Prop
   | skip: BigStep ({}, s) s
-  | ass: BigStep (ass v a, s) (s[v <- a s])
+  | ass: BigStep (ass v a, s) (s[v ← a s])
   | cat (s'': State) (hcatl: BigStep (c, s) s'') (hcatr: BigStep (c', s'') s'):
     BigStep (c++c', s) s'
   | ifFalse (hcond: b s = false) (hifright: BigStep (c', s) s'):
@@ -21,24 +21,24 @@ infix:10 " ==> " => BigStep
 
 namespace BigStep
 
-private example: ([|x = 5|], s0) ==> s0["x" <- 5] := ass
+private example: ([|x = 5|], s0) ==> s0["x" ← 5] := ass
 
 private example: ([|x = 2; if x <= 1 {y = 3} else {z = 4}|], s0)
-  ==> s0["x" <- 2]["z" <- 4] :=
-  cat (s0["x" <- 2]) ass (ifFalse rfl ass)
+  ==> s0["x" ← 2]["z" ← 4] :=
+  cat (s0["x" ← 2]) ass (ifFalse rfl ass)
 
-private example: ([| x = 2; x = 3|], s0) ==> s0["x" <- 3] :=
-  have h1: s0["x" <- 3] = s0["x" <- 2]["x" <- 3] :=
+private example: ([| x = 2; x = 3|], s0) ==> s0["x" ← 3] :=
+  have h1: s0["x" ← 3] = s0["x" ← 2]["x" ← 3] :=
     Map.forget.symm
   h1 ▸ cat _ ass ass
 
 -- factorial of x = 2
 private example: ([|x = 2; y = 1; while 2 <= x {y = y * x; x = x - 1}|], s0)
-  ==> s0["x" <- 2]["y" <- 1]["y" <- 2]["x" <- 1] := by
-  apply cat (s0["x" <- 2]["y" <- 1]) (cat (s0["x" <- 2]) ass ass)
-  apply whileTrue (s0["x" <- 2]["y" <- 1]["y" <- 2]["x" <- 1])
+  ==> s0["x" ← 2]["y" ← 1]["y" ← 2]["x" ← 1] := by
+  apply cat (s0["x" ← 2]["y" ← 1]) (cat (s0["x" ← 2]) ass ass)
+  apply whileTrue (s0["x" ← 2]["y" ← 1]["y" ← 2]["x" ← 1])
   apply rfl
-  apply cat (s0["x" <- 2]["y" <- 1]["y" <- 2]) ass ass
+  apply cat (s0["x" ← 2]["y" ← 1]["y" ← 2]) ass ass
   apply whileFalse
   apply rfl
 
@@ -46,17 +46,17 @@ private example: ([|x = 2; y = 1; while 2 <= x {y = y * x; x = x - 1}|], s0)
 ## Rewriting rules
 -/
 
-theorem skip_eq: (({}, s) ==> s') <-> (s = s') :=
+theorem skip_eq: (({}, s) ==> s') ↔ (s = s') :=
   ⟨fun (skip) => rfl, (· ▸ skip)⟩
 
 theorem cat_eq:
-  ((c++c', s) ==> s') <-> ∃s'', ((c, s) ==> s'') ∧ ((c', s'') ==> s') := {
+  ((c++c', s) ==> s') ↔ ∃s'', ((c, s) ==> s'') ∧ ((c', s'') ==> s') := {
     mp := fun (cat s'' hcatl hcatr) => ⟨s'', hcatl, hcatr⟩,
     mpr := fun ⟨s'', hcatl, hcatr⟩ => cat s'' hcatl hcatr
   }
 
 theorem if_eq: ((ifElse b c c', s) ==> s')
-    <-> cond (b s) ((c, s) ==> s') ((c', s) ==> s') := {
+    ↔ cond (b s) ((c, s) ==> s') ((c', s) ==> s') := {
     mp := fun hmp => match hmp with
       | ifTrue hcond hstep | ifFalse hcond hstep =>
         hcond ▸ hstep,
@@ -66,7 +66,7 @@ theorem if_eq: ((ifElse b c c', s) ==> s')
   }
 
 theorem if_eq': ((ifElse b c c', s) ==> s')
-  <-> ((cond (b s) c c', s) ==> s') := {
+  ↔ ((cond (b s) c c', s) ==> s') := {
     mp := fun hmp => match hmp with
       | ifTrue hcond hif | ifFalse hcond hif => hcond ▸ hif,
     mpr := match hcond: b s with
@@ -74,7 +74,7 @@ theorem if_eq': ((ifElse b c c', s) ==> s')
       | false => (ifFalse hcond .)
   }
 
-theorem while_eq: ((whileLoop b c, s) ==> s') <->
+theorem while_eq: ((whileLoop b c, s) ==> s') ↔
   cond (b s) (∃s'', ((c, s) ==> s'') ∧ ((whileLoop b c, s'') ==> s'))
   (s = s') := {
     mp := fun hmp => match hmp with
@@ -92,7 +92,7 @@ theorem while_eq: ((whileLoop b c, s) ==> s') <->
 -/
 
 instance equiv: Setoid Com where
-  r c c' := ∀{s s': State}, ((c, s) ==> s') <-> ((c', s) ==> s')
+  r c c' := ∀{s s': State}, ((c, s) ==> s') ↔ ((c', s) ==> s')
   iseqv := {
     refl := fun _ => Iff.rfl
     symm := (Iff.symm .)

@@ -6,90 +6,74 @@
 ## Total maps
 -/
 
-def Map (α: Type) := String -> α
+def Map (α: Type) := String → α
 
 namespace Map
 
 def default (v: α): Map α := fun _ => v
 
 def update (k: String) (v: α) (m: Map α) :=
-  fun k' => bif k == k' then v else m k'
+  fun k' => match k == k' with
+  | true => v
+  | false => m k'
 
-notation m "[" k " <- " v "]" => Map.update k v m
+notation m "[" k " ← " v "]" => Map.update k v m
 
 theorem eval:
-  (m[k <- v]) k = v := by
+  (m[k ← v]) k = v := by
   unfold Map.update
-  rw [beq_self_eq_true, cond_true]
+  exact beq_self_eq_true k ▸ rfl
 
 theorem neval (hneq: k != k'):
-  (m[k <- v]) k' = m k' := by
+  (m[k ← v]) k' = m k' := by
   unfold Map.update
-  rw [bne_iff_ne] at hneq
-  rw [Bool.cond_neg]
-  rw [beq_eq_false_iff_ne, ne_eq]
-  exact hneq
+  exact Bool.cond_neg (beq_eq_false_iff_ne.mpr $ bne_iff_ne.mp hneq)
 
 theorem forget:
-  m[k <- v'][k <- v] = m[k <- v] := by
+  m[k ← v'][k ← v] = m[k ← v] := by
   funext k'
-  match h: k == k' with
-  | true =>
-    unfold Map.update
-    rw [h, cond_true, cond_true]
-  | false =>
-    unfold Map.update
-    rw [h, cond_false, cond_false, cond_false]
+  unfold Map.update
+  match k == k' with | true | false => rfl
 
 theorem comm (hneq: k != k'):
-  m[k' <- v'][k <- v] = m[k <- v][k' <- v'] := by
+  m[k' ← v'][k ← v] = m[k ← v][k' ← v'] := by
   funext k''
+  unfold Map.update
   match h: k == k'' with
   | true =>
-    unfold Map.update
-    rw [h, cond_true]
     match h': k' == k'' with
     | true =>
-      rw [eq_of_beq h, eq_of_beq h', bne_iff_ne] at hneq
-      contradiction
-    | false =>
-      rw [cond_false, cond_true]
-  | false =>
-    unfold Map.update
-    rw [h, cond_false, cond_false]
+      rw [bne_iff_ne, eq_of_beq h, eq_of_beq h'] at hneq
+      apply absurd rfl hneq
+    | false => rfl
+  | false => rfl
 
 theorem idem:
-  m[k <- m k] = m := by
+  m[k ← m k] = m := by
   funext k'
+  unfold Map.update
   match h: k == k' with
-  | true =>
-    unfold Map.update
-    rw [h, cond_true, eq_of_beq h]
-  | false =>
-    unfold Map.update
-    rw [h, cond_false]
+  | true => rw [eq_of_beq h]
+  | false => rfl
 
 theorem eval_same:
-  (fun _ => v)[k <- v] = fun _ => v := by
+  (fun _ => v)[k ← v] = fun _ => v := by
   funext k'
+  unfold Map.update
   match h: k == k' with
-  | true =>
-    unfold Map.update
-    rw [h, cond_true]
-  | false =>
-    unfold Map.update
-    rw [h, cond_false]
+  | true => rfl
+  | false => rfl
 
 example (m: Map Nat):
-  m["a" <- 0]["a" <- 2] = m["a" <- 2] := forget
+  m["a" ← 0]["a" ← 2] = m["a" ← 2] := forget
 
 example (m: Map Nat):
-  m["a" <- 0]["b" <- 2] = m["b" <- 2]["a" <- 0] := by
+  m["a" ← 0]["b" ← 2] = m["b" ← 2]["a" ← 0] := by
   apply comm
   simp only [String.reduceBNe]
 
 example (m: Map Nat):
-  m["a" <- m "a"]["b" <- 0] = m["b" <- 0] := idem ▸ rfl
+  m["a" ← m "a"]["b" ← 0] = m["b" ← 0] := idem ▸ rfl
 
 end Map
 

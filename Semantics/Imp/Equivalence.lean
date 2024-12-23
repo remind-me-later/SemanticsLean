@@ -40,8 +40,8 @@ theorem structural_eq_natural:
 theorem denote.from_natural {conf: Com × State}
   (hconf: conf ==> s''): (conf.2, s'') ∈ [[conf.1]] := by
   induction hconf with
-  | skip => exact SFun.mem_id.mpr rfl
-  | ass  => exact SFun.mem_id.mpr rfl
+  | skip => exact SRel.mem_id.mpr rfl
+  | ass  => exact SRel.mem_id.mpr rfl
   | cat s' _ _ ihcatl ihcatr => exact ⟨s', ihcatl, ihcatr⟩
   | ifTrue hcond _ ih => exact Or.inl ⟨ih, hcond⟩
   | ifFalse hcond _ ih =>
@@ -66,7 +66,7 @@ theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
   induction c generalizing s s'' with
   | skip =>
     intro hmp
-    rw [denote, SFun.mem_id] at hmp
+    rw [denote, SRel.mem_id] at hmp
     exact hmp ▸ skip
   | ass =>
     intro hmp
@@ -94,7 +94,7 @@ theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
       exact whileTrue s' hcond (ih hstep) hrest
     | Or.inr ⟨hid, hcond⟩ =>
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
-      rw [SFun.mem_id] at hid
+      rw [SRel.mem_id] at hid
       exact hid ▸ whileFalse hcond
 
 theorem natural_eq_denote: ((s, s') ∈ [[c]]) <-> ((c, s) ==> s') :=

@@ -11,18 +11,18 @@ namespace Com
 
 private def denote_while (b: Bexp) (f: State ->s State):
   (State ->s State) -> (State ->s State) :=
-  fun g => Set.ite {(s, _) | b s} (f ○ g) SFun.id
+  fun g => Set.ite {(s, _) | b s} (f ○ g) SRel.id
 
 def denote: Com -> (State ->s State)
-  | skip      => SFun.id
+  | skip      => SRel.id
   | ass v a   => {(s, t) | t = s[v <- a s]}
   | cat c c' => denote c ○ denote c'
   | ifElse b c c' => Set.ite {(s, _) | b s} (denote c) (denote c')
   | whileLoop b c => Fix.lfp (denote_while b (denote c))
 
-theorem monotone_denote_loop: monotone (denote_while b c) :=
+theorem denote_while_mono: monotone (denote_while b c) :=
   fun _ _ hmp =>
-  Set.ite_mono _ (SFun.comp_mono PartialOrder.le_rfl hmp) PartialOrder.le_rfl
+  Set.ite_mono _ (SRel.comp_mono PartialOrder.le_rfl hmp) PartialOrder.le_rfl
 
 notation (priority := high) "[[" c "]]" => denote c
 
@@ -41,15 +41,15 @@ instance equiv: Setoid Com where
 
 theorem skipl:
   (skip++c) ≈ c := by
-  simp only [HasEquiv.Equiv, equiv, denote, SFun.id_comp]
+  simp only [HasEquiv.Equiv, equiv, denote, SRel.id_comp]
 
 theorem skipr:
   (c++skip) ≈ c := by
-  simp only [HasEquiv.Equiv, equiv, denote, SFun.comp_id]
+  simp only [HasEquiv.Equiv, equiv, denote, SRel.comp_id]
 
 theorem while_unfold:
   whileLoop b c ≈ ifElse b (c++whileLoop b c) skip :=
-  Fix.lfp_eq _ monotone_denote_loop
+  Fix.lfp_eq _ denote_while_mono
 
 /-
 ## Congruence

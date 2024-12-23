@@ -18,7 +18,9 @@ protected def Subset (a b: Set α) :=
 
 instance: HasSubset (Set α) := ⟨Set.Subset⟩
 
-instance: LE (Set α) := ⟨(. ⊆ .)⟩
+protected def SSubset (a b: Set α) := a ⊆ b ∧ a ≠ b
+
+instance: HasSSubset (Set α) := ⟨Set.SSubset⟩
 
 instance: EmptyCollection (Set α) := ⟨fun _ => False⟩
 
@@ -81,19 +83,13 @@ theorem Subset.from_eq {a b: Set α} (heq: a = b): a ⊆ b :=
 
 def Set.ite (t a b: Set α): Set α := a ∩ t ∪ b \ t
 
-theorem Set.ite_mono (t: Set α) (hab: a ⊆ b) (hab': a' ⊆ b'):
-  ite t a a' ⊆ ite t b b' := fun _ hite =>
-  match hite with
-  | Or.inl ⟨hl, hr⟩ => Or.inl ⟨hab hl, hr⟩
-  | Or.inr ⟨hl, hr⟩ => Or.inr ⟨hab' hl, hr⟩
-
 /-
   ## Set theoretic (partial) functions
 
   Really these are just relations, but we can think of them as functions
 -/
 
-namespace SFun
+namespace SRel
 
 notation:20 α " ->s " β => Set (α × β)
 
@@ -103,15 +99,12 @@ theorem mem_id: (a, b) ∈ id <-> a = b :=
   Iff.rfl
 
 def comp (f g: α ->s α): α ->s α :=
-  {(x, y) | ∃z, (x, z) ∈ f ∧ (z, y) ∈ g}
+  {(x, z) | ∃y, (x, y) ∈ f ∧ (y, z) ∈ g}
 
-infixl:90 " ○ " => SFun.comp
+infixl:90 " ○ " => SRel.comp
 
 theorem mem_comp: x ∈ f ○ g <-> ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g :=
   Iff.rfl
-
-theorem comp_mono (hfh: f ⊆ h) (hgk: g ⊆ k): f ○ g ⊆ h ○ k :=
-  fun _ ⟨z, hl, hr⟩ => ⟨z, hfh hl, hgk hr⟩
 
 theorem comp_id: f ○ id = f := by
   apply funext
@@ -133,4 +126,4 @@ theorem id_comp: id ○ f = f := by
     exact this
   . exact (⟨_, mem_id.mpr rfl, .⟩)
 
-end SFun
+end SRel

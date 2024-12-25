@@ -87,7 +87,7 @@ theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
     suffices [[whileLoop b c]] ≤ {(s, s'') | (whileLoop b c, s) ==> s''} by
       apply this
 
-    apply Fix.lfp_le
+    apply OrderHom.lfp_le
     intro (_, _) hmp
     match hmp with
     | Or.inl ⟨⟨s', hstep, hrest⟩, hcond⟩ =>

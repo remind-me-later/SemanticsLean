@@ -1,14 +1,18 @@
 import Semantics.Set
-import Semantics.KnasterTarski
+import Semantics.Lattice
 
-def Chain {α: Type} (S: Nat → Set α): Prop :=
-  ∀i, S i ⊆ S (i + 1)
+def Chain {α: Type} (s: Nat → Set α): Prop :=
+  ∀i, s i ⊆ s (i + 1)
 
-def continuous {α β: Type} (f: Set α → Set β): Prop :=
-  ∀S, Chain S → f (⋃ i, S i) = ⋃ i, f (S i)
+structure ωChain (α: Type) where
+  toSeq: Nat → Set α
+  chain': Chain toSeq
 
-theorem continuous_mono {f: Set α → Set α} (h: continuous f):
-  monotone f := by
+def Continuous {α β: Type} (f: Set α → Set β): Prop :=
+  ∀s, Chain s → f (⋃ i, s i) = ⋃ i, f (s i)
+
+theorem Continuous.isMono (f: Set α → Set β) (h: Continuous f):
+  Monotone f := by
   intro a b hab _ hx
 
   have hchain: Chain (fun i => if i = 0 then a else b) := fun i x =>
@@ -30,79 +34,81 @@ theorem continuous_mono {f: Set α → Set α} (h: continuous f):
 
   exact hh ▸ Or.inl hx
 
-def fexp {α: Type} (f: α → α) (n: Nat): α → α
+structure ContinuousHom (α β: Type) extends Set α →o Set β where
+  continuous': Continuous toFun
+  monotone' := Continuous.isMono toFun continuous'
+
+infixr:25 " →𝒄 " => ContinuousHom
+
+instance ContinuousHom.coerceFun {α β: Type}:
+  CoeFun (α →𝒄 β) (fun _ => Set α → Set β) := ⟨fun f => f.toFun⟩
+
+def fpow {α: Type} (f: α → α) (n: Nat): α → α
   | a => match n with
     | .zero => a
-    | .succ n => f (fexp f n a)
+    | .succ n => f (fpow f n a)
 
-theorem fexp_next (f: α → α) (x: α): (fexp f (n + 1)) x = f ((fexp f n) x) := by
+theorem fexp_succ (f: α → α) (x: α): (fpow f (n + 1)) x = f (fpow f n x) := by
   induction n <;> rfl
 
-theorem fexp_chain (hmono: monotone f): Chain (fun i => fexp f i {}) := by {
+theorem fexp_chain (f: Set α →o Set α): Chain (fun i => fpow f i ∅) := by {
   intro i
   simp at *
   induction i with
   | zero =>
-    unfold fexp
+    unfold fpow
     simp [Membership.mem, Set.Mem, EmptyCollection.emptyCollection]
     intro x hx
     contradiction
   | succ i ih =>
-    unfold fexp
+    unfold fpow
     simp at *
-    unfold monotone at hmono
-    exact hmono _ _ ih
+    exact f.monotone' _ _ ih
 }
 
-theorem kleene_fix {f: Set α → Set α} (h: continuous f):
-  Fix.lfp f = ⋃ i, (fexp f i) {} := by {
+instance (f: Set α →o Set α): ωChain α where
+  toSeq := fun i => fpow f i ∅
+  chain' := fexp_chain f
+
+def ContinuousHom.lfp (f: α →𝒄 α): Set α := ⋃ i, fpow f i ∅
+
+theorem kleene_fix {f: α →𝒄 α}:
+  f.toOrderHom.lfp = f.lfp := by {
   apply Subset.antisymm
-  . suffices Fix.pre_fp f (⋃ i, (fexp f i) {}) by exact Fix.lfp_le this
+  . suffices f.toOrderHom.pfp (⋃ i, (fpow f i) ∅) by exact OrderHom.lfp_le this
 
     intro a ha
 
-    specialize h _ (fexp_chain (continuous_mono h))
-    simp [←fexp_next f {}] at h
+    have h := f.continuous' _ (fexp_chain f.toOrderHom)
+    simp [←fexp_succ f ∅] at h
 
-    have hh: (Set.iUnion fun i => fexp f (i + 1) ∅) = (Set.iUnion fun i => fexp f i ∅) := by {
-      simp [Set.iUnion]
-      apply Set.ext
-      intro x
-      constructor
-      . intro ⟨i, hi⟩
-        cases i with
-        | zero =>
-          exact ⟨1, hi⟩
-        | succ i =>
-          exact ⟨i+1+1, hi⟩
-      . intro ⟨i, hi⟩
-        cases i with
-        | zero =>
-          exists 0
-        | succ i =>
-          exists i
+    have hh: (Set.iUnion fun i => fpow f (i + 1) ∅) = (Set.iUnion fun i => fpow f i ∅) := Set.ext fun x => {
+      mp := fun ⟨i, hi⟩ => match i with
+        | .zero => ⟨1, hi⟩
+        | .succ i => ⟨i+1+1, hi⟩,
+      mpr := fun ⟨i, hi⟩ => match i with
+        | .zero => by contradiction
+        | .succ i => ⟨i, hi⟩
     }
 
     rw [hh] at h
     rw [h] at ha
 
     exact ha
-  .
-    intro a ⟨i, ha⟩
+
+  . intro a ⟨i, ha⟩
     revert a ha
     rw [←Set.Subset]
     simp at *
     induction i with
     | zero =>
-      unfold fexp
+      unfold fpow
       simp
       intro a ha
       contradiction
     | succ i ih =>
-      have hmono := continuous_mono h
-      unfold monotone at hmono
-      specialize hmono _ _ ih
-      rw [←fexp_next f {}] at hmono
-      rw [Fix.lfp_eq f (continuous_mono h)]
+      have hmono := f.monotone' _ _ ih
+      rw [←fexp_succ f ∅] at hmono
+      rw [f.toOrderHom.lfp_eq]
       exact hmono
 }

@@ -44,11 +44,33 @@ private theorem W.Continuous: Continuous (W b f) := by {
     apply Set.ext
     intro x
     constructor
-    . intro hx
-      cases  hx <;> simp at *
-
-
-    . sorry
+    . simp [W, Set.iUnion]
+      intro hx
+      match hx with
+      | Or.inl ⟨⟨w, _, i, hi⟩, hr⟩ =>
+        exists i
+        simp [Set.ite]
+        apply Or.inl
+        simp [SRel.comp]
+        constructor
+        . exists w
+        . exact hr
+      | Or.inr hr =>
+        exists 0
+        apply Or.inr hr
+    . simp [W, Set.iUnion]
+      intro ⟨i, hi⟩
+      match hi with
+      | Or.inl ⟨⟨w, hl, hrr⟩, hr⟩ =>
+        apply Or.inl
+        simp [SRel.comp]
+        constructor
+        . exists w
+          apply And.intro hl
+          exists i
+        . exact hr
+      | Or.inr hh =>
+        apply Or.inr hh
   }
 
 namespace Denotational

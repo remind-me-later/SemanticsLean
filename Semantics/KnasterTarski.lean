@@ -1,4 +1,4 @@
-import Semantics.Set
+import Semantics.SetRelation
 
 -- Concrete Semantics with Isabelle
 -- 10.4.1 The Knaster-Tarski Fixpoint Theorem on Sets
@@ -40,7 +40,7 @@ instance Set.completeLattice: CompleteLattice (Set α) := {
     ⟨fun ⟨hl, hr⟩ => ⟨hl, (hr $ Subset.antisymm hl .)⟩,
       fun ⟨hl, hr⟩ => ⟨hl, (hr $ Subset.from_eq $ Eq.symm .)⟩⟩
   le_trans := fun _a _b _c => Subset.trans
-  Inf := fun a => {x | ∀b ∈ a, x ∈ b},
+  Inf := fun a => ⋂₀ a,
   Inf_le := fun _ x hx _ ha => ha x hx,
   le_Inf := fun _ _ h _ hb _ hd => h _ hd hb
 }

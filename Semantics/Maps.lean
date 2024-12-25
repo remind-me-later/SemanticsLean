@@ -12,16 +12,14 @@ namespace Map
 
 def default (v: α): Map α := fun _ => v
 
-def update (k: String) (v: α) (m: Map α) :=
-  fun k' => match k == k' with
-  | true => v
-  | false => m k'
+def update (k: String) (v: α) (m: Map α): Map α
+  | k' => match k == k' with | true => v | false => m k'
 
 notation m "[" k " ← " v "]" => Map.update k v m
 
 theorem eval:
   (m[k ← v]) k = v := by
-  unfold Map.update
+  simp only [Map.update]
   exact beq_self_eq_true k ▸ rfl
 
 theorem neval (hneq: k != k'):
@@ -32,13 +30,13 @@ theorem neval (hneq: k != k'):
 theorem forget:
   m[k ← v'][k ← v] = m[k ← v] := by
   funext k'
-  unfold Map.update
+  simp only [Map.update]
   match k == k' with | true | false => rfl
 
 theorem comm (hneq: k != k'):
   m[k' ← v'][k ← v] = m[k ← v][k' ← v'] := by
   funext k''
-  unfold Map.update
+  simp only [Map.update]
   match h: k == k'' with
   | true =>
     match h': k' == k'' with
@@ -51,7 +49,7 @@ theorem comm (hneq: k != k'):
 theorem idem:
   m[k ← m k] = m := by
   funext k'
-  unfold Map.update
+  simp only [Map.update]
   match h: k == k' with
   | true => rw [eq_of_beq h]
   | false => rfl
@@ -59,7 +57,7 @@ theorem idem:
 theorem eval_same:
   (fun _ => v)[k ← v] = fun _ => v := by
   funext k'
-  unfold Map.update
+  simp only [Map.update]
   match h: k == k' with
   | true => rfl
   | false => rfl

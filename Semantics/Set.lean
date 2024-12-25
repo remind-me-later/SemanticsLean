@@ -26,6 +26,9 @@ instance: EmptyCollection (Set α) := ⟨fun _ => False⟩
 
 notation (priority := high) "{" x " | " p "}" => setOf fun x => p
 
+theorem mem_comprehend (a: α) (P: α → Prop): a ∈ ({a | P a}: Set α) ↔ P a :=
+  Iff.rfl
+
 def univ: Set α := {_ | True}
 
 protected def insert (a: α) (s: Set α): Set α := {x | x = a ∨ x ∈ s}
@@ -50,78 +53,45 @@ protected def diff (a b: Set α): Set α := {x | x ∈ a ∧ x ∉ b}
 
 instance: SDiff (Set α) := ⟨Set.diff⟩
 
+theorem mem_diff {s t: Set α} (x: α): x ∈ s \ t ↔ x ∈ s ∧ x ∉ t :=
+  Iff.rfl
+
+def ite (t a b: Set α): Set α := a ∩ t ∪ b \ t
+
+def iUnion {α: Type} (S: Nat → Set α): Set α :=
+  {a | ∃i, a ∈ S i}
+
+notation "⋃" i ", " S => (iUnion fun i => S)
+
+def sUnion {α: Type} (S: Set (Set α)): Set α :=
+  {a | ∃B ∈ S, a ∈ B}
+
+notation "⋃₀ " S => sUnion S
+
+def iInter {α: Type} (S: Nat → Set α): Set α :=
+  {a | ∀i, a ∈ S i}
+
+notation "⋂" i ", " S => (iInter fun i => S)
+
+def sInter {α: Type} (S: Set (Set α)): Set α :=
+  {a | ∀B ∈ S, a ∈ B}
+
+notation "⋂₀ " S => sInter S
+
 end Set
 
-/-
-  ## Set theorems
--/
+namespace Subset
 
-theorem Set.mem_comprehend (a: α) (P: α → Prop): a ∈ ({a | P a}: Set α) ↔ P a :=
-  Iff.rfl
+@[refl]
+theorem refl (x: Set α): x ⊆ x := fun _ => id
 
-theorem Set.mem_diff {s t: Set α} (x: α): x ∈ s \ t ↔ x ∈ s ∧ x ∉ t :=
-  Iff.rfl
-
-/-
-  ### Basic subset properties
--/
-
-theorem Subset.refl (x: Set α): x ⊆ x := fun _ => id
-
-theorem Subset.trans {a b c: Set α} (hab: a ⊆ b) (hbc: b ⊆ c): a ⊆ c :=
+theorem trans {a b c: Set α} (hab: a ⊆ b) (hbc: b ⊆ c): a ⊆ c :=
   fun _ h => hbc (hab h)
 
-theorem Subset.antisymm {a b: Set α} (hab: a ⊆ b) (hba: b ⊆ a): a = b :=
+theorem antisymm {a b: Set α} (hab: a ⊆ b) (hba: b ⊆ a): a = b :=
   funext fun _ => propext ⟨(hab .), (hba .)⟩
 
-theorem Subset.from_eq {a b: Set α} (heq: a = b): a ⊆ b :=
+theorem from_eq {a b: Set α} (heq: a = b): a ⊆ b :=
   fun _x hxa => heq ▸ hxa
 
-/-
-  ### Set if then else
--/
-
-def Set.ite (t a b: Set α): Set α := a ∩ t ∪ b \ t
-
-/-
-  ## Set theoretic (partial) functions
-
-  Really these are just relations, but we can think of them as functions
--/
-
-namespace SRel
-
-def id: Set (α × α) := {p | p.1 = p.2}
-
-theorem mem_id: (a, b) ∈ id ↔ a = b :=
-  Iff.rfl
-
-def comp (f g: Set (α × α)): Set (α × α) :=
-  {(x, z) | ∃y, (x, y) ∈ f ∧ (y, z) ∈ g}
-
-infixl:90 " ○ " => SRel.comp
-
-theorem mem_comp: x ∈ f ○ g ↔ ∃z, (x.1, z) ∈ f ∧ (z, x.2) ∈ g :=
-  Iff.rfl
-
-theorem comp_id: f ○ id = f := by
-  apply funext
-  intro x
-  apply propext
-  constructor
-  . intro ⟨_, hl, hr⟩
-    have := mem_id.mp hr ▸ hl
-    exact this
-  . exact (⟨_, ., mem_id.mpr rfl⟩)
-
-theorem id_comp: id ○ f = f := by
-  apply funext
-  intro x
-  apply propext
-  constructor
-  . intro ⟨_, hl, hr⟩
-    have := mem_id.mp hl ▸ hr
-    exact this
-  . exact (⟨_, mem_id.mpr rfl, .⟩)
-
-end SRel
+end Subset

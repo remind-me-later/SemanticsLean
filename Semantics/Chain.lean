@@ -1,21 +1,21 @@
 import Semantics.Set
 import Semantics.Lattice
 
-def Chain {α: Type} (s: Nat → Set α): Prop :=
+def isωChain {α: Type} (s: Nat → Set α): Prop :=
   ∀i, s i ⊆ s (i + 1)
 
 structure ωChain (α: Type) where
   toSeq: Nat → Set α
-  chain': Chain toSeq
+  chain': isωChain toSeq
 
 def ωContinuous {α β: Type} (f: Set α → Set β): Prop :=
-  ∀s, Chain s → f (⋃ i, s i) = ⋃ i, f (s i)
+  ∀s, isωChain s → f (⋃ i, s i) = ⋃ i, f (s i)
 
 theorem ωContinuous.isMono (f: Set α → Set β) (h: ωContinuous f):
   Monotone f := by
   intro a b hab _ hx
 
-  have hchain: Chain (fun i => if i = 0 then a else b) := fun i x =>
+  have hchain: isωChain (fun i => if i = 0 then a else b) := fun i x =>
     match i with | .zero => (hab .) | .succ j => (.)
   have hset: (⋃ i, if i = 0 then a else b) = b := Set.ext fun _ => {
       mp := fun ⟨i, hi⟩ => match i with | .zero => hab hi | .succ _ => hi,
@@ -51,7 +51,7 @@ def fpow {α: Type} (f: α → α) (n: Nat): α → α
 theorem fexp_succ (f: α → α) (x: α): (fpow f (n + 1)) x = f (fpow f n x) := by
   induction n <;> rfl
 
-theorem fexp_chain (f: Set α →o Set α): Chain (fun i => fpow f i ∅) := by {
+theorem fexp_chain (f: Set α →o Set α): isωChain (fun i => fpow f i ∅) := by {
   intro i
   simp at *
   induction i with

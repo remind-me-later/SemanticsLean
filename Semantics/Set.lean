@@ -31,6 +31,10 @@ theorem mem_comprehend (a: α) (P: α → Prop): a ∈ ({a | P a}: Set α) ↔ P
 
 def univ: Set α := {_ | True}
 
+theorem mem_univ (a: α): a ∈ univ := trivial
+
+theorem univ_def {α: Type}: @univ α = {_ | True} := rfl
+
 protected def insert (a: α) (s: Set α): Set α := {x | x = a ∨ x ∈ s}
 
 instance: Insert α (Set α) := ⟨Set.insert⟩
@@ -43,9 +47,29 @@ protected def union (a b: Set α): Set α := {x | x ∈ a ∨ x ∈ b}
 
 instance: Union (Set α) := ⟨Set.union⟩
 
+theorem mem_union {s t: Set α} (x: α): x ∈ s ∪ t ↔ x ∈ s ∨ x ∈ t :=
+  Iff.rfl
+
+theorem union_empty (a: Set α): a ∪ ∅ = a := by
+  apply ext
+  intro x
+  simp [mem_union, mem_comprehend]
+  intro h
+  contradiction
+
 protected def inter (a b: Set α): Set α := {x | x ∈ a ∧ x ∈ b}
 
 instance: Inter (Set α) := ⟨Set.inter⟩
+
+theorem mem_inter {s t: Set α} (x: α): x ∈ s ∩ t ↔ x ∈ s ∧ x ∈ t :=
+  Iff.rfl
+
+theorem inter_univ (a: Set α): a ∩ univ = a := by
+  apply ext
+  intro x
+  simp [mem_inter, mem_comprehend]
+  intro h
+  exact mem_univ x
 
 protected def compl (s: Set α): Set α := {a | a ∉ s}
 
@@ -55,6 +79,16 @@ instance: SDiff (Set α) := ⟨Set.diff⟩
 
 theorem mem_diff {s t: Set α} (x: α): x ∈ s \ t ↔ x ∈ s ∧ x ∉ t :=
   Iff.rfl
+
+theorem diff_univ (a: Set α): a \ univ = ∅ := by
+  apply ext
+  intro x
+  simp [mem_diff, mem_comprehend]
+  constructor
+  . intro ⟨ha, hu⟩
+    exact absurd (mem_univ x) hu
+  . intro h
+    contradiction
 
 def ite (t a b: Set α): Set α := a ∩ t ∪ b \ t
 
@@ -77,6 +111,21 @@ def sInter {α: Type} (S: Set (Set α)): Set α :=
   {a | ∀B ∈ S, a ∈ B}
 
 notation "⋂₀ " S => sInter S
+
+theorem mem_sInter {α: Type} {S: Set (Set α)} {a: α}: a ∈ (⋂₀ S) ↔ ∀B ∈ S, a ∈ B :=
+  Iff.rfl
+
+theorem sInter_univ {α: Type}: (⋂₀ (@univ $ Set α)) = ∅ := by
+  apply ext
+  intro x
+  simp [mem_sInter, mem_comprehend]
+  constructor
+  . intro h
+    specialize h ∅
+    apply h
+    trivial
+  . intro h B hB
+    contradiction
 
 end Set
 

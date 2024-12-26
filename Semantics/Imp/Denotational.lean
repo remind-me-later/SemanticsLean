@@ -35,6 +35,19 @@ notation (priority := high) "[[" c "]]" => denote c
 #check (s0, s0["x"←5]["x"←1]) ∈ [[[|x = 5; if x <= 1 {skip} else {x = 1}|]]]
 #check (s0, s0["x"←5]) ∈ [[[|x = 5; while x <= 1 {x = 1}|]]]
 
+private example: denote [|while true {skip}|] = ∅ := by {
+  unfold denote
+  unfold denote
+  unfold W.OrderHom
+  unfold Com.W
+  simp [Bexp.eval]
+  unfold Set.ite
+  simp [SRel.id_comp]
+  simp [←Set.univ_def, Set.inter_univ, Set.diff_univ, Set.union_empty]
+  simp [OrderHom.lfp, OrderHom.pfp, CompleteLattice.Inf, Preorder.le_refl, ←Set.univ_def]
+  simp [Set.sInter_univ]
+}
+
 /-
 ## Computation
 -/

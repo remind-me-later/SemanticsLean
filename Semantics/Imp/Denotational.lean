@@ -60,7 +60,7 @@ private theorem W.ωContinuous: ωContinuous (W b f) := fun _ _ =>
   }
 
 instance W.ContinuousHom (b: Bexp) (f: Set (State × State)):
-  (State × State) →𝒄 (State × State) := {
+  (State × State) →ω (State × State) := {
     toFun := W b f
     monotone' := W.Monotone
     continuous' := W.ωContinuous

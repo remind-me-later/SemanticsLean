@@ -38,10 +38,10 @@ structure ωContinuousHom (α β: Type) extends Set α →o Set β where
   continuous': ωContinuous toFun
   monotone' := ωContinuous.isMono toFun continuous'
 
-infixr:25 " →𝒄 " => ωContinuousHom
+infixr:25 " →ω " => ωContinuousHom
 
 instance ωContinuousHom.coerceFun {α β: Type}:
-  CoeFun (α →𝒄 β) (fun _ => Set α → Set β) := ⟨fun f => f.toFun⟩
+  CoeFun (α →ω β) (fun _ => Set α → Set β) := ⟨fun f => f.toFun⟩
 
 def fpow {α: Type} (f: α → α) (n: Nat): α → α
   | a => match n with
@@ -70,9 +70,9 @@ instance (f: Set α →o Set α): ωChain α where
   toSeq := fun i => fpow f i ∅
   chain' := fpow_chain f
 
-def ωContinuousHom.lfp (f: α →𝒄 α): Set α := ⋃ i, fpow f i ∅
+def ωContinuousHom.lfp (f: α →ω α): Set α := ⋃ i, fpow f i ∅
 
-theorem kleene_fix {f: α →𝒄 α}:
+theorem kleene_fix {f: α →ω α}:
   f.toOrderHom.lfp = f.lfp := by {
   apply Subset.antisymm
   . suffices f.toOrderHom.pfp (⋃ i, (fpow f i) ∅) by exact OrderHom.lfp_le this

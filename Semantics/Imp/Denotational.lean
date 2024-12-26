@@ -22,7 +22,6 @@ instance W.OrderHom (b: Bexp) (f: Set (State × State)):
   Set (State × State) →o Set (State × State) :=
     ⟨W b f, W.Monotone⟩
 
-
 def denote: Com → Set (State × State)
   | skip => SRel.id
   | ass v a => {(s, t) | t = s[v ← a s]}
@@ -35,16 +34,14 @@ notation (priority := high) "[[" c "]]" => denote c
 #check (s0, s0["x"←5]["x"←1]) ∈ [[[|x = 5; if x <= 1 {skip} else {x = 1}|]]]
 #check (s0, s0["x"←5]) ∈ [[[|x = 5; while x <= 1 {x = 1}|]]]
 
-private example: denote [|while true {skip}|] = ∅ := by {
-  unfold denote
-  unfold denote
-  unfold W.OrderHom
+private example: [[[|while true {skip}|]]] = ∅ := by {
+  simp [denote, W.OrderHom]
   unfold Com.W
-  simp [Bexp.eval]
-  unfold Set.ite
-  simp [SRel.id_comp]
-  simp [←Set.univ_def, Set.inter_univ, Set.diff_univ, Set.union_empty]
-  simp [OrderHom.lfp, OrderHom.pfp, CompleteLattice.Inf, Preorder.le_refl, ←Set.univ_def]
+  unfold Bexp.eval
+  simp [Set.ite, SRel.id_comp, ←Set.univ_def, Set.inter_univ, Set.diff_univ,
+    Set.union_empty]
+  simp [OrderHom.lfp, OrderHom.pfp, CompleteLattice.Inf, Preorder.le_refl,
+    ←Set.univ_def]
   simp [Set.sInter_univ]
 }
 
@@ -52,7 +49,7 @@ private example: denote [|while true {skip}|] = ∅ := by {
 ## Computation
 -/
 
-private theorem W.Continuous: Continuous (W b f) := fun _ _ =>
+private theorem W.ωContinuous: ωContinuous (W b f) := fun _ _ =>
   Set.ext fun _ => {
     mp := fun hx => match hx with
       | Or.inl ⟨⟨w, hwl, i, hwr⟩, hr⟩ => ⟨i, Or.inl ⟨⟨w, hwl, hwr⟩, hr⟩⟩
@@ -66,7 +63,7 @@ instance W.ContinuousHom (b: Bexp) (f: Set (State × State)):
   (State × State) →𝒄 (State × State) := {
     toFun := W b f
     monotone' := W.Monotone
-    continuous' := W.Continuous
+    continuous' := W.ωContinuous
   }
 
 namespace Denotational

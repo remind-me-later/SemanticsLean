@@ -8,10 +8,10 @@ structure ωChain (α: Type) where
   toSeq: Nat → Set α
   chain': Chain toSeq
 
-def Continuous {α β: Type} (f: Set α → Set β): Prop :=
+def ωContinuous {α β: Type} (f: Set α → Set β): Prop :=
   ∀s, Chain s → f (⋃ i, s i) = ⋃ i, f (s i)
 
-theorem Continuous.isMono (f: Set α → Set β) (h: Continuous f):
+theorem ωContinuous.isMono (f: Set α → Set β) (h: ωContinuous f):
   Monotone f := by
   intro a b hab _ hx
 
@@ -34,13 +34,13 @@ theorem Continuous.isMono (f: Set α → Set β) (h: Continuous f):
 
   exact hh ▸ Or.inl hx
 
-structure ContinuousHom (α β: Type) extends Set α →o Set β where
-  continuous': Continuous toFun
-  monotone' := Continuous.isMono toFun continuous'
+structure ωContinuousHom (α β: Type) extends Set α →o Set β where
+  continuous': ωContinuous toFun
+  monotone' := ωContinuous.isMono toFun continuous'
 
-infixr:25 " →𝒄 " => ContinuousHom
+infixr:25 " →𝒄 " => ωContinuousHom
 
-instance ContinuousHom.coerceFun {α β: Type}:
+instance ωContinuousHom.coerceFun {α β: Type}:
   CoeFun (α →𝒄 β) (fun _ => Set α → Set β) := ⟨fun f => f.toFun⟩
 
 def fpow {α: Type} (f: α → α) (n: Nat): α → α
@@ -70,7 +70,7 @@ instance (f: Set α →o Set α): ωChain α where
   toSeq := fun i => fpow f i ∅
   chain' := fexp_chain f
 
-def ContinuousHom.lfp (f: α →𝒄 α): Set α := ⋃ i, fpow f i ∅
+def ωContinuousHom.lfp (f: α →𝒄 α): Set α := ⋃ i, fpow f i ∅
 
 theorem kleene_fix {f: α →𝒄 α}:
   f.toOrderHom.lfp = f.lfp := by {

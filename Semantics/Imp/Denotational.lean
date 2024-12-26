@@ -39,38 +39,21 @@ notation (priority := high) "[[" c "]]" => denote c
 ## Computation
 -/
 
-private theorem W.Continuous: Continuous (W b f) := by {
-    intro s hs
-    apply Set.ext
-    intro x
-    constructor
-    . simp [W, Set.iUnion]
-      intro hx
-      match hx with
-      | Or.inl ⟨⟨w, _, i, hi⟩, hr⟩ =>
-        exists i
-        simp [Set.ite]
-        apply Or.inl
-        simp [SRel.comp]
-        constructor
-        . exists w
-        . exact hr
-      | Or.inr hr =>
-        exists 0
-        apply Or.inr hr
-    . simp [W, Set.iUnion]
-      intro ⟨i, hi⟩
-      match hi with
-      | Or.inl ⟨⟨w, hl, hrr⟩, hr⟩ =>
-        apply Or.inl
-        simp [SRel.comp]
-        constructor
-        . exists w
-          apply And.intro hl
-          exists i
-        . exact hr
-      | Or.inr hh =>
-        apply Or.inr hh
+private theorem W.Continuous: Continuous (W b f) := fun _ _ =>
+  Set.ext fun _ => {
+    mp := fun hx => match hx with
+      | Or.inl ⟨⟨w, hwl, i, hwr⟩, hr⟩ => ⟨i, Or.inl ⟨⟨w, hwl, hwr⟩, hr⟩⟩
+      | Or.inr hr => ⟨0, Or.inr hr⟩
+    mpr := fun ⟨i, hi⟩ => match hi with
+      | Or.inl ⟨⟨_w, hwl, hwr⟩, hr⟩ => Or.inl ⟨⟨_, hwl, i, hwr⟩, hr⟩
+      | Or.inr hh => Or.inr hh
+  }
+
+instance W.ContinuousHom (b: Bexp) (f: Set (State × State)):
+  (State × State) →𝒄 (State × State) := {
+    toFun := W b f
+    monotone' := W.Monotone
+    continuous' := W.Continuous
   }
 
 namespace Denotational

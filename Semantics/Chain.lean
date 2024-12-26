@@ -48,10 +48,10 @@ def fpow {α: Type} (f: α → α) (n: Nat): α → α
     | .zero => a
     | .succ n => f (fpow f n a)
 
-theorem fexp_succ (f: α → α) (x: α): (fpow f (n + 1)) x = f (fpow f n x) := by
+theorem fpow_succ (f: α → α) (x: α): (fpow f (n + 1)) x = f (fpow f n x) := by
   induction n <;> rfl
 
-theorem fexp_chain (f: Set α →o Set α): isωChain (fun i => fpow f i ∅) := by {
+theorem fpow_chain (f: Set α →o Set α): isωChain (fun i => fpow f i ∅) := by {
   intro i
   simp at *
   induction i with
@@ -68,7 +68,7 @@ theorem fexp_chain (f: Set α →o Set α): isωChain (fun i => fpow f i ∅) :=
 
 instance (f: Set α →o Set α): ωChain α where
   toSeq := fun i => fpow f i ∅
-  chain' := fexp_chain f
+  chain' := fpow_chain f
 
 def ωContinuousHom.lfp (f: α →𝒄 α): Set α := ⋃ i, fpow f i ∅
 
@@ -79,8 +79,8 @@ theorem kleene_fix {f: α →𝒄 α}:
 
     intro a ha
 
-    have h := f.continuous' _ (fexp_chain f.toOrderHom)
-    simp [←fexp_succ f ∅] at h
+    have h := f.continuous' _ (fpow_chain f.toOrderHom)
+    simp [←fpow_succ f ∅] at h
 
     have hh: (Set.iUnion fun i => fpow f (i + 1) ∅) = (Set.iUnion fun i => fpow f i ∅) := Set.ext fun x => {
       mp := fun ⟨i, hi⟩ => match i with
@@ -108,7 +108,7 @@ theorem kleene_fix {f: α →𝒄 α}:
       contradiction
     | succ i ih =>
       have hmono := f.monotone' _ _ ih
-      rw [←fexp_succ f ∅] at hmono
+      rw [←fpow_succ f ∅] at hmono
       rw [f.toOrderHom.lfp_eq]
       exact hmono
 }

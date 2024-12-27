@@ -44,8 +44,7 @@ def fpow {α: Type} (f: α → α) (n: Nat): α → α
     | .zero => a
     | .succ n => f (fpow f n a)
 
-theorem fpow.succ_eq (f: α → α): fpow f (n + 1) x = f (fpow f n x) := by
-  induction n <;> rfl
+theorem fpow.succ_eq (f: α → α): fpow f (n + 1) x = f (fpow f n x) := rfl
 
 theorem fpow.isChain (f: Set α →o Set α): isωChain (fun i => fpow f i ∅) := by
   intro i
@@ -67,7 +66,7 @@ theorem fpow.succ_limit_eq (f: Set α →o Set α):
 
 def ωContinuousHom.lfp (f: α →ω α): Set α := ⋃ i, fpow f i ∅
 
-theorem kleene_fix {f: α →ω α}: f.toOrderHom.lfp = f.lfp := by {
+theorem kleene_fix {f: α →ω α}: f.toOrderHom.lfp = f.lfp := by
   apply Subset.antisymm
   . have hpfp: f.toOrderHom.pfp (⋃ i, (fpow f i) ∅) := fun _ ha =>
       have hcont := f.continuous' _ (fpow.isChain f.toOrderHom)
@@ -81,4 +80,3 @@ theorem kleene_fix {f: α →ω α}: f.toOrderHom.lfp = f.lfp := by {
     | succ i ih =>
       have hmono := fpow.succ_eq f ▸ f.monotone' _ _ ih
       exact f.toOrderHom.lfp_eq ▸ hmono
-}

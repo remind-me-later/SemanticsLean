@@ -35,14 +35,28 @@ notation (priority := high) "[[" c "]]" => denote c
 #check (s0, s0["x"←5]) ∈ [[[|x = 5; while x <= 1 {x = 1}|]]]
 
 private example: [[[|while true {skip}|]]] = ∅ := by {
-  simp [denote, W.OrderHom]
+  rw [denote.eq_5, denote.eq_1, OrderHom.lfp]
+  rw [←Set.inf_eq]
+  rw [W.OrderHom]
   unfold Com.W
   unfold Bexp.eval
-  simp [Set.ite, SRel.id_comp, ←Set.univ_def, Set.inter_univ, Set.diff_univ,
-    Set.union_empty]
-  simp [OrderHom.lfp, OrderHom.pfp, CompleteLattice.Inf, Preorder.le_refl,
-    ←Set.univ_def]
-  simp [Set.sInter_univ]
+  unfold Set.sInter
+  unfold Set.ite
+  unfold OrderHom.pfp
+  simp only
+  apply Set.ext
+  intro x
+  rw [Set.mem_comprehend]
+  constructor
+  . intro h
+    apply h ∅
+    rw [Set.mem_comprehend]
+    intro _ hl
+    rw [SRel.id_comp, Set.empty_inter] at hl
+    match hl with
+    | .inl h => exact h
+    | .inr h => exact Set.diff_univ _ ▸ h
+  . exact (absurd . (Set.mem_empty _))
 }
 
 /-
@@ -69,20 +83,23 @@ instance W.ContinuousHom (b: Bexp) (f: Set (State × State)):
 namespace Denotational
 
 instance equiv: Setoid Com where
-  r a b := [[a]] = [[b]]
+  r := ([[.]] = [[.]])
   iseqv := {
     refl := fun _ => rfl,
     symm := Eq.symm
     trans := Eq.trans
   }
 
-theorem skipl:
-  (skip++c) ≈ c := by
-  simp only [HasEquiv.Equiv, equiv, denote, SRel.id_comp]
+theorem equiv_eq (c c': Com): c ≈ c' ↔ [[c]] = [[c']] := Iff.rfl
+theorem append_eq (c c': Com): [[c++c']] = [[c]] ○ [[c']] := rfl
 
-theorem skipr:
-  (c++skip) ≈ c := by
-  simp only [HasEquiv.Equiv, equiv, denote, SRel.comp_id]
+theorem skipl: (skip++c) ≈ c := by
+  rw [equiv_eq, append_eq, denote.eq_1]
+  exact SRel.id_comp
+
+theorem skipr: (c++skip) ≈ c := by
+  rw [equiv_eq, append_eq, denote.eq_1]
+  exact SRel.comp_id
 
 theorem while_unfold:
   whileLoop b c ≈ ifElse b (c++whileLoop b c) skip :=
@@ -92,18 +109,18 @@ theorem while_unfold:
 ## Congruence
 -/
 
-theorem cat_congr {c c' d₁ d₂: Com} (hc: c ≈ c') (hd: d₁ ≈ d₂):
-  (c++d₁) ≈ (c'++d₂) := by
-  simp only [HasEquiv.Equiv, equiv, denote]
+theorem cat_congr {c c' d d': Com} (hc: c ≈ c') (hd: d ≈ d'):
+  (c++d) ≈ (c'++d') := by
+  rw [equiv_eq, append_eq, append_eq]
   exact hc ▸ hd ▸ rfl
 
-theorem cond_congr (hc: c1 ≈ c2) (hd: d1 ≈ d2):
-  ifElse b c1 d1 ≈ ifElse b c2 d2 := by
-  simp only [HasEquiv.Equiv, equiv, denote]
+theorem cond_congr (hc: c ≈ c') (hd: d ≈ d'):
+  ifElse b c d ≈ ifElse b c' d' := by
+  rw [equiv_eq, denote.eq_4]
   exact hc ▸ hd ▸ rfl
 
-theorem loop_congr (hc: c1 ≈ c2): whileLoop b c1 ≈ whileLoop b c2 := by
-  simp only [HasEquiv.Equiv, equiv, denote]
+theorem loop_congr (hc: c ≈ c'): whileLoop b c ≈ whileLoop b c' := by
+  rw [equiv_eq, denote.eq_5]
   exact hc ▸ rfl
 
 end Denotational

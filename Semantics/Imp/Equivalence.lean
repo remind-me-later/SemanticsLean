@@ -40,39 +40,24 @@ theorem structural_eq_natural:
 theorem denote.from_natural {conf: Com × State}
   (hconf: conf ==> s''): (conf.2, s'') ∈ [[conf.1]] := by
   induction hconf with
-  | skip => exact SRel.mem_id.mpr rfl
-  | ass  => exact SRel.mem_id.mpr rfl
+  | skip => exact rfl
+  | ass  => exact rfl
   | cat s' _ _ ihcatl ihcatr => exact ⟨s', ihcatl, ihcatr⟩
   | ifTrue hcond _ ih => exact .inl ⟨ih, hcond⟩
   | ifFalse hcond _ ih =>
-      apply Or.inr
-      simp only [Set.mem_diff, Set.mem_comprehend, hcond,
-                  Bool.false_eq_true, not_false_eq_true,
-                  and_true]
-      exact ih
+    exact .inr ⟨ih, (absurd . (Bool.not_eq_true _ ▸ hcond))⟩
   | whileTrue s' hcond _ _ ihwhilestep ihwhilerest =>
     exact Denotational.while_unfold ▸
       .inl ⟨⟨s', ihwhilestep, ihwhilerest⟩, hcond⟩
   | whileFalse hcond =>
-      rw [Denotational.while_unfold]
-      apply Or.inr
-      simp only [Set.mem_diff, Set.mem_comprehend, hcond,
-                  Bool.false_eq_true, not_false_eq_true,
-                  and_true]
-      rfl
+    exact Denotational.while_unfold ▸
+      .inr ⟨denote.eq_1 ▸ rfl, (absurd . (Bool.not_eq_true _ ▸ hcond))⟩
 
 theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
   revert hmem
   induction c generalizing s s'' with
-  | skip =>
-    intro hmp
-    rw [denote, SRel.mem_id] at hmp
-    exact hmp ▸ skip
-  | ass =>
-    intro hmp
-    rw [denote.eq_def, Set.mem_comprehend] at hmp
-    simp only at hmp
-    exact hmp ▸ ass
+  | skip => exact (SRel.mem_id.mp . ▸ skip)
+  | ass => exact (. ▸ ass)
   | cat _ _ ihcatl ihcatr =>
     exact fun ⟨s', hl, hr⟩ => cat s' (ihcatl hl) (ihcatr hr)
   | ifElse _ _ _ ih1 ih2 =>
@@ -80,21 +65,17 @@ theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
     match hmp with
     | .inl ⟨hstep, hcond⟩ => exact ifTrue hcond (ih1 hstep)
     | .inr ⟨hstep, hcond⟩ =>
-      simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
-      exact ifFalse hcond (ih2 hstep)
+      exact ifFalse (Bool.not_eq_true _ ▸ hcond) (ih2 hstep)
   | whileLoop b c ih =>
-    suffices [[whileLoop b c]] ≤ {(s, s'') | (whileLoop b c, s) ==> s''} by
-      apply this
+    have h: [[whileLoop b c]] ≤ {(s, s'') | (whileLoop b c, s) ==> s''} :=
+      OrderHom.lfp_le fun (_, _) hmp =>
+        match hmp with
+        | .inl ⟨⟨s', hstep, hrest⟩, hcond⟩ =>
+          whileTrue s' hcond (ih hstep) hrest
+        | .inr ⟨hid, hcond⟩ =>
+          (SRel.mem_id.mp hid) ▸ whileFalse (Bool.not_eq_true _ ▸ hcond)
 
-    apply OrderHom.lfp_le
-    intro (_, _) hmp
-    match hmp with
-    | .inl ⟨⟨s', hstep, hrest⟩, hcond⟩ =>
-      exact whileTrue s' hcond (ih hstep) hrest
-    | .inr ⟨hid, hcond⟩ =>
-      simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
-      rw [SRel.mem_id] at hid
-      exact hid ▸ whileFalse hcond
+    apply h
 
 theorem natural_eq_denote: ((s, s') ∈ [[c]]) ↔ ((c, s) ==> s') :=
   ⟨BigStep.from_denote, denote.from_natural⟩

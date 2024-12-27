@@ -45,6 +45,8 @@ instance Set.completeLattice: CompleteLattice (Set α) := {
   le_Inf := fun _ _ h _ hb _ hd => h _ hd hb
 }
 
+theorem Set.inf_eq (a: Set (Set α)): (⋂₀ a) = CompleteLattice.Inf a := rfl
+
 /-
 ## Monotonic Functions
 -/
@@ -88,6 +90,9 @@ theorem SRel.comp_mono (hfh: f ⊆ h) (hgk: g ⊆ k): f ○ g ⊆ h ○ k :=
 -- pre-fixed point
 def OrderHom.pfp [CompleteLattice α] (f: α →o α) (a: α): Prop :=
   f a ≤ a
+
+theorem OrderHom.pfp_eq [CompleteLattice α] (f: α →o α) (a: α):
+  OrderHom.pfp f a = (f a ≤ a) := rfl
 
 def OrderHom.lfp [CompleteLattice α] (f: α →o α): α :=
   CompleteLattice.Inf {a | pfp f a}

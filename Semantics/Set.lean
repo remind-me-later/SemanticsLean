@@ -33,7 +33,7 @@ theorem mem_comprehend (a: α) (P: α → Prop): a ∈ ({a | P a}: Set α) ↔ P
 
 def univ: Set α := {_ | True}
 
-theorem mem_univ (a: α): a ∈ univ := trivial
+theorem mem_univ (a: α): a ∈ univ := ⟨⟩
 
 theorem univ_def {α: Type}: @univ α = {_ | True} := rfl
 
@@ -52,12 +52,8 @@ instance: Union (Set α) := ⟨Set.union⟩
 theorem mem_union {s t: Set α} (x: α): x ∈ s ∪ t ↔ x ∈ s ∨ x ∈ t :=
   Iff.rfl
 
-theorem union_empty (a: Set α): a ∪ ∅ = a := by
-  apply ext
-  intro x
-  simp [mem_union, mem_comprehend]
-  intro h
-  contradiction
+theorem union_empty (a: Set α): a ∪ ∅ = a :=
+  ext fun _ => ⟨fun (.inl h) => h, fun h => .inl h⟩
 
 protected def inter (a b: Set α): Set α := {x | x ∈ a ∧ x ∈ b}
 
@@ -66,12 +62,14 @@ instance: Inter (Set α) := ⟨Set.inter⟩
 theorem mem_inter {s t: Set α} (x: α): x ∈ s ∩ t ↔ x ∈ s ∧ x ∈ t :=
   Iff.rfl
 
-theorem inter_univ (a: Set α): a ∩ univ = a := by
-  apply ext
-  intro x
-  simp [mem_inter, mem_comprehend]
-  intro h
-  exact mem_univ x
+theorem inter_univ (a: Set α): a ∩ univ = a :=
+  ext fun _ => ⟨fun ⟨h, _⟩ => h, (⟨., ⟨⟩⟩)⟩
+
+theorem inter_empty (a: Set α): a ∩ ∅ = ∅ :=
+  ext fun _ => ⟨fun ⟨_, h⟩ => h, (absurd . (mem_empty _))⟩
+
+theorem empty_inter (a: Set α): ∅ ∩ a = ∅ :=
+  ext fun _ => ⟨fun ⟨h, _⟩ => h, (absurd . (mem_empty _))⟩
 
 protected def compl (s: Set α): Set α := {a | a ∉ s}
 
@@ -82,15 +80,8 @@ instance: SDiff (Set α) := ⟨Set.diff⟩
 theorem mem_diff {s t: Set α} (x: α): x ∈ s \ t ↔ x ∈ s ∧ x ∉ t :=
   Iff.rfl
 
-theorem diff_univ (a: Set α): a \ univ = ∅ := by
-  apply ext
-  intro x
-  simp [mem_diff, mem_comprehend]
-  constructor
-  . intro ⟨ha, hu⟩
-    exact absurd (mem_univ x) hu
-  . intro h
-    contradiction
+theorem diff_univ (a: Set α): a \ univ = ∅ :=
+  ext fun x => ⟨fun ⟨_, h⟩ => absurd (mem_univ x) h, (absurd . (mem_empty x))⟩
 
 def ite (t a b: Set α): Set α := a ∩ t ∪ b \ t
 
@@ -114,20 +105,11 @@ def sInter {α: Type} (S: Set (Set α)): Set α :=
 
 notation "⋂₀ " S => sInter S
 
-theorem mem_sInter {α: Type} {S: Set (Set α)} {a: α}: a ∈ (⋂₀ S) ↔ ∀B ∈ S, a ∈ B :=
-  Iff.rfl
+theorem mem_sInter {S: Set (Set α)} {a: α}:
+  a ∈ (⋂₀ S) ↔ ∀B ∈ S, a ∈ B := Iff.rfl
 
-theorem sInter_univ {α: Type}: (⋂₀ (@univ $ Set α)) = ∅ := by
-  apply ext
-  intro x
-  simp [mem_sInter, mem_comprehend]
-  constructor
-  . intro h
-    specialize h ∅
-    apply h
-    trivial
-  . intro h B hB
-    contradiction
+theorem sInter_univ {α: Type}: (⋂₀ (@univ $ Set α)) = ∅ :=
+  ext fun x => ⟨(. ∅ $ mem_univ ∅), fun h _ _ => absurd h (mem_empty x)⟩
 
 end Set
 

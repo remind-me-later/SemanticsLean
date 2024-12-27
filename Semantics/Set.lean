@@ -24,6 +24,8 @@ instance: HasSSubset (Set α) := ⟨Set.SSubset⟩
 
 instance: EmptyCollection (Set α) := ⟨fun _ => False⟩
 
+theorem mem_empty (a: α): a ∉ (∅: Set α) := id
+
 notation (priority := high) "{" x " | " p "}" => setOf fun x => p
 
 theorem mem_comprehend (a: α) (P: α → Prop): a ∈ ({a | P a}: Set α) ↔ P a :=

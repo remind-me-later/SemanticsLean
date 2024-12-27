@@ -52,11 +52,11 @@ private example: [[[|while true {skip}|]]] = ∅ := by {
 private theorem W.ωContinuous: ωContinuous (W b f) := fun _ _ =>
   Set.ext fun _ => {
     mp := fun hx => match hx with
-      | Or.inl ⟨⟨w, hwl, i, hwr⟩, hr⟩ => ⟨i, Or.inl ⟨⟨w, hwl, hwr⟩, hr⟩⟩
-      | Or.inr hr => ⟨0, Or.inr hr⟩
+      | .inl ⟨⟨w, hwl, i, hwr⟩, hr⟩ => ⟨i, .inl ⟨⟨w, hwl, hwr⟩, hr⟩⟩
+      | .inr hr => ⟨0, .inr hr⟩
     mpr := fun ⟨i, hi⟩ => match hi with
-      | Or.inl ⟨⟨_w, hwl, hwr⟩, hr⟩ => Or.inl ⟨⟨_, hwl, i, hwr⟩, hr⟩
-      | Or.inr hh => Or.inr hh
+      | .inl ⟨⟨_w, hwl, hwr⟩, hr⟩ => .inl ⟨⟨_, hwl, i, hwr⟩, hr⟩
+      | .inr hh => .inr hh
   }
 
 instance W.ContinuousHom (b: Bexp) (f: Set (State × State)):

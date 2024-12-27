@@ -23,16 +23,12 @@ theorem ωContinuous.isMono (f: Set α → Set β) (h: ωContinuous f):
     }
   have hset': (⋃ i, f (if i = 0 then a else b)) = (f a ∪ f b) :=
     Set.ext fun _ => {
-      mp := fun ⟨i, hi⟩ => match i with
-        | .zero => Or.inl hi
-        | .succ _ => Or.inr hi,
-      mpr := fun hx => match hx with
-        | .inl hx => ⟨0, hx⟩
-        | .inr hx => ⟨1, hx⟩
+      mp := fun ⟨i, hi⟩ => match i with | .zero => .inl hi | .succ _ => .inr hi,
+      mpr := fun hx => match hx with | .inl hx => ⟨0, hx⟩ | .inr hx => ⟨1, hx⟩
     }
   have hh := hset ▸ hset' ▸ (h _ hchain)
 
-  exact hh ▸ Or.inl hx
+  exact hh ▸ .inl hx
 
 structure ωContinuousHom (α β: Type) extends Set α →o Set β where
   continuous': ωContinuous toFun
@@ -48,67 +44,41 @@ def fpow {α: Type} (f: α → α) (n: Nat): α → α
     | .zero => a
     | .succ n => f (fpow f n a)
 
-theorem fpow_succ (f: α → α) (x: α): (fpow f (n + 1)) x = f (fpow f n x) := by
+theorem fpow.succ_eq (f: α → α): fpow f (n + 1) x = f (fpow f n x) := by
   induction n <;> rfl
 
-theorem fpow_chain (f: Set α →o Set α): isωChain (fun i => fpow f i ∅) := by {
+theorem fpow.isChain (f: Set α →o Set α): isωChain (fun i => fpow f i ∅) := by
   intro i
-  simp at *
   induction i with
-  | zero =>
-    unfold fpow
-    simp [Membership.mem, Set.Mem, EmptyCollection.emptyCollection]
-    intro x hx
-    contradiction
-  | succ i ih =>
-    unfold fpow
-    simp at *
-    exact f.monotone' _ _ ih
-}
+  | zero => exact fun x hx => absurd hx (Set.mem_empty x)
+  | succ _ ih => exact f.monotone' _ _ ih
 
-instance (f: Set α →o Set α): ωChain α where
+instance fpow.ωChain (f: Set α →o Set α): ωChain α where
   toSeq := fun i => fpow f i ∅
-  chain' := fpow_chain f
+  chain' := fpow.isChain f
+
+theorem fpow.succ_limit_eq (f: Set α →o Set α):
+  (⋃ i, fpow f (i + 1) ∅) = (⋃ i, fpow f i ∅) := Set.ext fun _ => {
+    mp := fun ⟨i, hi⟩ => match i with
+      | .zero => ⟨1, hi⟩ | .succ i => ⟨i+1+1, hi⟩,
+    mpr := fun ⟨i, hi⟩ => match i with
+      | .zero => absurd hi (Set.mem_empty _) | .succ i => ⟨i, hi⟩
+  }
 
 def ωContinuousHom.lfp (f: α →ω α): Set α := ⋃ i, fpow f i ∅
 
-theorem kleene_fix {f: α →ω α}:
-  f.toOrderHom.lfp = f.lfp := by {
+theorem kleene_fix {f: α →ω α}: f.toOrderHom.lfp = f.lfp := by {
   apply Subset.antisymm
-  . suffices f.toOrderHom.pfp (⋃ i, (fpow f i) ∅) by exact OrderHom.lfp_le this
-
-    intro a ha
-
-    have h := f.continuous' _ (fpow_chain f.toOrderHom)
-    simp [←fpow_succ f ∅] at h
-
-    have hh: (Set.iUnion fun i => fpow f (i + 1) ∅) = (Set.iUnion fun i => fpow f i ∅) := Set.ext fun x => {
-      mp := fun ⟨i, hi⟩ => match i with
-        | .zero => ⟨1, hi⟩
-        | .succ i => ⟨i+1+1, hi⟩,
-      mpr := fun ⟨i, hi⟩ => match i with
-        | .zero => by contradiction
-        | .succ i => ⟨i, hi⟩
-    }
-
-    rw [hh] at h
-    rw [h] at ha
-
-    exact ha
+  . have hpfp: f.toOrderHom.pfp (⋃ i, (fpow f i) ∅) := fun _ ha =>
+      have hcont := f.continuous' _ (fpow.isChain f.toOrderHom)
+      fpow.succ_limit_eq _ ▸ hcont ▸ ha
+    exact OrderHom.lfp_le hpfp
 
   . intro a ⟨i, ha⟩
     revert a ha
-    rw [←Set.Subset]
-    simp at *
     induction i with
-    | zero =>
-      unfold fpow
-      simp
-      intro a ha
-      contradiction
+    | zero => exact fun a ha => absurd ha (Set.mem_empty a)
     | succ i ih =>
-      have hmono := f.monotone' _ _ ih
-      rw [←fpow_succ f ∅] at hmono
-      rw [f.toOrderHom.lfp_eq]
-      exact hmono
+      have hmono := fpow.succ_eq f ▸ f.monotone' _ _ ih
+      exact f.toOrderHom.lfp_eq ▸ hmono
 }

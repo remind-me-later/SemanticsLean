@@ -75,8 +75,8 @@ instance OrderHom.const [Preorder α] [Preorder β]: Coe (β) (α →o β) :=
 theorem Set.ite_mono (t: Set α) (hab: a ⊆ b) (hab': a' ⊆ b'):
   ite t a a' ⊆ ite t b b' := fun _ hite =>
   match hite with
-  | Or.inl ⟨hl, hr⟩ => Or.inl ⟨hab hl, hr⟩
-  | Or.inr ⟨hl, hr⟩ => Or.inr ⟨hab' hl, hr⟩
+  | .inl ⟨hl, hr⟩ => .inl ⟨hab hl, hr⟩
+  | .inr ⟨hl, hr⟩ => .inr ⟨hab' hl, hr⟩
 
 theorem SRel.comp_mono (hfh: f ⊆ h) (hgk: g ⊆ k): f ○ g ⊆ h ○ k :=
   fun _ ⟨z, hl, hr⟩ => ⟨z, hfh hl, hgk hr⟩

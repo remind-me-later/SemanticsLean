@@ -23,29 +23,29 @@ theorem cat_eq: ((c++c'', s) ~> conf)
   ↔ ((∃c' s', ((c, s) ~> (c', s')) ∧ conf = (c'++c'', s'))
     ∨ (c = {} ∧ conf = (c'', s))) := {
     mp := fun hmp => match hmp with
-      | skipCat => Or.inr ⟨rfl, rfl⟩
-      | cat h => Or.inl ⟨_, _, h, rfl⟩,
+      | skipCat => .inr ⟨rfl, rfl⟩
+      | cat h => .inl ⟨_, _, h, rfl⟩,
     mpr := fun hmpr => match hmpr with
-      | Or.inl ⟨_c', _s', hl, hr⟩ => hr ▸ cat hl
-      | Or.inr ⟨hl, hr⟩ => hl ▸ hr ▸ skipCat
+      | .inl ⟨_c', _s', hl, hr⟩ => hr ▸ cat hl
+      | .inr ⟨hl, hr⟩ => hl ▸ hr ▸ skipCat
   }
 
 theorem cond_eq: ((.ifElse b c c', s) ~> conf)
   ↔ (b s ∧ conf = (c, s) ∨ b s = false ∧ conf = (c', s)) := {
     mp := fun hmp => match hb: b s with
-      | false => match hmp with | ifElse => Or.inr ⟨rfl, hb ▸ rfl⟩
-      | true => match hmp with | ifElse => Or.inl ⟨rfl, hb ▸ rfl⟩,
+      | false => match hmp with | ifElse => .inr ⟨rfl, hb ▸ rfl⟩
+      | true => match hmp with | ifElse => .inl ⟨rfl, hb ▸ rfl⟩,
     mpr := fun hmpr =>
       have hss: conf = (cond (b s) c c', s) := match hb: b s with
-        | true => match hb ▸ hmpr with | Or.inl ⟨_, hr⟩ => hr
-        | false => match hb ▸ hmpr with | Or.inr ⟨_, hr⟩ => hr
+        | true => match hb ▸ hmpr with | .inl ⟨_, hr⟩ => hr
+        | false => match hb ▸ hmpr with | .inr ⟨_, hr⟩ => hr
       hss ▸ ifElse
   }
 
 theorem cond_false (hb: b s = false): ((.ifElse b c c', s) ~> conf)
   ↔ (conf = (c', s)) := by
   rw [cond_eq, hb]
-  exact ⟨fun (Or.inr ⟨rfl, h⟩) => h, (Or.inr ⟨rfl, .⟩)⟩
+  exact ⟨fun (.inr ⟨rfl, h⟩) => h, (.inr ⟨rfl, .⟩)⟩
 
 infixl:10 " ~>* " => ReflTrans SmallStep
 

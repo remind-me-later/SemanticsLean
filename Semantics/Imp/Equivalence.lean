@@ -43,7 +43,7 @@ theorem denote.from_natural {conf: Com × State}
   | skip => exact SRel.mem_id.mpr rfl
   | ass  => exact SRel.mem_id.mpr rfl
   | cat s' _ _ ihcatl ihcatr => exact ⟨s', ihcatl, ihcatr⟩
-  | ifTrue hcond _ ih => exact Or.inl ⟨ih, hcond⟩
+  | ifTrue hcond _ ih => exact .inl ⟨ih, hcond⟩
   | ifFalse hcond _ ih =>
       apply Or.inr
       simp only [Set.mem_diff, Set.mem_comprehend, hcond,
@@ -52,7 +52,7 @@ theorem denote.from_natural {conf: Com × State}
       exact ih
   | whileTrue s' hcond _ _ ihwhilestep ihwhilerest =>
     exact Denotational.while_unfold ▸
-      Or.inl ⟨⟨s', ihwhilestep, ihwhilerest⟩, hcond⟩
+      .inl ⟨⟨s', ihwhilestep, ihwhilerest⟩, hcond⟩
   | whileFalse hcond =>
       rw [Denotational.while_unfold]
       apply Or.inr
@@ -78,9 +78,8 @@ theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
   | ifElse _ _ _ ih1 ih2 =>
     intro hmp
     match hmp with
-    | Or.inl ⟨hstep, hcond⟩ =>
-      exact ifTrue hcond (ih1 hstep)
-    | Or.inr ⟨hstep, hcond⟩ =>
+    | .inl ⟨hstep, hcond⟩ => exact ifTrue hcond (ih1 hstep)
+    | .inr ⟨hstep, hcond⟩ =>
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
       exact ifFalse hcond (ih2 hstep)
   | whileLoop b c ih =>
@@ -90,9 +89,9 @@ theorem BigStep.from_denote (hmem: (s, s'') ∈ [[c]]): (c, s) ==> s'' := by
     apply OrderHom.lfp_le
     intro (_, _) hmp
     match hmp with
-    | Or.inl ⟨⟨s', hstep, hrest⟩, hcond⟩ =>
+    | .inl ⟨⟨s', hstep, hrest⟩, hcond⟩ =>
       exact whileTrue s' hcond (ih hstep) hrest
-    | Or.inr ⟨hid, hcond⟩ =>
+    | .inr ⟨hid, hcond⟩ =>
       simp only [Set.mem_comprehend, Bool.not_eq_true] at hcond
       rw [SRel.mem_id] at hid
       exact hid ▸ whileFalse hcond

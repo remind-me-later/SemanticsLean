@@ -16,15 +16,11 @@ private inductive BigStep: Bexp × State → Bool → Prop
   | eq: BigStep (eq a a', s) (a s == a' s)
   | le: BigStep (le a a', s) (a s <= a' s)
 
-infix:10 " ==> " => BigStep
+infix:100 " ==>b " => BigStep
 
 private instance equiv: Setoid Bexp where
-  r b b' := ∀{s n}, ((b, s) ==> n) ↔ ((b', s) ==> n)
-  iseqv := {
-    refl := fun _ => Iff.rfl
-    symm := (Iff.symm .)
-    trans := (Iff.trans . .)
-  }
+  r b b' := ∀{s n}, (b, s) ==>b n ↔ (b', s) ==>b n
+  iseqv := ⟨fun _ => Iff.rfl, (Iff.symm .), (Iff.trans . .)⟩
 
 end BigStep
 
@@ -43,17 +39,13 @@ instance: CoeFun Bexp (fun _b => State → Bool) := ⟨eval⟩
 
 instance reduce.equiv: Setoid Bexp where
   r b b':= ∀{s}, b s = b' s
-  iseqv := {
-    refl := fun _ => rfl
-    symm := (Eq.symm .)
-    trans := (Eq.trans . .)
-  }
+  iseqv := ⟨fun _ => rfl, (Eq.symm .), (Eq.trans . .)⟩
 
 section Equivalence
 
 -- relational definition is equivalent to recursive
 private theorem reduce.from_natural {conf: Bexp × State}
-  (hBigStep: conf ==> x): conf.1 conf.2 = x :=
+  (hBigStep: conf ==>b x): conf.1 conf.2 = x :=
   by induction hBigStep with
   | not _ ih => exact ih ▸ rfl
   | and _ _ ihb ihb' | or _ _ ihb ihb' =>
@@ -61,7 +53,7 @@ private theorem reduce.from_natural {conf: Bexp × State}
   | _ => rfl
 
 private theorem BigStep.from_reduce {b: Bexp}
-  (hred: b s = x): (b, s) ==> x :=
+  (hred: b s = x): (b, s) ==>b x :=
   by induction b generalizing x with
   | true => exact hred ▸ BigStep.true
   | false => exact hred ▸ BigStep.false
@@ -74,11 +66,11 @@ private theorem BigStep.from_reduce {b: Bexp}
   | le => exact hred ▸ BigStep.le
 
 private theorem BigStep_eq_reduce {b: Bexp}:
-  ((b, s) ==> x) ↔ (b s = x) :=
+  (b, s) ==>b x ↔ b s = x :=
   ⟨reduce.from_natural, BigStep.from_reduce⟩
 
 private theorem BigStep_eq_reduce' {b: Bexp}:
-  (b, s) ==> b s :=
+  (b, s) ==>b b s :=
   BigStep.from_reduce rfl
 
 private theorem not_true_eq_false {b: Bexp}: (!b s) = (~~~b) s :=

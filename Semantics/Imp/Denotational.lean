@@ -16,7 +16,7 @@ private def W (b: Bexp) (f: Set (State × State)):
 
 private theorem W.Monotone: Monotone (W b f) :=
   fun _ _ hmp =>
-  Set.ite_mono _ (SRel.comp_mono Preorder.le_rfl hmp) Preorder.le_rfl
+  Set.ite_mono _ (SRel.comp_mono (Preorder.le_refl f) hmp) (Preorder.le_refl SRel.id)
 
 instance W.OrderHom (b: Bexp) (f: Set (State × State)):
   Set (State × State) →o Set (State × State) :=
@@ -29,12 +29,12 @@ def denote: Com → Set (State × State)
   | ifElse b c c' => {(s, _) | b s}.ite c.denote c'.denote
   | whileLoop b c => (W.OrderHom b c.denote).lfp
 
-notation (priority := high) "[[" c "]]" => denote c
+notation (priority := high) "⟦" c "⟧" => denote c
 
-#check (s0, s0["x"←5]["x"←1]) ∈ [[[|x = 5; if x <= 1 {skip} else {x = 1}|]]]
-#check (s0, s0["x"←5]) ∈ [[[|x = 5; while x <= 1 {x = 1}|]]]
+#check (s0, s0["x"←5]["x"←1]) ∈ ⟦[|x = 5; if x <= 1 {skip} else {x = 1}|]⟧
+#check (s0, s0["x"←5]) ∈ ⟦[|x = 5; while x <= 1 {x = 1}|]⟧
 
-private example: [[[|while true {skip}|]]] = ∅ := by {
+private example: ⟦[|while true {skip}|]⟧ = ∅ := by {
   rw [denote.eq_5, denote.eq_1, OrderHom.lfp]
   rw [←Set.inf_eq]
   rw [W.OrderHom]
@@ -83,15 +83,15 @@ instance W.ContinuousHom (b: Bexp) (f: Set (State × State)):
 namespace Denotational
 
 instance equiv: Setoid Com where
-  r := ([[.]] = [[.]])
+  r := (⟦.⟧ = ⟦.⟧)
   iseqv := {
     refl := fun _ => rfl,
     symm := Eq.symm
     trans := Eq.trans
   }
 
-theorem equiv_eq (c c': Com): c ≈ c' ↔ [[c]] = [[c']] := Iff.rfl
-theorem append_eq (c c': Com): [[c++c']] = [[c]] ○ [[c']] := rfl
+theorem equiv_eq (c c': Com): c ≈ c' ↔ ⟦c⟧ = ⟦c'⟧ := Iff.rfl
+theorem append_eq (c c': Com): ⟦c++c'⟧ = ⟦c⟧ ○ ⟦c'⟧ := rfl
 
 theorem skipl: (skip++c) ≈ c := by
   rw [equiv_eq, append_eq, denote.eq_1]

@@ -3,7 +3,7 @@ import Semantics.Imp.Bexp
 namespace Com
 
 inductive BigStep: Com × State → State → Prop
-  | skip: BigStep ({}, s) s
+  | skip: BigStep (∅, s) s
   | ass: BigStep (ass v a, s) (s[v ← a s])
   | cat (s'': State) (hcatl: BigStep (c, s) s'') (hcatr: BigStep (c', s'') s'):
     BigStep (c++c', s) s'
@@ -17,7 +17,7 @@ inductive BigStep: Com × State → State → Prop
     (hwhilerest: BigStep (whileLoop b c, s'') s'):
     BigStep (whileLoop b c, s) s'
 
-infix:10 " ==> " => BigStep
+infix:100 " ==> " => BigStep
 
 namespace BigStep
 
@@ -46,44 +46,31 @@ private example: ([|x = 2; y = 1; while 2 <= x {y = y * x; x = x - 1}|], s0)
 ## Rewriting rules
 -/
 
-theorem skip_eq: (({}, s) ==> s') ↔ (s = s') :=
-  ⟨fun (skip) => rfl, (· ▸ skip)⟩
+theorem skip_eq: (∅, s) ==> s' ↔ s = s' := ⟨fun (skip) => rfl, (· ▸ skip)⟩
 
-theorem cat_eq:
-  ((c++c', s) ==> s') ↔ ∃s'', ((c, s) ==> s'') ∧ ((c', s'') ==> s') := {
+theorem cat_eq: (c++c', s) ==> s' ↔ ∃s'', (c, s) ==> s'' ∧ (c', s'') ==> s' := {
     mp := fun (cat s'' hcatl hcatr) => ⟨s'', hcatl, hcatr⟩,
     mpr := fun ⟨s'', hcatl, hcatr⟩ => cat s'' hcatl hcatr
   }
 
-theorem if_eq: ((ifElse b c c', s) ==> s')
+theorem if_eq: (ifElse b c c', s) ==> s'
     ↔ cond (b s) ((c, s) ==> s') ((c', s) ==> s') := {
-    mp := fun hmp => match hmp with
-      | ifTrue hcond hstep | ifFalse hcond hstep =>
-        hcond ▸ hstep,
-    mpr := match hb: b s with
-      | true => (ifTrue hb .)
-      | false => (ifFalse hb .)
+    mp := fun hmp => match hmp with | ifTrue hc h | ifFalse hc h => hc ▸ h,
+    mpr := match hb: b s with | true => (ifTrue hb .) | false => (ifFalse hb .)
   }
 
-theorem if_eq': ((ifElse b c c', s) ==> s')
-  ↔ ((cond (b s) c c', s) ==> s') := {
-    mp := fun hmp => match hmp with
-      | ifTrue hcond hif | ifFalse hcond hif => hcond ▸ hif,
-    mpr := match hcond: b s with
-      | true => (ifTrue hcond .)
-      | false => (ifFalse hcond .)
+theorem if_eq': (ifElse b c c', s) ==> s' ↔ (cond (b s) c c', s) ==> s' := {
+    mp := fun hmp => match hmp with | ifTrue hc h | ifFalse hc h => hc ▸ h,
+    mpr := match hb: b s with | true => (ifTrue hb .) | false => (ifFalse hb .)
   }
 
-theorem while_eq: ((whileLoop b c, s) ==> s') ↔
-  cond (b s) (∃s'', ((c, s) ==> s'') ∧ ((whileLoop b c, s'') ==> s'))
-  (s = s') := {
+theorem while_eq: (whileLoop b c, s) ==> s' ↔
+  cond (b s) (∃s'', (c, s) ==> s'' ∧ (whileLoop b c, s'') ==> s') (s = s') := {
     mp := fun hmp => match hmp with
-      | whileTrue s'' hcond hwhilestep hwhilerest =>
-        hcond ▸ ⟨s'', hwhilestep, hwhilerest⟩
+      | whileTrue s'' hc h hw => hc ▸ ⟨s'', h, hw⟩
       | whileFalse hb => hb ▸ rfl,
     mpr := match hb: b s with
-      | true => fun ⟨s'', hwhilestep, hwhilerest⟩ =>
-        whileTrue s'' hb hwhilestep hwhilerest
+      | true => fun ⟨s'', h, hw⟩ => whileTrue s'' hb h hw
       | false => (. ▸ whileFalse hb)
   }
 
@@ -92,90 +79,87 @@ theorem while_eq: ((whileLoop b c, s) ==> s') ↔
 -/
 
 instance equiv: Setoid Com where
-  r c c' := ∀{s s': State}, ((c, s) ==> s') ↔ ((c', s) ==> s')
-  iseqv := {
-    refl := fun _ => Iff.rfl
-    symm := (Iff.symm .)
-    trans := (Iff.trans . .)
-  }
+  r c c' := ∀{s s': State}, (c, s) ==> s' ↔ (c', s) ==> s'
+  iseqv := ⟨fun _ => Iff.rfl, (Iff.symm .), (Iff.trans . .)⟩
 
-theorem skipl {c: Com}: ({}++c) ≈ c :=
-  ⟨fun (cat _ hcatl hcatr) => skip_eq.mp hcatl ▸ hcatr, (cat _ skip .)⟩
+theorem skipl {c: Com}: ∅++c ≈ c :=
+  ⟨fun (cat _ hl hr) => skip_eq.mp hl ▸ hr, (cat _ skip .)⟩
 
-theorem skipr {c: Com}: (c++{}) ≈ c :=
-  ⟨fun (cat _ hc hd) => skip_eq.mp hd ▸ hc, (cat _ · skip)⟩
+theorem skipr {c: Com}: c++∅ ≈ c :=
+  ⟨fun (cat _ hl hr) => skip_eq.mp hr ▸ hl, (cat _ · skip)⟩
 
 theorem cond_true (hb: b ≈ Bexp.true): ifElse b c c' ≈ c := by
-  intro _ _; rw [if_eq, hb]; rfl
+  intro _ _; rw [if_eq', hb]; rfl
 
 theorem cond_false (hb: b ≈ Bexp.false): ifElse b c c' ≈ c' := by
-  intro _ _; rw [if_eq, hb]; rfl
+  intro _ _; rw [if_eq', hb]; rfl
 
-theorem loop_unfold: whileLoop b c ≈ ifElse b (c++whileLoop b c) {} := by
-  intro s _s''; rw [if_eq']
-  exact {
-    mp := fun hmp => match hmp with
-      | whileTrue s' hb hc hw => hb ▸ cat s' hc hw
-      | whileFalse hb => hb ▸ skip,
-    mpr := match hb: b s with
-      | false => fun (skip) => whileFalse hb
-      | true => fun (cat s' hc hw) => whileTrue s' hb hc hw
-  }
+theorem loop_unfold: whileLoop b c ≈ ifElse b (c++whileLoop b c) ∅ := by
+  intro s _; rw [if_eq', while_eq]
+  match b s with
+  | false => exact skip_eq.symm
+  | true => exact ⟨fun ⟨_, hl, hr⟩ => cat _ hl hr,
+    fun (cat s'' hl hr) => ⟨s'', hl, hr⟩⟩
 
 /-
 ## Non termination
 -/
 
-theorem loop_tt (htrue: b ≈ Bexp.true): ¬((whileLoop b c, s) ==> s') := by
+theorem loop_tt: ¬(whileLoop .true c, s) ==> s' := by
   intro hmp
-  generalize hconf: (whileLoop b c, s) = conf at hmp
+  generalize hx: (whileLoop .true c, s) = x at hmp
   induction hmp generalizing s with
-  | whileTrue _ _ _ _ _ ihw => match hconf with
+  | whileTrue _ _ _ _ _ ihw => match hx with
     | Eq.refl _ => exact ihw rfl
-  | whileFalse hb => match hconf with
-    | Eq.refl _ => rw [htrue] at hb; contradiction
-  | _ => match Prod.mk.injEq _ _ _ _ ▸ hconf with
+  | whileFalse hb => match hx with
+    | Eq.refl _ => contradiction
+  | _ => match Prod.mk.injEq _ _ _ _ ▸ hx with
     | ⟨_, _⟩ => contradiction
+
+def halts (c: Com) (s: State) := ∃s', (c, s) ==> s'
+
+theorem exists_non_halting: ∃c, ∀s, ¬halts c s :=
+  ⟨whileLoop .true ∅, fun s => not_exists.mpr (@loop_tt ∅ s .)⟩
 
 /-
 ## Determinism
 -/
 
-theorem deterministic {conf: Com × State}
-  (hps: conf ==> s) (hps': conf ==> s'): s = s' :=
-by induction hps generalizing s' with
-| skip => match hps' with | skip => rfl
-| ass => match hps' with | ass => rfl
-| cat _ _ _ ihcatl ihcatr =>
-  match hps' with
-  | cat _ hcatl hcatr =>
-    exact ihcatr (ihcatl hcatl ▸ hcatr)
-| ifTrue hcond _ ihifleft =>
-  match hps' with
-  | ifTrue _ hifleft => exact ihifleft hifleft
-  | ifFalse hcond' _ =>
-    have hcontra := hcond ▸ hcond'
-    contradiction
-| ifFalse hcond _ ihifright =>
-  match hps' with
-  | ifTrue hcond' _ =>
-    have hcontra := hcond ▸ hcond'
-    contradiction
-  | ifFalse _ hifright =>
-    exact ihifright hifright
-| whileTrue _ hcond _ _ ihwhilestep ihwhilerest =>
-  match hps' with
-  | whileTrue _ _ hwhilestep hwhilerest =>
-    exact ihwhilerest (ihwhilestep hwhilestep ▸ hwhilerest)
-  | whileFalse hcond' =>
-    have hcontra := hcond ▸ hcond'
-    contradiction
-| whileFalse hcond =>
-  match hps' with
-  | whileTrue _ hcond' _ _ =>
-    have hcontra := hcond ▸ hcond'
-    contradiction
-  | whileFalse _ => rfl
+theorem deterministic {x: Com × State}
+  (hps: x ==> s) (hps': x ==> s'): s = s' :=
+  by induction hps generalizing s' with
+  | skip => match hps' with | skip => rfl
+  | ass => match hps' with | ass => rfl
+  | cat _ _ _ ihcatl ihcatr =>
+    match hps' with
+    | cat _ hcatl hcatr =>
+      exact ihcatr (ihcatl hcatl ▸ hcatr)
+  | ifTrue hcond _ ihifleft =>
+    match hps' with
+    | ifTrue _ hifleft => exact ihifleft hifleft
+    | ifFalse hcond' _ =>
+      have hcontra := Bool.false_eq_true ▸ (hcond ▸ hcond').symm
+      exact False.elim hcontra
+  | ifFalse hcond _ ihifright =>
+    match hps' with
+    | ifTrue hcond' _ =>
+      have hcontra := Bool.false_eq_true ▸ hcond ▸ hcond'
+      exact False.elim hcontra
+    | ifFalse _ hifright =>
+      exact ihifright hifright
+  | whileTrue _ hcond _ _ ihwhilestep ihwhilerest =>
+    match hps' with
+    | whileTrue _ _ hwhilestep hwhilerest =>
+      exact ihwhilerest (ihwhilestep hwhilestep ▸ hwhilerest)
+    | whileFalse hcond' =>
+      have hcontra := Bool.false_eq_true ▸ (hcond ▸ hcond').symm
+      exact False.elim hcontra
+  | whileFalse hcond =>
+    match hps' with
+    | whileTrue _ hcond' _ _ =>
+      have hcontra := Bool.false_eq_true ▸ hcond ▸ hcond'
+      exact False.elim hcontra
+    | whileFalse _ => rfl
 
 end BigStep
 end Com

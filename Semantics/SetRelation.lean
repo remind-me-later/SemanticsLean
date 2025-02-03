@@ -1,9 +1,5 @@
 import Semantics.Set
 
-/-
-# Set theoretic relations
--/
-
 namespace SRel
 
 def id: Set (α × α) := {p | p.1 = p.2}

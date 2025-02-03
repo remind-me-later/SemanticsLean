@@ -1,5 +1,3 @@
--- # Sets
-
 def Set (α: Type) := α → Prop
 
 def setOf (p: α → Prop): Set α := p

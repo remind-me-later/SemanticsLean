@@ -78,7 +78,7 @@ private theorem not_true_eq_false {b: Bexp}: (!b s) = (~~~b) s :=
 
 private theorem BigStep_eq_eq_reduce_eq:
   BigStep.equiv.r b b' ↔ reduce.equiv.r b b' := by
-  simp only [Setoid.r, eq_iff_iff]
+  dsimp only [Setoid.r, eq_iff_iff]
   constructor
   . intro h s
     specialize @h s (b s)

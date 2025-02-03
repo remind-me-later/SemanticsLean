@@ -1,4 +1,3 @@
--- Reflexive transitive relations
 inductive ReflTrans (r: α → α → Prop): α → α → Prop
   | refl: ReflTrans r a a
   | tail: ReflTrans r a b → r b c → ReflTrans r a c

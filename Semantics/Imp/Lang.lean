@@ -58,9 +58,7 @@ inductive Com where
 instance: EmptyCollection Com := ⟨.skip⟩
 instance: Append Com := ⟨.cat⟩
 
-/-
-## Syntax
--/
+-- ## Syntax
 
 declare_syntax_cat imp
 

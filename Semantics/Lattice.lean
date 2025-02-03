@@ -3,10 +3,6 @@ import Semantics.SetRelation
 -- Concrete Semantics with Isabelle
 -- 10.4.1 The Knaster-Tarski Fixpoint Theorem on Sets
 
-/-
-## Complete lattices
--/
-
 class Preorder (α: Type)  extends LE α, LT α where
   le_refl: ∀a: α, a ≤ a
   le_trans: ∀{{a b c: α}}, a ≤ b → b ≤ c → a ≤ c
@@ -27,10 +23,6 @@ theorem CompleteLattice.Inf_unique [CompleteLattice α] (s: Set α) (a b: α)
   (h: CompleteLattice.Inf s = a) (h': CompleteLattice.Inf s = b): a = b :=
   PartialOrder.le_antisymm (h ▸ h' ▸ Preorder.le_rfl) (h' ▸ h ▸ Preorder.le_rfl)
 
-/-
-## Set instances
--/
-
 instance Set.completeLattice: CompleteLattice (Set α) := {
   le := (. ⊆ .),
   lt := (. ⊂ .),
@@ -46,10 +38,6 @@ instance Set.completeLattice: CompleteLattice (Set α) := {
 }
 
 theorem Set.inf_eq (a: Set (Set α)): (⋂₀ a) = CompleteLattice.Inf a := rfl
-
-/-
-## Monotonic Functions
--/
 
 def Monotone [Preorder α] [Preorder β] (f: α → β): Prop :=
   ∀a b, a ≤ b → f a ≤ f b
@@ -83,10 +71,6 @@ theorem Set.ite_mono (t: Set α) (hab: a ⊆ b) (hab': a' ⊆ b'):
 theorem SRel.comp_mono (hfh: f ⊆ h) (hgk: g ⊆ k): f ○ g ⊆ h ○ k :=
   fun _ ⟨z, hl, hr⟩ => ⟨z, hfh hl, hgk hr⟩
 
-/-
-## Least Fixed Points
--/
-
 -- pre-fixed point
 def OrderHom.pfp [CompleteLattice α] (f: α →o α) (a: α): Prop :=
   f a ≤ a
@@ -106,10 +90,7 @@ theorem OrderHom.le_lfp [CompleteLattice α] {f: α →o α}
   a ≤ lfp f :=
   CompleteLattice.le_Inf h
 
-/-
-## The Knaster-Tarski Fixpoint Theorem
--/
-
+-- The Knaster-Tarski Fixpoint Theorem
 theorem OrderHom.lfp_eq [CompleteLattice α] (f: α →o α):
   lfp f = f (lfp f) :=
   have h: f (lfp f) ≤ lfp f :=

@@ -36,13 +36,8 @@ notation (priority := high) "⟦" c "⟧" => denote c
 
 private example: ⟦[|while true {skip}|]⟧ = ∅ := by {
   rw [denote.eq_5, denote.eq_1, OrderHom.lfp]
-  rw [←Set.inf_eq]
-  rw [W.OrderHom]
-  unfold Com.W
-  unfold Bexp.eval
-  unfold Set.sInter
-  unfold Set.ite
-  unfold OrderHom.pfp
+  rw [←Set.inf_eq, W.OrderHom]
+  unfold Com.W Bexp.eval Set.sInter Set.ite OrderHom.pfp
   simp only
   apply Set.ext
   intro x
@@ -84,11 +79,7 @@ namespace Denotational
 
 instance equiv: Setoid Com where
   r := (⟦.⟧ = ⟦.⟧)
-  iseqv := {
-    refl := fun _ => rfl,
-    symm := Eq.symm
-    trans := Eq.trans
-  }
+  iseqv := ⟨fun _ => rfl, .symm, .trans⟩
 
 theorem equiv_eq (c c': Com): c ≈ c' ↔ ⟦c⟧ = ⟦c'⟧ := Iff.rfl
 theorem append_eq (c c': Com): ⟦c++c'⟧ = ⟦c⟧ ○ ⟦c'⟧ := rfl

@@ -42,9 +42,7 @@ private example: ([|x = 2; y = 1; while 2 <= x {y = y * x; x = x - 1}|], s0)
   apply whileFalse
   apply rfl
 
-/-
-## Rewriting rules
--/
+-- ## Rewriting rules
 
 theorem skip_eq: (∅, s) ==> s' ↔ s = s' := ⟨fun (skip) => rfl, (· ▸ skip)⟩
 
@@ -74,9 +72,7 @@ theorem while_eq: (whileLoop b c, s) ==> s' ↔
       | false => (. ▸ whileFalse hb)
   }
 
-/-
-## Behavioral equivalence
--/
+-- ## Behavioral equivalence
 
 instance equiv: Setoid Com where
   r c c' := ∀{s s': State}, (c, s) ==> s' ↔ (c', s) ==> s'
@@ -121,9 +117,7 @@ def halts (c: Com) (s: State) := ∃s', (c, s) ==> s'
 theorem exists_non_halting: ∃c, ∀s, ¬halts c s :=
   ⟨whileLoop .true ∅, fun s => not_exists.mpr (@loop_tt ∅ s .)⟩
 
-/-
-## Determinism
--/
+-- ## Determinism
 
 theorem deterministic {x: Com × State}
   (hps: x ==> s) (hps': x ==> s'): s = s' :=

@@ -109,6 +109,7 @@ macro_rules
 | `([|if $b {$x} else {$y}|]) => `(Com.ifElse [|$b|] [|$x|] [|$y|])
 | `([|while $b {$x}|]) => `(Com.whileLoop [|$b|] [|$x|])
 
+-- Fibonacci of 5
 #check [|
   n = 5; i = 2; res = 1;
 

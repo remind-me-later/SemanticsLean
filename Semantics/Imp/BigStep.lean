@@ -119,8 +119,7 @@ theorem exists_non_halting: ∃c, ∀s, ¬halts c s :=
 
 -- ## Determinism
 
-theorem deterministic {x: Com × State}
-  (hps: x ==> s) (hps': x ==> s'): s = s' :=
+theorem deterministic (hps: x ==> s) (hps': x ==> s'): s = s' :=
   by induction hps generalizing s' with
   | skip => match hps' with | skip => rfl
   | ass => match hps' with | ass => rfl

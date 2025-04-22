@@ -1,14 +1,14 @@
 import Semantics.Set
 import Semantics.Lattice
 
-def isωChain {α: Type} (s: Nat → Set α): Prop :=
+def isωChain (s: Nat → Set α): Prop :=
   ∀i, s i ⊆ s (i + 1)
 
 structure ωChain (α: Type) where
   toSeq: Nat → Set α
   chain': isωChain toSeq
 
-def ωContinuous {α β: Type} (f: Set α → Set β): Prop :=
+def ωContinuous (f: Set α → Set β): Prop :=
   ∀s, isωChain s → f (⋃ i, s i) = ⋃ i, f (s i)
 
 theorem ωContinuous.isMono (f: Set α → Set β) (h: ωContinuous f):
@@ -66,7 +66,7 @@ theorem fpow.succ_limit_eq (f: Set α →o Set α):
 
 def ωContinuousHom.lfp (f: α →ω α): Set α := ⋃ i, fpow f i ∅
 
-theorem kleene_fix {f: α →ω α}: f.toOrderHom.lfp = f.lfp := by
+theorem kleene_fix (f: α →ω α): f.toOrderHom.lfp = f.lfp := by
   apply Subset.antisymm
   . have hpfp: f.toOrderHom.pfp (⋃ i, (fpow f i) ∅) := fun _ ha =>
       have hcont := f.continuous' _ (fpow.isChain f.toOrderHom)

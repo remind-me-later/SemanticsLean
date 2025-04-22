@@ -34,7 +34,7 @@ notation (priority := high) "⟦" c "⟧" => denote c
 #check (s0, s0["x"←5]["x"←1]) ∈ ⟦[|x = 5; if x <= 1 {skip} else {x = 1}|]⟧
 #check (s0, s0["x"←5]) ∈ ⟦[|x = 5; while x <= 1 {x = 1}|]⟧
 
-private example: ⟦[|while true {skip}|]⟧ = ∅ := by {
+private example: ⟦[|while true {skip}|]⟧ = ∅ := by
   rw [denote.eq_5, denote.eq_1, OrderHom.lfp]
   rw [←Set.inf_eq, W.OrderHom]
   unfold Com.W Bexp.eval Set.sInter Set.ite OrderHom.pfp
@@ -52,7 +52,6 @@ private example: ⟦[|while true {skip}|]⟧ = ∅ := by {
     | .inl h => exact h
     | .inr h => exact Set.diff_univ _ ▸ h
   . exact (absurd . (Set.mem_empty _))
-}
 
 /-
 ## Computation
@@ -100,7 +99,7 @@ theorem while_unfold:
 ## Congruence
 -/
 
-theorem cat_congr {c c' d d': Com} (hc: c ≈ c') (hd: d ≈ d'):
+theorem cat_congr {c: Com} (hc: c ≈ c') (hd: d ≈ d'):
   (c++d) ≈ (c'++d') := by
   rw [equiv_eq, append_eq, append_eq]
   exact hc ▸ hd ▸ rfl

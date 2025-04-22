@@ -44,7 +44,7 @@ instance reduce.equiv: Setoid Bexp where
 section Equivalence
 
 -- relational definition is equivalent to recursive
-private theorem reduce.from_natural {conf: Bexp × State}
+private theorem reduce.from_natural
   (hBigStep: conf ==>b x): conf.1 conf.2 = x :=
   by induction hBigStep with
   | not _ ih => exact ih ▸ rfl
@@ -52,8 +52,7 @@ private theorem reduce.from_natural {conf: Bexp × State}
     exact ihb ▸ ihb' ▸ rfl
   | _ => rfl
 
-private theorem BigStep.from_reduce {b: Bexp}
-  (hred: b s = x): (b, s) ==>b x :=
+private theorem BigStep.from_reduce (hred: b s = x): (b, s) ==>b x :=
   by induction b generalizing x with
   | true => exact hred ▸ BigStep.true
   | false => exact hred ▸ BigStep.false
@@ -65,12 +64,10 @@ private theorem BigStep.from_reduce {b: Bexp}
   | eq => exact hred ▸ BigStep.eq
   | le => exact hred ▸ BigStep.le
 
-private theorem BigStep_eq_reduce {b: Bexp}:
-  (b, s) ==>b x ↔ b s = x :=
+private theorem BigStep_eq_reduce: (b, s) ==>b x ↔ b s = x :=
   ⟨reduce.from_natural, BigStep.from_reduce⟩
 
-private theorem BigStep_eq_reduce' {b: Bexp}:
-  (b, s) ==>b b s :=
+private theorem BigStep_eq_reduce': (b, s) ==>b b s :=
   BigStep.from_reduce rfl
 
 private theorem not_true_eq_false {b: Bexp}: (!b s) = (~~~b) s :=

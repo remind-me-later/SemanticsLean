@@ -4,7 +4,7 @@ import Semantics.Imp.Denotational
 
 namespace Com
 
-theorem SmallStep.from_natural {x: Com × State}
+theorem SmallStep.from_natural
   (h: x ==> s'): x ~>* (∅, s') := by
   induction h with
   | skip => exact .refl
@@ -35,7 +35,7 @@ theorem BigStep.from_structural (h: x ~>* (∅, s')): x ==> s' := by
 theorem structural_eq_natural: (c, s) ~>* (∅, s') ↔ (c, s) ==> s' :=
   ⟨BigStep.from_structural, SmallStep.from_natural⟩
 
-theorem denote.from_natural {x: Com × State}
+theorem denote.from_natural
   (h: x ==> s''): (x.2, s'') ∈ ⟦x.1⟧ := by
   induction h with
   | skip => exact rfl

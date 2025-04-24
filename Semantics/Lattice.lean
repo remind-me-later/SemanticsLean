@@ -3,7 +3,7 @@ import Semantics.SetRelation
 -- Concrete Semantics with Isabelle
 -- 10.4.1 The Knaster-Tarski Fixpoint Theorem on Sets
 
-class Preorder (α: Type)  extends LE α, LT α where
+class Preorder (α: Type) extends LE α, LT α where
   le_refl: ∀a: α, a ≤ a
   le_trans: ∀{{a b c: α}}, a ≤ b → b ≤ c → a ≤ c
   lt_iff_le_not_le: ∀{{a b: α}}, a < b ↔ a ≤ b ∧ ¬(b ≤ a)

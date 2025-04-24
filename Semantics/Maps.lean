@@ -9,6 +9,9 @@ def update (k: String) (v: α) (m: Map α): Map α
 
 notation m "[" k " ← " v "]" => Map.update k v m
 
+def toList (m: Map α) (keys: List String): List (String × α) :=
+  keys.map fun k => (k, m k)
+
 theorem eval:
   (m[k ← v]) k = v := by
   dsimp only [Map.update]

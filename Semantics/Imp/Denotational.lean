@@ -113,5 +113,34 @@ theorem loop_congr (hc: c ≈ c'): whileLoop b c ≈ whileLoop b c' := by
   rw [equiv_eq, denote.eq_5]
   exact hc ▸ rfl
 
+/-
+## Partial Fixpoint
+-/
+
+def eval (c: Com) (s: State): Option State :=
+  match c with
+  | skip => some s
+  | ass v a => some (s[v ← a s])
+  | cat c c' => eval c s >>= eval c'
+  | ifElse b c c' => eval (if b s then c else c') s
+  | whileLoop b c' => if b s then eval c' s >>= eval c else s
+partial_fixpoint
+
+def showVars (s: Option State) (l: List String): List (String × Int) :=
+  match s with
+  | none => []
+  | some s => Map.toList s l
+
+#eval showVars (eval [|x = 5; while 1 <= x {x = x - 1}|] s0) ["x"]
+
+#eval showVars (eval [|
+  n = 5; i = 2; res = 1;
+
+  while i <= n {
+      res = res * i;
+      i = i + 1
+  }
+|] s0) ["n", "i", "res"]
+
 end Denotational
 end Com
